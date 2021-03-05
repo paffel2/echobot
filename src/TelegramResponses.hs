@@ -6,7 +6,7 @@ import Control.Monad
 -------------------------------------------------------------------------------------------
 data TelegramSendMessage = TelegramSendMessage { telegramSendMessageChatId :: Int
                                                , telegramSendMessageText :: String
-                                               , telegramSendMessageEntities :: Maybe ([TelegramMessageEntity])
+                                               , telegramSendMessageEntities :: Maybe [TelegramMessageEntity]
                                                , telegramSendMessageReplyMarkup :: Maybe TelegramInlineKeyboardMarkup
                                                } deriving (Show, Generic)
 {-instance ToJSON TelegramSendMessage where
@@ -250,12 +250,12 @@ data TelegramMessage = TelegramMessage { telegramMessageMessageId :: Int
                                        , telegramMessageForwardFromMessageId :: Maybe Int
                                        , telegramMessageForwardSignature :: Maybe String
                                        , telegramMessageText :: Maybe String
-                                       , telegramMessageEntities :: Maybe ([TelegramMessageEntity])
+                                       , telegramMessageEntities :: Maybe [TelegramMessageEntity]
                                        , telegramMessageAnimation :: Maybe TelegramAnimation
                                        , telegramMessageCaption :: Maybe String
                                        , telegramMessageDocument :: Maybe TelegramDocument
                                        , telegramMessageAudio :: Maybe TelegramAudio
-                                       , telegramMessagePhoto :: Maybe ([TelegramPhotoSize])
+                                       , telegramMessagePhoto :: Maybe [TelegramPhotoSize]
                                        , telegramMessageVideo :: Maybe TelegramVideo
                                        , telegramMessageSticker :: Maybe TelegramSticker
                                        , telegramMessageVideoNote :: Maybe TelegramVideoNote
