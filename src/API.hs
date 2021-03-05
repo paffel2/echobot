@@ -69,7 +69,7 @@ buildTelegramGetRequest token url params = do
               parseResult r = case parseEither parseJSON r of
                 Right (TelegramResponse True _ (Just result)) -> Right result
                 Right (TelegramResponse False (Just errMess) _) -> Left "1 er"
-                Right (TelegramResponse True errMess Nothing) -> Left $ "no result"
+                Right (TelegramResponse True errMess Nothing) -> Left  "no result"
                 Left errMess -> Left "2 er"
 
 buildParams :: (QueryParam p, Monoid p) => [(T.Text, T.Text)] -> p
@@ -89,7 +89,7 @@ getMe token = buildTelegramGetRequest token "getMe" []
 
 
 
-buildTelegramPostRequest :: ToJSON b => String -> String -> b -> [(T.Text,T.Text)] -> IO (Int)
+buildTelegramPostRequest :: ToJSON b => String -> String -> b -> [(T.Text,T.Text)] -> IO Int
 buildTelegramPostRequest token url body params = runReq defaultHttpConfig $ do
     r <- req
         POST
@@ -370,7 +370,7 @@ echo' updateId listOfUsers = do
   updates <- getUpdates' testToken updateId
   b <- answers updates listOfUsers
   let listOfUsers' = updateListUsers listOfUsers b
-  putStrLn $ show listOfUsers'
+  print listOfUsers'
   nextUpdateID <- getLastUpdateId updates
   echo' nextUpdateID listOfUsers'
 
@@ -407,7 +407,7 @@ testList = [(1,5), (2,6), (3,7), (274864287, 2)]
 testUpdate :: [Maybe (Int,Int)]
 testUpdate = [Nothing, Just(4,5),Just(2,5)]
 
-findRepeatNumber :: [(Int, Int)] -> Int -> IO (Int)
+findRepeatNumber :: [(Int, Int)] -> Int -> IO Int
 findRepeatNumber listOfUsers chatId = do
   let n = lookup chatId listOfUsers
   case n of 
@@ -417,4 +417,5 @@ findRepeatNumber listOfUsers chatId = do
     Nothing -> do 
                  putStrLn "user not found"
                  return 1
+
 
