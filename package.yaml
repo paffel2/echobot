@@ -24,6 +24,18 @@ dependencies:
 
 library:
   source-dirs: src
+  dependencies:
+    - bytestring
+    - http-conduit
+    - text
+    - aeson
+    - http-client
+    - req-conduit
+    - req
+  default-extensions:
+      - OverloadedStrings
+      - DeriveGeneric
+
 
 executables:
   echobot-exe:

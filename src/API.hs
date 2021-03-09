@@ -2,20 +2,14 @@
 module API where
 
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as BC
-import Network.HTTP.Simple
-import qualified Data.Text.Encoding as E
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Data.Aeson
-import GHC.Generics
 import Network.HTTP.Req
 import Control.Monad.IO.Class
 import TelegramResponses
 import Data.Aeson.Types
 import Control.Exception (throwIO)
-import Data.List
---import Data.Maybe
 
 
 instance MonadHttp IO where

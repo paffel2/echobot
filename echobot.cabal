@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 89c072c5f684bd5f7bbc53491ca516f478b7ea88567f0c2aa57cf9e792abd5e3
+-- hash: 7162e5c3d48ea85645e8f339348c99fd1f6642c0f722189cd5ae3422148ac787
 
 name:           echobot
 version:        0.1.0.0
@@ -27,26 +27,26 @@ source-repository head
 
 library
   exposed-modules:
+      API
       Lib
+      TelegramResponses
+      VkAPI
+      VkResponses
   other-modules:
       Paths_echobot
-      , API
-      , TelegramResponses
   hs-source-dirs:
       src
+  default-extensions: OverloadedStrings DeriveGeneric
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
     , bytestring
-    , http-conduit
-    , text
-    , aeson
     , http-client
-    , req-conduit
+    , http-conduit
     , req
+    , req-conduit
+    , text
   default-language: Haskell2010
-  extensions:
-      OverloadedStrings
-    , DeriveGeneric
 
 executable echobot-exe
   main-is: Main.hs
@@ -58,16 +58,7 @@ executable echobot-exe
   build-depends:
       base >=4.7 && <5
     , echobot
-    , bytestring
-    , http-conduit
-    , text
-    , http-client
-    , req-conduit
-    , req
   default-language: Haskell2010
-  extensions:
-      OverloadedStrings
-    , DeriveGeneric
 
 test-suite echobot-test
   type: exitcode-stdio-1.0
