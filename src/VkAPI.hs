@@ -52,8 +52,8 @@ buildTelegramGetRequest token url params = do
                 Right (TelegramResponse True errMess Nothing) -> Left  "no result"
                 Left errMess -> Left "2 er"-}
 
-buildVkGetRequest :: [Char] -> [Char] -> T.Text -> [(T.Text, T.Text)] -> IO (Either String VkResponseType )
-buildVkGetRequest token groupID url params = do
+buildVkGetRequest :: [Char] -> T.Text -> [(T.Text, T.Text)] -> IO (Either String VkResponseType )
+buildVkGetRequest token url params = do
     response <- responseBody <$> request
     return $ parseResult response
         where request = req
@@ -62,9 +62,9 @@ buildVkGetRequest token groupID url params = do
                             NoReqBody 
                             jsonResponse
                             param
-              param = buildParams (params ++ [("access_token", T.pack token)] ++ [("group_id", T.pack groupID)])
+              param = buildParams (params ++ [("access_token", T.pack token)])
               parseResult r = case parseEither parseJSON r of
                   Right (VkResponse result) -> Right result
                   Left errMess -> Left "err2"
  
-getLongPollServerTest' = buildVkGetRequest testTokenVk "203142656" "messages.getLongPollServer" [("lp_version","3"),("need_pts","1"),("v","5.130")]
+getLongPollServerTest' = buildVkGetRequest testTokenVk "messages.getLongPollServer" [("lp_version","3"),("need_pts","1"),("v","5.130")]
