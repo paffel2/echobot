@@ -67,4 +67,8 @@ buildVkGetRequest token url params = do
                   Right (VkResponse result) -> Right result
                   Left errMess -> Left "err2"
  
+getLongPollServerTest' :: IO (Either String VkResponseType)
 getLongPollServerTest' = buildVkGetRequest testTokenVk "messages.getLongPollServer" [("lp_version","3"),("need_pts","1"),("v","5.130")]
+
+getLongPollHistoryTest :: IO (Either String VkResponseType)
+getLongPollHistoryTest = buildVkGetRequest testTokenVk "messages.getLongPollHistory" [("ts","1802152298"),("pts","10000107"),("v","5.130")]
