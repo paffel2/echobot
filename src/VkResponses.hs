@@ -31,12 +31,13 @@ data VkMessages =  VkMessages { vkMessagesCount :: Int
 instance FromJSON VkMessages where
     parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 10}
 
-data VkItem = VkItem { vkItemId :: Int
+data VkItem = VkItem { vkItemId :: Maybe Int
                      , vkItemFromId :: Int
                      , vkItemText :: String
                      , vkItemAttachments :: [VkAttachment]
-                     , vkItemImportant :: Bool
-                     , vkItemGeo :: VkGeo
+                     , vkItemImportant :: Maybe Bool
+                     , vkItemGeo :: Maybe VkGeo
+                     , vkItemFwdMessages :: Maybe [VkItem]
                      } deriving (Show, Generic)
 instance FromJSON VkItem where
     parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 6}
@@ -69,7 +70,10 @@ data VkAttachment = VkAttachmentPhoto { vkAttachmentPhotoType :: String,
                                      } |
                     VkAttachmentSticker { vkAttachmentStickerType :: String
                                         , vkAttachmentStickerSticker :: VkSticker
-                                        } deriving (Show, Generic)
+                                        } |
+                    VkAttachmentAudioMessage { vkAttachmentAudioMessageType :: String
+                                             , vkAttachmentAudioMessageAudioMessage :: VkAudioMessage
+                                             } deriving (Show, Generic)
 instance FromJSON VkAttachment where
     parseJSON (Object v) = 
         (VkAttachmentPhoto <$> v .: "type"
@@ -98,6 +102,10 @@ instance FromJSON VkAttachment where
                           <|>
         (VkAttachmentSticker <$> v .: "type"
                              <*> v .: "sticker")
+                             <|>
+        (VkAttachmentAudioMessage <$> v .: "type"
+                                  <*> v .: "audio_message")
+    parseJSON _ = mzero
 
 
 
@@ -178,3 +186,11 @@ data VkPlace = VkPlace { vkPlaceCountry :: String
                        } deriving (Show, Generic)
 instance FromJSON VkPlace where
     parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 7}
+
+
+data VkAudioMessage = VkAudioMessage { vkAudioMessageId :: Int 
+                                     , vkAudioMessageOwnerId :: Int 
+                                     , vkAudioMessageAccessKey :: String
+                                     } deriving (Show, Generic) 
+instance FromJSON VkAudioMessage where
+    parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 14}
