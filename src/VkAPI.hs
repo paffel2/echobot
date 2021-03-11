@@ -11,6 +11,7 @@ import Data.Aeson.Types
 import Control.Exception (throwIO) 
 import VkResponses
 import Data.Foldable
+import Control.Concurrent
 
 
 instance MonadHttp IO where
@@ -75,6 +76,24 @@ getLongPollServerTest' = buildVkGetRequest testTokenVk "messages.getLongPollServ
 getLongPollHistoryTest :: IO (Either String VkResponseType)
 getLongPollHistoryTest = buildVkGetRequest testTokenVk "messages.getLongPollHistory" [("ts","1730196697"),("pts","10000147"),("v","5.130")]
 
+getLongPollServer :: VkToken -> IO (Either String VkResponseType)
+getLongPollServer token = buildVkGetRequest token "messages.getLongPollServer" [("lp_version","3"),("need_pts","1"),("v","5.130")]
+
+getLongPollHistory :: VkToken -> Int -> Int -> IO (Either String VkResponseType)
+getLongPollHistory token ts pts = buildVkGetRequest token "messages.getLongPollHistory" [("ts",T.pack $ show ts),("pts",T.pack $ show pts),("v","5.130")]
+
+tsAndPts :: VkResponseType -> (Int, Int)
+tsAndPts (Server _ _ (Just ts) (Just pts) _ _ ) = (ts,pts)
+
+newPts :: Either String VkResponseType -> Int
+newPts (Right (Server _ _ _ _ (Just npts) _ )) = npts
+
+getTsAndPts :: VkToken -> IO (Either String (Int, Int))
+getTsAndPts token = do
+    serverInf <- getLongPollServer token
+    let ans = case serverInf of Right (Server _ _ (Just ts) (Just pts) _ _) -> Right (ts,pts)
+                                Left err -> Left err
+    return ans
 
 {-buildTelegramPostRequest :: ToJSON b => String -> String -> b -> [(T.Text,T.Text)] -> IO Int
 buildTelegramPostRequest token url body params = runReq defaultHttpConfig $ do
@@ -111,6 +130,8 @@ createParams vkMessage = [ ("user_id", Just $ T.pack $ show $ vkItemFromId vkMes
                          ]
 
 answer (Right (Server _ _ _ _ _ (Just messages))) = answers $ vkMessagesItems messages
+answer (Right _) = putStrLn "ошибка 1"
+answer (Left err) = putStrLn err
 
 answers [] = putStrLn ""
 answers (x:xs) = do
@@ -125,3 +146,33 @@ vkEchoTest = do
     updates <- getLongPollHistoryTest
     answer updates
     putStrLn "done"
+
+
+vkEchoTest' :: VkToken -> Maybe Int -> Maybe Int -> IO ()
+vkEchoTest' token Nothing Nothing = do
+    tsPts <- getTsAndPts token
+    case tsPts of Right (ts, pts) -> do
+                    updates <- getLongPollHistory token ts pts
+                    answer updates
+                    putStrLn "done"
+                    let npts = newPts updates
+                    threadDelay 10000000
+                    vkEchoTest' token (Just ts) (Just npts)
+                  Left err -> putStrLn "бля"
+
+vkEchoTest' token (Just ts') (Just pts') = do
+    tsPts <- getTsAndPts token
+    case tsPts of Right (ts, pts) -> do
+                    updates <- getLongPollHistory token ts pts'
+                    answer updates
+                    putStrLn "done"
+                    let npts = newPts updates
+                    threadDelay 2000000 --подумать
+                    vkEchoTest' token (Just ts) (Just npts)
+                  Left err -> putStrLn "бля"
+    {-updates <- getLongPollHistory token ts pts
+    answer updates
+    putStrLn "done"
+    let npts = newPts updates
+    vkEchoTest' token (Just ts) (Just npts)-}
+
