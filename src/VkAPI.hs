@@ -178,7 +178,7 @@ createParamsAttachment (VkAttachmentPoll _ (VkPoll pollId ownerId)) = [("attachm
                                                                                       attachStr = "poll" ++ show ownerId ++ "_" ++ show pollId
 createParamsAttachment (VkAttachmentSticker _ (VkSticker _ stickerId)) = [("sticker_id", Just $ T.pack $ show stickerId)]
 
-createParamsAttachment (VkAttachmentAudioMessage _ (VkAudioMessage audioId ownerId accessKey)) = [("attachment", Just $ T.pack attachStr)]
+createParamsAttachment (VkAttachmentAudioMessage "audio_message" (VkAudioMessage audioId ownerId accessKey)) = [("attachment", Just $ T.pack attachStr)]
                                                                                   where
                                                                                       attachStr = "audio_message" ++ show ownerId ++ "_" ++ show audioId ++ "_" ++ accessKey
 
@@ -203,6 +203,7 @@ answers _ [] = putStrLn "all sended"
 answers token xs = do
     mapM_ (sendMessageText token) xs
     mapM_ (sendMessageAttachment token) xs
+    putStrLn "all sended"
 
     
     
@@ -220,9 +221,8 @@ vkEchoTest' token Nothing Nothing = do
     case tsPts of Right (ts, pts) -> do
                     updates <- getLongPollHistory token ts pts
                     answer token updates
-                    putStrLn "done"
                     let npts = newPts updates
-                    threadDelay 1000000
+                    threadDelay 3000000
                     vkEchoTest' token (Just ts) (Just npts)
                   Left err -> putStrLn "бля"
 
@@ -231,9 +231,8 @@ vkEchoTest' token (Just ts') (Just pts') = do
     case tsPts of Right (ts, pts) -> do
                     updates <- getLongPollHistory token ts pts'
                     answer token updates
-                    putStrLn "done"
                     let npts = newPts updates
-                    threadDelay 1000000 --подумать
+                    threadDelay 3000000 --подумать
                     vkEchoTest' token (Just ts) (Just npts)
                   Left err -> putStrLn "бля"
     {-updates <- getLongPollHistory token ts pts
