@@ -128,23 +128,89 @@ createParams :: VkItem  -> [(T.Text, Maybe T.Text)]
 createParams vkMessage = [ ("user_id", Just $ T.pack $ show $ vkItemFromId vkMessage)
                          , ("message", Just $ T.pack $ vkItemText vkMessage)
                          ]
+--sendMessageText :: String -> VkItem -> IO ()
+sendMessageText :: String -> VkItem -> IO ()
+{-sendMessageText token (VkItem _ fromId text _ _ _ _)  = do
+    let params = [ ("user_id", Just $ T.pack $ show fromId)
+                 , ("message", Just $ T.pack $ text)
+                 ][ ("user_id", Just $ T.pack $ show fromId)
+                 , ("message", Just $ T.pack $ text)
+                 ]
+    --statusCode <- buildVkPostRequest token "messages.send" params
+    buildVkPostRequest token "messages.send" params
+    --return statusCode-}
+sendMessageText token (VkItem _ fromId text _ _ _ _)  =
+    if fromId > 0 then do
+        buildVkPostRequest token "messages.send" params
+        putStrLn "message send"
+    else
+        putStr ""
+        where params = [ ("user_id", Just $ T.pack $ show fromId)
+                       , ("message", Just $ T.pack $ text)
+                       ]
 
-answer (Right (Server _ _ _ _ _ (Just messages))) = answers $ vkMessagesItems messages
-answer (Right _) = putStrLn "ошибка 1"
-answer (Left err) = putStrLn err
+createParamsAttachment :: VkAttachment -> [(T.Text, Maybe T.Text)]
+createParamsAttachment (VkAttachmentPhoto _ (VkPhoto photoId ownerId accessKey _)) = [("attachment", Just $ T.pack attachStr)]
+                                                                                        where
+                                                                                            attachStr = "photo" ++ show ownerId ++ "_" ++ show photoId ++ "_" ++ accessKey
 
-answers [] = putStrLn ""
-answers (x:xs) = do
-    let p = createParams x
-    buildVkPostRequest testTokenVk "messages.send" p
-    putStrLn "message send"
-    answers xs
+createParamsAttachment (VkAttachmentDoc _ (VkDoc docId ownerId accessKey)) = [("attachment", Just $ T.pack attachStr)]
+                                                                                  where
+                                                                                      attachStr = "doc" ++ show ownerId ++ "_" ++ show docId ++ "_" ++ accessKey
+
+createParamsAttachment (VkAttachmentVideo _ (VkVideo videoId ownerId accessKey)) = [("attachment", Just $ T.pack attachStr)]
+                                                                                  where
+                                                                                      attachStr = "video" ++ show ownerId ++ "_" ++ show videoId ++ "_" ++ accessKey
+createParamsAttachment (VkAttachmentAudio _ (VkAudio audioId ownerId)) = [("attachment", Just $ T.pack attachStr)]
+                                                                                  where
+                                                                                      attachStr = "audio" ++ show ownerId ++ "_" ++ show audioId
+createParamsAttachment (VkAttachmentWall _ (VkWall ownerId wallId)) = [("attachment", Just $ T.pack attachStr)]
+                                                                                  where
+                                                                                      attachStr = "wall" ++ show ownerId ++ "_" ++ show wallId
+createParamsAttachment (VkAttachmentMarket _ (VkMarket marketId ownerId)) = [("attachment", Just $ T.pack attachStr)]
+                                                                                  where
+                                                                                      attachStr = "market" ++ show ownerId ++ "_" ++ show marketId 
+createParamsAttachment (VkAttachmentStory _ (VkStory storyId ownerId)) = [("attachment", Just $ T.pack attachStr)]
+                                                                                  where
+                                                                                      attachStr = "story" ++ show ownerId ++ "_" ++ show storyId  
+createParamsAttachment (VkAttachmentPoll _ (VkPoll pollId ownerId)) = [("attachment", Just $ T.pack attachStr)]
+                                                                                  where
+                                                                                      attachStr = "poll" ++ show ownerId ++ "_" ++ show pollId
+createParamsAttachment (VkAttachmentSticker _ (VkSticker _ stickerId)) = [("sticker_id", Just $ T.pack $ show stickerId)]
+
+createParamsAttachment (VkAttachmentAudioMessage _ (VkAudioMessage audioId ownerId accessKey)) = [("attachment", Just $ T.pack attachStr)]
+                                                                                  where
+                                                                                      attachStr = "audio_message" ++ show ownerId ++ "_" ++ show audioId ++ "_" ++ accessKey
+
+--createParamsGeo :: Maybe VkGeo -> [(T.Text, Maybe T.Text)]
+--createParamsGeo (Just geo)
+                                            
+sendMessageAttachment :: VkToken -> VkItem -> IO ()
+sendMessageAttachment token (VkItem _ fromId _ attachments _ _ _) = 
+    if fromId > 0 then do
+        let params = createParamsAttachment <$> attachments
+        mapM_ (buildVkPostRequest token "messages.send") (fmap (++ [("user_id", Just $ T.pack $ show fromId)]) params)--доделать для обработки ошибок
+        putStrLn "attsend"
+    else putStr ""
+
+
+answer token (Right (Server _ _ _ _ _ (Just messages))) = answers token $ vkMessagesItems messages
+answer token (Right _) = putStrLn "ошибка 1"
+answer token (Left err) = putStrLn err
+
+answers :: VkToken -> [VkItem] -> IO ()
+answers _ [] = putStrLn "all sended"
+answers token xs = do
+    mapM_ (sendMessageText token) xs
+    mapM_ (sendMessageAttachment token) xs
+
+    
     
 
 vkEchoTest :: IO ()
 vkEchoTest = do
     updates <- getLongPollHistoryTest
-    answer updates
+    answer testTokenVk updates
     putStrLn "done"
 
 
@@ -153,10 +219,10 @@ vkEchoTest' token Nothing Nothing = do
     tsPts <- getTsAndPts token
     case tsPts of Right (ts, pts) -> do
                     updates <- getLongPollHistory token ts pts
-                    answer updates
+                    answer token updates
                     putStrLn "done"
                     let npts = newPts updates
-                    threadDelay 10000000
+                    threadDelay 1000000
                     vkEchoTest' token (Just ts) (Just npts)
                   Left err -> putStrLn "бля"
 
@@ -164,10 +230,10 @@ vkEchoTest' token (Just ts') (Just pts') = do
     tsPts <- getTsAndPts token
     case tsPts of Right (ts, pts) -> do
                     updates <- getLongPollHistory token ts pts'
-                    answer updates
+                    answer token updates
                     putStrLn "done"
                     let npts = newPts updates
-                    threadDelay 2000000 --подумать
+                    threadDelay 1000000 --подумать
                     vkEchoTest' token (Just ts) (Just npts)
                   Left err -> putStrLn "бля"
     {-updates <- getLongPollHistory token ts pts
@@ -176,3 +242,5 @@ vkEchoTest' token (Just ts') (Just pts') = do
     let npts = newPts updates
     vkEchoTest' token (Just ts) (Just npts)-}
 
+t :: IO ()
+t = vkEchoTest' testTokenVk Nothing Nothing
