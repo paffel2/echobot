@@ -3,6 +3,7 @@ module VkAPI where
 import qualified Data.ByteString as B
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
+import qualified Data.ByteString.Lazy.Internal as BLI
 import Data.Aeson
 import Network.HTTP.Req
 import Control.Monad.IO.Class
@@ -12,6 +13,10 @@ import Control.Exception (throwIO)
 import VkResponses
 import Data.Foldable
 import Control.Concurrent
+import GHC.Generics
+
+import qualified Network.HTTP.Client.MultipartFormData as LM
+
 
 
 instance MonadHttp IO where
@@ -141,13 +146,13 @@ sendMessageText :: String -> VkItem -> IO ()
     --return statusCode-}
 sendMessageText token (VkItem _ fromId text _ _ _ _)  =
     if fromId > 0 then do
-        buildVkPostRequest token "messages.send" params
+        buildVkPostRequest token "messages.send" params'
         putStrLn "message send"
     else
         putStr ""
-        where params = [ ("user_id", Just $ T.pack $ show fromId)
-                       , ("message", Just $ T.pack $ text)
-                       ]
+        where params' = [ ("user_id", Just $ T.pack $ show fromId)
+                        , ("message", Just $ T.pack $ text)
+                        ]
 
 createParamsAttachment :: VkAttachment -> [(T.Text, Maybe T.Text)]
 createParamsAttachment (VkAttachmentPhoto _ (VkPhoto photoId ownerId accessKey _)) = [("attachment", Just $ T.pack attachStr)]
@@ -243,3 +248,90 @@ vkEchoTest' token (Just ts') (Just pts') = do
 
 t :: IO ()
 t = vkEchoTest' testTokenVk Nothing Nothing
+
+
+{-keyboardVk = VkKeyboard True buttonsVk False
+
+b1 = VkButton (VkAction "text" "1" "{\"button\": \"1\"}")-- "secondary"
+
+b2 = VkButton (VkAction "text" "2" "{\"button\": \"2\"}")-- "secondary"
+
+b3 = VkButton (VkAction "text" "3" "{\"button\": \"3\"}")-- "secondary"
+
+b4 = VkButton (VkAction "text" "4" "{\"button\": \"4\"}")-- "secondary"
+
+b5 = VkButton (VkAction "text" "5" "{\"button\": \"5\"}")-- "secondary"
+
+buttonsVk = [b1, b2, b3, b4, b5]
+encKeyboard = T.pack $ BLI.unpackChars (encode keyboardVk)
+a = TIO.putStrLn encKeyboard-}
+sendKeyboardTest = buildVkPostRequest testTokenVk "messages.send" [("user_id", Just "30087801"),("message", Just "выбирай")]--,("keyboard", Just keyboardVk)]
+
+
+
+--sendKeyboardVk ::IO Int 
+sendKeyboardVk :: IO ()
+sendKeyboardVk = runReq defaultHttpConfig $ do
+    r <- req
+        POST
+        (https "api.vk.com" /: "method" /: "messages.send")
+        (ReqBodyUrlEnc $ params [("keyboard",Just keytext)])
+        jsonResponse 
+        params'
+    liftIO $ print (responseBody r :: Value)
+    --return $ responseStatusCode (r :: JsonResponse Value)
+        where params' = buildParams [("user_id","30087801"),("message","тест"),("access_token", T.pack testTokenVk),("v","5.130"),("random_id","0")]
+
+--keyboardParam = queryParam "keyboard" _a
+
+
+
+
+
+
+smallKeyBoard :: VkKeyboard
+smallKeyBoard = VkKeyboard True [[smallButton]]
+smallButton :: VkButton
+smallButton = VkButton (VkAction "text" "test")
+
+keytext = T.pack $ BLI.unpackChars (encode smallKeyBoard)
+a = TIO.putStrLn keytext
+--a = queryParam "keyboard" (Just keyboardVk)
+--a = TIO.readFile "src/VkKeyboard.json"
+{-sendForwardMessage :: IO  Int
+sendForwardMessage = runReq defaultHttpConfig $ do
+    r <- req
+        POST
+        (https "api.vk.com" /: "method" /: "messages.send")
+        (ReqBodyJson forward)
+        jsonResponse
+        params
+    return $ responseStatusCode (r :: JsonResponse Value)
+        where
+            forward = Forward 81958221 30087801 [50443] [288]
+            params = buildParams [("access_token", T.pack testTokenVk),("v","5.130"),("random_id","0")]
+
+
+{-buildVkPostRequest :: String -> String -> [(T.Text, Maybe T.Text)] -> IO  Int
+buildVkPostRequest token method param  = runReq defaultHttpConfig $ do
+    r <- req
+        POST 
+        (https "api.vk.com" /: "method" /: T.pack method)
+        (ReqBodyUrlEnc $ params param)
+        jsonResponse 
+        tokenParam
+    return $ responseStatusCode (r :: JsonResponse Value)
+        where tokenParam = buildParams [("access_token", T.pack token),("v","5.130"),("random_id","0")]-}
+data Forward = Forward { forwardOwnerId :: Int 
+                       , forwardPeerId :: Int 
+                       , forwardConversationMessageIds :: [Int]
+                       , forwardMessageIds :: [Int]
+                       } deriving (Show, Generic)
+instance ToJSON Forward where
+    toJSON  = genericToJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 7, omitNothingFields = True  }-}
+
+
+
+
+
+costul = "%7B%20%22one_time%22%20%3A%20true%2C%0A%20%20%20%20%22inline%22%20%3A%20false%2C%0A%20%20%20%20%22buttons%22%3A%5B%0A%20%20%20%20%20%20%20%20%5B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22action%22%3A%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22type%22%3A%22text%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22label%22%3A%221%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22payload%22%3A%22%7B%5C%22button%5C%22%3A%20%5C%221%5C%22%7D%22%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%5D%2C%0A%20%20%20%20%20%20%20%20%5B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22action%22%3A%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22type%22%3A%22text%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22label%22%3A%222%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22payload%22%3A%22%7B%5C%22button%5C%22%3A%20%5C%222%5C%22%7D%22%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%5D%2C%0A%20%20%20%20%20%20%20%20%5B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22action%22%3A%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22type%22%3A%22text%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22label%22%3A%223%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22payload%22%3A%22%7B%5C%22button%5C%22%3A%20%5C%223%5C%22%7D%22%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%5D%2C%0A%20%20%20%20%20%20%20%20%5B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22action%22%3A%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22type%22%3A%22text%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22label%22%3A%224%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22payload%22%3A%22%7B%5C%22button%5C%22%3A%20%5C%224%5C%22%7D%22%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%5D%2C%0A%20%20%20%20%20%20%20%20%5B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22action%22%3A%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22type%22%3A%22text%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22label%22%3A%225%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22payload%22%3A%22%7B%5C%22button%5C%22%3A%20%5C%225%5C%22%7D%22%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%5D%0A%20%20%20%20%5D%0A%7D"

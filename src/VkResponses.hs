@@ -194,3 +194,26 @@ data VkAudioMessage = VkAudioMessage { vkAudioMessageId :: Int
                                      } deriving (Show, Generic) 
 instance FromJSON VkAudioMessage where
     parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 14}
+
+
+
+data VkKeyboard = VkKeyboard { vkKeyboardOneTime :: Bool
+                             , vkKeyboardButtons :: [[VkButton]]
+                             --, vkKeyboardInline :: Bool
+                             } deriving (Show, Generic)
+instance ToJSON VkKeyboard where
+    toJSON  = genericToJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 10, omitNothingFields = True }
+
+data VkButton = VkButton { vkButtonAction :: VkAction
+                         --, vkButtonColor :: String 
+                         } deriving (Show, Generic)
+
+instance ToJSON VkButton where
+    toJSON  = genericToJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 8 , omitNothingFields = True }
+
+data VkAction = VkAction { vkActionType :: String
+                         , vkActionLabel :: String
+                        -- , vkActionPayload :: String
+                         } deriving (Show, Generic)
+instance ToJSON VkAction where
+    toJSON  = genericToJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 8, omitNothingFields = True }
