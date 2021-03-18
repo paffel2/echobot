@@ -388,6 +388,7 @@ updateListUsers xs (u:us) =  case update of
     Just (cid, n) -> newlist' ++ [(cid, n)] where
                               newlist' = filter ((/=cid) . fst) xs-}
 --updateListUsers :: [(Int,Int)] -> [Maybe (Int,Int)] -> [[(Int,Int)]]
+--updateListUsers ::[(Int, Int)] -> [Maybe (Int, Int)] -> [(Int, Int)]
 updateListUsers xs (u:us) = updateListUsers newList us where
     newList = case u of
         Nothing -> xs

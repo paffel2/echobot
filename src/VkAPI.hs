@@ -134,7 +134,7 @@ createParams vkMessage = [ ("user_id", Just $ T.pack $ show $ vkItemFromId vkMes
                          , ("message", Just $ T.pack $ vkItemText vkMessage)
                          ]
 sendMessageText :: String -> VkItem -> IO ()
-sendMessageText token (VkItem _ fromId _ _ _ _ _ (Just button)) =
+{-sendMessageText token (VkItem _ fromId _ _ _ _ _ (Just button)) =
     if fromId > 0 then do
         buildVkPostRequest token "messages.send" params'
         putStrLn $ "user " ++ show fromId ++ " changed the number of repetitions to " ++ button
@@ -142,8 +142,8 @@ sendMessageText token (VkItem _ fromId _ _ _ _ _ (Just button)) =
         putStr ""
         where params' = [ ("user_id", Just $ T.pack $ show fromId)
                         , ("message", Just $ T.pack ("the number of repetitions is " ++ button))
-                        ]
-sendMessageText token (VkItem _ fromId "/help" _ _ _ _ _)  =
+                        ]-}
+sendMessageText token (VkItem _ fromId "/help" _ _ _ _ Nothing )  =
     if  fromId > 0  then do
         buildVkPostRequest token "messages.send" params'
         putStrLn "help message send"
@@ -152,7 +152,7 @@ sendMessageText token (VkItem _ fromId "/help" _ _ _ _ _)  =
         where params' = [ ("user_id", Just $ T.pack $ show fromId)
                         , ("message", Just $ T.pack $ "памагити")
                         ]
-sendMessageText token (VkItem _ fromId text@(x:xs) _ _ _ _ _)  =
+sendMessageText token (VkItem _ fromId text@(x:xs) _ _ _ _ Nothing)  =
     if (fromId > 0) && (text /="/repeat")  then do
         buildVkPostRequest token "messages.send" params'
         putStrLn "message send"
@@ -161,7 +161,8 @@ sendMessageText token (VkItem _ fromId text@(x:xs) _ _ _ _ _)  =
         where params' = [ ("user_id", Just $ T.pack $ show fromId)
                         , ("message", Just $ T.pack $ text)
                         ]
-sendMessageText token (VkItem _ fromId "" _ _ _ _ _)  = putStr ""
+sendMessageText token (VkItem _ fromId "" _ _ _ _ Nothing)  = putStr ""
+sendMessageText token (VkItem _ fromId _ _ _ _ _ (Just _)) = putStr ""
 
 
 createParamsAttachment :: VkAttachment -> [(T.Text, Maybe T.Text)]
@@ -243,7 +244,9 @@ answers token xs = do
     mapM_ (sendMessageText token) xs
     mapM_ (sendMessageAttachment token) xs
     mapM_ (sendGeoVK token) xs
+    --mapM (sendMessageRepeatText' token list)
     putStrLn "all sended"
+
 
     
     
@@ -305,8 +308,81 @@ encKeyboard = T.pack $ BLI.unpackChars (encode keyboardVk)
 
 
 
+---------------------------------------------------------------------------------------------------------------------
 
+updateListUsers ::[(Int, Int)] -> [Maybe (Int, Int)] -> [(Int, Int)]
+updateListUsers xs (u:us) = updateListUsers newList us where
+    newList = case u of
+        Nothing -> xs
+        Just (cid, n) -> newlist' ++ [(cid, n)] where
+                              newlist' = filter ((/=cid) . fst) xs
+updateListUsers xs [] = xs
 
+testList :: [(Int, Int)]
+testList = [(1,5), (2,6), (3,7), (274864287, 2)]
 
+testUpdate :: [Maybe (Int,Int)]
+testUpdate = [Nothing, Just(4,5),Just(2,5)]
 
+findRepeatNumber :: [(Int, Int)] -> Int -> IO Int
+findRepeatNumber listOfUsers chatId = do
+  let n = lookup chatId listOfUsers
+  case n of 
+    Just x -> do
+                 putStrLn "user founded"
+                 return x
+    Nothing -> do 
+                 putStrLn "user not found"
+                 return 1
 
+sendMessageRepeatText' :: String -> [(Int,Int)] ->  VkItem -> IO (Maybe (Int,Int))
+sendMessageRepeatText' token list (VkItem _ fromId _ _ _ _ _ (Just button)) =
+    if fromId > 0 then do
+        buildVkPostRequest token "messages.send" params'
+        putStrLn $ "user " ++ show fromId ++ " changed the number of repetitions to " ++ button
+        return $ Just (fromId,read button)
+    else do
+        putStr ""
+        return Nothing 
+        where params' = [ ("user_id", Just $ T.pack $ show fromId)
+                        , ("message", Just $ T.pack ("the number of repetitions is " ++ button))
+                        ]
+sendMessageRepeatText' token list (VkItem _ fromId _ _ _ _ _ Nothing) = return Nothing 
+answers' :: VkToken -> [(Int,Int)] -> [VkItem] -> IO [(Int,Int)]
+answers' _ list [] = return list
+answers' token list xs = do
+    mapM_ (sendKeyboardVk token) xs
+    mapM_ (sendMessageText token) xs
+    mapM_ (sendMessageAttachment token) xs
+    mapM_ (sendGeoVK token) xs
+    update <- mapM (sendMessageRepeatText' token list) xs
+    return $ updateListUsers list update
+
+answer' :: VkToken -> Either String VkResponseType  -> [(Int,Int)] -> IO [(Int, Int)]
+answer' token (Right (Server _ _ _ _ _ (Just messages))) xs = answers' token xs $ vkMessagesItems messages
+answer' token (Right _) xs = putStrLn "ошибка 1" >> return xs
+answer' token (Left err) xs = putStrLn err >> return xs
+
+vkEchoTest'' :: VkToken -> Maybe Int -> Maybe Int -> [(Int,Int)] -> IO ()
+vkEchoTest'' token Nothing Nothing listOfUsers = do
+    tsPts <- getTsAndPts token
+    case tsPts of Right (ts, pts) -> do
+                    updates <- getLongPollHistory token ts pts
+                    listOfUsers' <- answer' token updates listOfUsers
+                    let npts = newPts updates
+                    threadDelay 3000000
+                    vkEchoTest'' token (Just ts) (Just npts) listOfUsers'
+                  Left err -> putStrLn "бля"
+
+vkEchoTest'' token (Just ts') (Just pts') listOfUsers = do
+    tsPts <- getTsAndPts token
+    case tsPts of Right (ts, pts) -> do
+                    updates <- getLongPollHistory token ts pts'
+                    listOfUsers' <- answer' token updates listOfUsers
+                    let npts = newPts updates
+                    threadDelay 3000000 --подумать
+                    vkEchoTest'' token (Just ts) (Just npts) listOfUsers'
+                  Left err -> putStrLn "бля"
+
+t' :: IO ()
+t' = vkEchoTest'' testTokenVk Nothing Nothing []
