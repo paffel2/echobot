@@ -143,7 +143,7 @@ sendMessageText :: String -> VkItem -> IO ()
         where params' = [ ("user_id", Just $ T.pack $ show fromId)
                         , ("message", Just $ T.pack ("the number of repetitions is " ++ button))
                         ]-}
-sendMessageText token (VkItem _ fromId "/help" _ _ _ _ Nothing )  =
+{-sendMessageText token (VkItem _ fromId "/help" _ _ _ _ Nothing )  =
     if  fromId > 0  then do
         buildVkPostRequest token "messages.send" params'
         putStrLn "help message send"
@@ -151,9 +151,9 @@ sendMessageText token (VkItem _ fromId "/help" _ _ _ _ Nothing )  =
         putStr ""
         where params' = [ ("user_id", Just $ T.pack $ show fromId)
                         , ("message", Just $ T.pack $ "памагити")
-                        ]
+                        ]-}
 sendMessageText token (VkItem _ fromId text@(x:xs) _ _ _ _ Nothing)  =
-    if (fromId > 0) && (text /="/repeat")  then do
+    if (fromId > 0) && (text /="/repeat")&&(text /="/help")  then do
         buildVkPostRequest token "messages.send" params'
         putStrLn "message send"
     else
@@ -351,10 +351,9 @@ sendMessageRepeatText' token list (VkItem _ fromId _ _ _ _ _ Nothing) = return N
 answers' :: VkToken -> [(Int,Int)] -> [VkItem] -> IO [(Int,Int)]
 answers' _ list [] = return list
 answers' token list xs = do
+    mapM_ (repeatMessage list token) xs
     mapM_ (sendKeyboardVk token) xs
-    mapM_ (sendMessageText token) xs
-    mapM_ (sendMessageAttachment token) xs
-    mapM_ (sendGeoVK token) xs
+    mapM_ (sendMessageHelp token) xs
     update <- mapM (sendMessageRepeatText' token list) xs
     return $ updateListUsers list update
 
@@ -386,3 +385,30 @@ vkEchoTest'' token (Just ts') (Just pts') listOfUsers = do
 
 t' :: IO ()
 t' = vkEchoTest'' testTokenVk Nothing Nothing []
+
+
+repeatMessage :: [(Int,Int)] -> VkToken -> VkItem -> IO ()
+repeatMessage list token  item@(VkItem _ fromId _ _ _ _ _ _) = if fromId > 0 then do
+    n <- findRepeatNumber list fromId
+    repeatMessage' n token item
+    else putStr ""
+        where repeatMessage' 0 _ _ = putStrLn "all sended"
+              repeatMessage' x token' item' = do
+                  sendMessageText token' item'
+                  sendMessageAttachment token' item'
+                  sendGeoVK token' item'
+                  repeatMessage' (x-1) token' item'
+                  putStr ""
+
+
+
+sendMessageHelp :: VkToken -> VkItem -> IO ()
+sendMessageHelp token (VkItem _ fromId text _ _ _ _ _ )  =
+    if  (fromId > 0) && (text=="/help")  then do
+        buildVkPostRequest token "messages.send" params'
+        putStrLn "help message send"
+    else
+        putStr ""
+        where params' = [ ("user_id", Just $ T.pack $ show fromId)
+                        , ("message", Just $ T.pack $ "памагити")
+                        ]

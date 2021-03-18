@@ -200,13 +200,11 @@ instance FromJSON VkAudioMessage where
 
 data VkKeyboard = VkKeyboard { vkKeyboardOneTime :: Bool
                              , vkKeyboardButtons :: [[VkButton]]
-                             --, vkKeyboardInline :: Bool
                              } deriving (Show, Generic)
 instance ToJSON VkKeyboard where
     toJSON  = genericToJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 10, omitNothingFields = True }
 
 data VkButton = VkButton { vkButtonAction :: VkAction
-                         --, vkButtonColor :: String 
                          } deriving (Show, Generic)
 
 instance ToJSON VkButton where
