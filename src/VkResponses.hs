@@ -38,6 +38,7 @@ data VkItem = VkItem { vkItemId :: Maybe Int
                      , vkItemImportant :: Maybe Bool
                      , vkItemGeo :: Maybe VkGeo
                      , vkItemFwdMessages :: Maybe [VkItem]
+                     , vkItemPayload :: Maybe String
                      } deriving (Show, Generic)
 instance FromJSON VkItem where
     parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 6}
@@ -213,7 +214,7 @@ instance ToJSON VkButton where
 
 data VkAction = VkAction { vkActionType :: String
                          , vkActionLabel :: String
-                        -- , vkActionPayload :: String
+                         , vkActionPayload :: String
                          } deriving (Show, Generic)
 instance ToJSON VkAction where
     toJSON  = genericToJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 8, omitNothingFields = True }

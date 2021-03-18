@@ -144,8 +144,27 @@ sendMessageText :: String -> VkItem -> IO ()
     --statusCode <- buildVkPostRequest token "messages.send" params
     buildVkPostRequest token "messages.send" params
     --return statusCode-}
-sendMessageText token (VkItem _ fromId text _ _ _ _)  =
+
+sendMessageText token (VkItem _ fromId _ _ _ _ _ (Just button)) =
     if fromId > 0 then do
+        buildVkPostRequest token "messages.send" params'
+        putStrLn $ "user " ++ show fromId ++ " changed the number of repetitions to " ++ button
+    else
+        putStr ""
+        where params' = [ ("user_id", Just $ T.pack $ show fromId)
+                        , ("message", Just $ T.pack ("the number of repetitions is " ++ button))
+                        ]
+sendMessageText token (VkItem _ fromId "/help" _ _ _ _ _)  =
+    if  fromId > 0  then do
+        buildVkPostRequest token "messages.send" params'
+        putStrLn "help message send"
+    else
+        putStr ""
+        where params' = [ ("user_id", Just $ T.pack $ show fromId)
+                        , ("message", Just $ T.pack $ "памагити")
+                        ]
+sendMessageText token (VkItem _ fromId text@(x:xs) _ _ _ _ _)  =
+    if (fromId > 0) && (text /="/repeat")  then do
         buildVkPostRequest token "messages.send" params'
         putStrLn "message send"
     else
@@ -153,6 +172,8 @@ sendMessageText token (VkItem _ fromId text _ _ _ _)  =
         where params' = [ ("user_id", Just $ T.pack $ show fromId)
                         , ("message", Just $ T.pack $ text)
                         ]
+sendMessageText token (VkItem _ fromId "" _ _ _ _ _)  = putStr ""
+
 
 createParamsAttachment :: VkAttachment -> [(T.Text, Maybe T.Text)]
 createParamsAttachment (VkAttachmentPhoto _ (VkPhoto photoId ownerId accessKey _)) = [("attachment", Just $ T.pack attachStr)]
@@ -187,16 +208,39 @@ createParamsAttachment (VkAttachmentAudioMessage "audio_message" (VkAudioMessage
                                                                                   where
                                                                                       attachStr = "audio_message" ++ show ownerId ++ "_" ++ show audioId ++ "_" ++ accessKey
 
---createParamsGeo :: Maybe VkGeo -> [(T.Text, Maybe T.Text)]
---createParamsGeo (Just geo)
+
                                             
 sendMessageAttachment :: VkToken -> VkItem -> IO ()
-sendMessageAttachment token (VkItem _ fromId _ attachments _ _ _) = 
+sendMessageAttachment token (VkItem _ fromId _ attachments@(x:xs) _ _ _ _) = 
     if fromId > 0 then do
         let params = createParamsAttachment <$> attachments
         mapM_ (buildVkPostRequest token "messages.send") (fmap (++ [("user_id", Just $ T.pack $ show fromId)]) params)--доделать для обработки ошибок
         putStrLn "attsend"
     else putStr ""
+sendMessageAttachment token (VkItem _ fromId _ [] _ _ _ _) = putStr ""
+
+sendKeyboardVk :: VkToken -> VkItem -> IO ()
+sendKeyboardVk token (VkItem _ fromId text _ _ _ _ _) = 
+    if (fromId > 0) && (text == "/repeat") then do
+        buildVkPostRequest token "messages.send" params'
+        putStrLn "keyboardsended"
+    else putStr ""
+        where params' = [("user_id", Just $ T.pack $ show fromId),("message", Just $ T.pack "выбирай"), ("keyboard", Just encKeyboard)]
+
+
+sendGeoVK :: String -> VkItem -> IO ()
+sendGeoVK token (VkItem _ fromId _ _ _ (Just geo) _ _) = 
+    if fromId > 0 then do
+        buildVkPostRequest token "messages.send" params'
+        putStrLn "geosended"
+    else putStr ""
+        where params' = [("user_id", Just $ T.pack $ show fromId),("lat", Just $ T.pack $ show lat), ("long", Just $ T.pack $ show long)]
+              lat = vkCoordinatesLatitude $ vkGeoCoordinates geo
+              long = vkCoordinatesLongitude $ vkGeoCoordinates geo
+sendGeoVK token (VkItem _ fromId _ _ _ _ _ _) = putStr ""
+
+
+
 
 
 answer token (Right (Server _ _ _ _ _ (Just messages))) = answers token $ vkMessagesItems messages
@@ -206,8 +250,10 @@ answer token (Left err) = putStrLn err
 answers :: VkToken -> [VkItem] -> IO ()
 answers _ [] = putStrLn "all sended"
 answers token xs = do
+    mapM_ (sendKeyboardVk token) xs
     mapM_ (sendMessageText token) xs
     mapM_ (sendMessageAttachment token) xs
+    mapM_ (sendGeoVK token) xs
     putStrLn "all sended"
 
     
@@ -265,24 +311,53 @@ b5 = VkButton (VkAction "text" "5" "{\"button\": \"5\"}")-- "secondary"
 buttonsVk = [b1, b2, b3, b4, b5]
 encKeyboard = T.pack $ BLI.unpackChars (encode keyboardVk)
 a = TIO.putStrLn encKeyboard-}
-sendKeyboardTest = buildVkPostRequest testTokenVk "messages.send" [("user_id", Just "30087801"),("message", Just "выбирай")]--,("keyboard", Just keyboardVk)]
 
 
 
 --sendKeyboardVk ::IO Int 
-sendKeyboardVk :: IO ()
-sendKeyboardVk = runReq defaultHttpConfig $ do
+
+sendKeyboardVk' :: VkToken -> VkItem  -> IO ()
+sendKeyboardVk' token (VkItem _ fromId "/repeat" _ _ _ _ _) = runReq defaultHttpConfig $ do
     r <- req
         POST
         (https "api.vk.com" /: "method" /: "messages.send")
-        (ReqBodyUrlEnc $ params [("keyboard",Just keytext)])
+        (ReqBodyUrlEnc $ params [("keyboard",Just encKeyboard)])
         jsonResponse 
         params'
     liftIO $ print (responseBody r :: Value)
     --return $ responseStatusCode (r :: JsonResponse Value)
-        where params' = buildParams [("user_id","30087801"),("message","тест"),("access_token", T.pack testTokenVk),("v","5.130"),("random_id","0")]
+        where params' = buildParams [("user_id",T.pack $ show fromId),("message",""),("access_token", T.pack token),("v","5.130"),("random_id","0")]
 
---keyboardParam = queryParam "keyboard" _a
+sendKeyboardVk'' :: VkToken -> VkItem -> IO ()
+sendKeyboardVk'' token a@(VkItem _ fromId "/repeat" _ _ _ _ _) = 
+    if fromId > 0 then do
+        sendKeyboardVk' token a
+        putStrLn "keyboardsended"
+    else
+        putStrLn ""
+
+keyboardVk :: VkKeyboard
+keyboardVk = VkKeyboard True buttonsVk
+
+b1 :: [VkButton]
+b1 = [VkButton (VkAction "text" "1" "1")]-- "secondary"
+
+b2 :: [VkButton]
+b2 = [VkButton (VkAction "text" "2" "2")]-- "secondary"
+
+b3 :: [VkButton]
+b3 = [VkButton (VkAction "text" "3" "3")]-- "secondary"
+
+b4 :: [VkButton]
+b4 = [VkButton (VkAction "text" "4" "4")]-- "secondary"
+
+b5 :: [VkButton]
+b5 = [VkButton (VkAction "text" "5" "5")]-- "secondary"
+
+buttonsVk :: [[VkButton]]
+buttonsVk = [b1, b2, b3, b4, b5]
+encKeyboard :: T.Text
+encKeyboard = T.pack $ BLI.unpackChars (encode keyboardVk)
 
 
 
@@ -292,7 +367,7 @@ sendKeyboardVk = runReq defaultHttpConfig $ do
 smallKeyBoard :: VkKeyboard
 smallKeyBoard = VkKeyboard True [[smallButton]]
 smallButton :: VkButton
-smallButton = VkButton (VkAction "text" "test")
+smallButton = VkButton (VkAction "text" "test" "test")
 
 keytext = T.pack $ BLI.unpackChars (encode smallKeyBoard)
 a = TIO.putStrLn keytext
