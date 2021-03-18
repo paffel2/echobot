@@ -133,18 +133,7 @@ createParams :: VkItem  -> [(T.Text, Maybe T.Text)]
 createParams vkMessage = [ ("user_id", Just $ T.pack $ show $ vkItemFromId vkMessage)
                          , ("message", Just $ T.pack $ vkItemText vkMessage)
                          ]
---sendMessageText :: String -> VkItem -> IO ()
 sendMessageText :: String -> VkItem -> IO ()
-{-sendMessageText token (VkItem _ fromId text _ _ _ _)  = do
-    let params = [ ("user_id", Just $ T.pack $ show fromId)
-                 , ("message", Just $ T.pack $ text)
-                 ][ ("user_id", Just $ T.pack $ show fromId)
-                 , ("message", Just $ T.pack $ text)
-                 ]
-    --statusCode <- buildVkPostRequest token "messages.send" params
-    buildVkPostRequest token "messages.send" params
-    --return statusCode-}
-
 sendMessageText token (VkItem _ fromId _ _ _ _ _ (Just button)) =
     if fromId > 0 then do
         buildVkPostRequest token "messages.send" params'
@@ -286,55 +275,10 @@ vkEchoTest' token (Just ts') (Just pts') = do
                     threadDelay 3000000 --подумать
                     vkEchoTest' token (Just ts) (Just npts)
                   Left err -> putStrLn "бля"
-    {-updates <- getLongPollHistory token ts pts
-    answer updates
-    putStrLn "done"
-    let npts = newPts updates
-    vkEchoTest' token (Just ts) (Just npts)-}
 
 t :: IO ()
 t = vkEchoTest' testTokenVk Nothing Nothing
 
-
-{-keyboardVk = VkKeyboard True buttonsVk False
-
-b1 = VkButton (VkAction "text" "1" "{\"button\": \"1\"}")-- "secondary"
-
-b2 = VkButton (VkAction "text" "2" "{\"button\": \"2\"}")-- "secondary"
-
-b3 = VkButton (VkAction "text" "3" "{\"button\": \"3\"}")-- "secondary"
-
-b4 = VkButton (VkAction "text" "4" "{\"button\": \"4\"}")-- "secondary"
-
-b5 = VkButton (VkAction "text" "5" "{\"button\": \"5\"}")-- "secondary"
-
-buttonsVk = [b1, b2, b3, b4, b5]
-encKeyboard = T.pack $ BLI.unpackChars (encode keyboardVk)
-a = TIO.putStrLn encKeyboard-}
-
-
-
---sendKeyboardVk ::IO Int 
-
-sendKeyboardVk' :: VkToken -> VkItem  -> IO ()
-sendKeyboardVk' token (VkItem _ fromId "/repeat" _ _ _ _ _) = runReq defaultHttpConfig $ do
-    r <- req
-        POST
-        (https "api.vk.com" /: "method" /: "messages.send")
-        (ReqBodyUrlEnc $ params [("keyboard",Just encKeyboard)])
-        jsonResponse 
-        params'
-    liftIO $ print (responseBody r :: Value)
-    --return $ responseStatusCode (r :: JsonResponse Value)
-        where params' = buildParams [("user_id",T.pack $ show fromId),("message",""),("access_token", T.pack token),("v","5.130"),("random_id","0")]
-
-sendKeyboardVk'' :: VkToken -> VkItem -> IO ()
-sendKeyboardVk'' token a@(VkItem _ fromId "/repeat" _ _ _ _ _) = 
-    if fromId > 0 then do
-        sendKeyboardVk' token a
-        putStrLn "keyboardsended"
-    else
-        putStrLn ""
 
 keyboardVk :: VkKeyboard
 keyboardVk = VkKeyboard True buttonsVk
@@ -363,47 +307,6 @@ encKeyboard = T.pack $ BLI.unpackChars (encode keyboardVk)
 
 
 
-
-smallKeyBoard :: VkKeyboard
-smallKeyBoard = VkKeyboard True [[smallButton]]
-smallButton :: VkButton
-smallButton = VkButton (VkAction "text" "test" "test")
-
-keytext = T.pack $ BLI.unpackChars (encode smallKeyBoard)
-a = TIO.putStrLn keytext
---a = queryParam "keyboard" (Just keyboardVk)
---a = TIO.readFile "src/VkKeyboard.json"
-{-sendForwardMessage :: IO  Int
-sendForwardMessage = runReq defaultHttpConfig $ do
-    r <- req
-        POST
-        (https "api.vk.com" /: "method" /: "messages.send")
-        (ReqBodyJson forward)
-        jsonResponse
-        params
-    return $ responseStatusCode (r :: JsonResponse Value)
-        where
-            forward = Forward 81958221 30087801 [50443] [288]
-            params = buildParams [("access_token", T.pack testTokenVk),("v","5.130"),("random_id","0")]
-
-
-{-buildVkPostRequest :: String -> String -> [(T.Text, Maybe T.Text)] -> IO  Int
-buildVkPostRequest token method param  = runReq defaultHttpConfig $ do
-    r <- req
-        POST 
-        (https "api.vk.com" /: "method" /: T.pack method)
-        (ReqBodyUrlEnc $ params param)
-        jsonResponse 
-        tokenParam
-    return $ responseStatusCode (r :: JsonResponse Value)
-        where tokenParam = buildParams [("access_token", T.pack token),("v","5.130"),("random_id","0")]-}
-data Forward = Forward { forwardOwnerId :: Int 
-                       , forwardPeerId :: Int 
-                       , forwardConversationMessageIds :: [Int]
-                       , forwardMessageIds :: [Int]
-                       } deriving (Show, Generic)
-instance ToJSON Forward where
-    toJSON  = genericToJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 7, omitNothingFields = True  }-}
 
 
 
