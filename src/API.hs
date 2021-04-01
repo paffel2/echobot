@@ -66,6 +66,24 @@ buildTelegramGetRequest token url params = do
                 Right (TelegramResponse True errMess Nothing) -> Left  "no result"
                 Left errMess -> Left "2 er"
 
+
+{-btgr :: [Char] -> [Char] -> [(T.Text, T.Text)] -> IO Value 
+btgr t u p = runReq defaultHttpConfig c where
+    c = responseBody <$> request
+    request = req
+                GET
+                (https "api.telegram.org" /: T.pack ("bot" ++ t) /: T.pack u)
+                NoReqBody
+                jsonResponse
+                param
+    param = buildParams p
+prs :: FromJSON b => Value -> Either String b
+prs = parseEither parseJSON-}
+    
+
+
+
+
 buildParams :: (QueryParam p, Monoid p) => [(T.Text, T.Text)] -> p
 buildParams [] = mempty
 buildParams params = mconcat $ fmap (uncurry (=:)) params
@@ -359,14 +377,17 @@ repeatSendVenue n token chatId lat long title address fsid fstype gpid gptype   
                                                                                 | otherwise = putStrLn "all sended"
               
 ---------------------------------------------------------------------------------------------------------------------------------
-echo' :: Maybe Int -> [(Int,Int)]-> IO a
-echo' updateId listOfUsers = do
-  updates <- getUpdates' testToken updateId
+echo' :: String -> Maybe Int -> [(Int,Int)]-> IO ()
+echo' token updateId listOfUsers = do
+  updates <- getUpdates' token updateId
   b <- answers updates listOfUsers
   let listOfUsers' = updateListUsers listOfUsers b
   print listOfUsers'
   nextUpdateID <- getLastUpdateId updates
-  echo' nextUpdateID listOfUsers'
+  echo' token nextUpdateID listOfUsers'
+
+et :: IO ()
+et = echo' testToken Nothing []
 
 getLastUpdateId :: Either String [TelegramUpdate] -> IO (Maybe Int)
 getLastUpdateId updates = case updates of

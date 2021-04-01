@@ -412,3 +412,7 @@ sendMessageHelp token (VkItem _ fromId text _ _ _ _ _ )  =
         where params' = [ ("user_id", Just $ T.pack $ show fromId)
                         , ("message", Just $ T.pack $ "памагити")
                         ]
+
+
+
+
