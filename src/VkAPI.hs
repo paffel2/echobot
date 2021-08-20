@@ -382,6 +382,7 @@ vkEchoTest'' token (Just ts') (Just pts') listOfUsers = do
                     threadDelay 3000000 --подумать
                     vkEchoTest'' token (Just ts) (Just npts) listOfUsers'
                   Left err -> putStrLn "бля"
+vkEchoTest'' _ _ _ _ = do putStrLn "Something wrong"
 
 t' :: IO ()
 t' = vkEchoTest'' testTokenVk Nothing Nothing []
@@ -410,7 +411,7 @@ sendMessageHelp token (VkItem _ fromId text _ _ _ _ _ )  =
     else
         putStr ""
         where params' = [ ("user_id", Just $ T.pack $ show fromId)
-                        , ("message", Just $ T.pack $ "памагити")
+                        , ("message", Just $ T.pack "памагити")
                         ]
 
 

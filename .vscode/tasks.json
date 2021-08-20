@@ -14,6 +14,18 @@
             "type": "shell",
             "command": "stack ghci",
             "problemMatcher": []
+        },
+        {
+            "label": "hlint",
+            "type": "shell",
+            "command": "stack build hlint",
+            "problemMatcher": []
+        },
+        {
+            "label" : "exec",
+            "type" : "shell",
+            "command" : "stack exec echobot-exe",
+            "problemMatcher" : []
         }
     ]
 }

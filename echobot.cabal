@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7162e5c3d48ea85645e8f339348c99fd1f6642c0f722189cd5ae3422148ac787
+-- hash: 52ef5ad059d20811a16858c12584d0da7ee657d3bbed5e285676fc71d128f67a
 
 name:           echobot
 version:        0.1.0.0
@@ -28,7 +28,11 @@ source-repository head
 library
   exposed-modules:
       API
+      Config
       Lib
+      Logger
+      TelegramApi
+      TelegramBot
       TelegramResponses
       VkAPI
       VkResponses
@@ -41,6 +45,7 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , configurator
     , http-client
     , http-conduit
     , req
@@ -56,8 +61,16 @@ executable echobot-exe
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , configurator
     , echobot
+    , http-client
+    , http-conduit
+    , req
+    , req-conduit
+    , text
   default-language: Haskell2010
 
 test-suite echobot-test
@@ -69,6 +82,14 @@ test-suite echobot-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , configurator
     , echobot
+    , http-client
+    , http-conduit
+    , req
+    , req-conduit
+    , text
   default-language: Haskell2010

@@ -298,11 +298,12 @@ data TelegramMessageEntity = TelegramMessageEntity { telegramMessageEntityType :
                                                    , telegramMessageEntityLength :: Int
                                                    } deriving (Show, Generic)
 instance FromJSON TelegramMessageEntity where
-    parseJSON (Object v) = 
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 21}
+    {-parseJSON (Object v) = 
         TelegramMessageEntity <$> v .: "type"
                               <*> v .: "offset"
-                              <*> v .: "length" 
-
+                              <*> v .: "length" -}
+--parseJSON  = genericParseJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 13}
 instance ToJSON TelegramMessageEntity where
     toJSON (TelegramMessageEntity ty off len) =
         object [ "type" .= ty
@@ -321,7 +322,8 @@ data TelegramAnimation = TelegramAnimation { telegramAnimationFileId :: String
                                            , telegramAnimationFileSize :: Maybe Int
                                            } deriving (Show, Generic)
 instance FromJSON TelegramAnimation where
-    parseJSON (Object v) = 
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 17}
+    {-parseJSON (Object v) = 
         TelegramAnimation <$> v .: "file_id"
                           <*> v .: "file_unique_id"
                           <*> v .: "width"
@@ -330,7 +332,7 @@ instance FromJSON TelegramAnimation where
                           <*> v .:? "thumb"
                           <*> v .:? "file_name"
                           <*> v .:? "mime_type"
-                          <*> v .:? "file_size"
+                          <*> v .:? "file_size"-}
 
 data TelegramPhotoSize = TelegramPhotoSize { telegramPhotoSizeFileId :: String
                                            , telegramPhotoSizeFileUniqueId :: String
@@ -339,12 +341,13 @@ data TelegramPhotoSize = TelegramPhotoSize { telegramPhotoSizeFileId :: String
                                            , telegramPhotoSizeFileSize :: Maybe Int 
                                            } deriving (Show, Generic)
 instance FromJSON TelegramPhotoSize where
-    parseJSON (Object v) =
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 17}
+    {-parseJSON (Object v) =
         TelegramPhotoSize <$> v .: "file_id"
                           <*> v .: "file_unique_id"
                           <*> v .: "width"
                           <*> v .: "height"
-                          <*> v .:? "file_size"  
+                          <*> v .:? "file_size"  -}
 
 data TelegramDocument = TelegramDocument { telegramDocumentFileId :: String
                                          , telegramDocumentFileUniqueId :: String
@@ -354,13 +357,14 @@ data TelegramDocument = TelegramDocument { telegramDocumentFileId :: String
                                          , telegramDocumentFileSize :: Maybe Integer
                                          } deriving (Show, Generic)
 instance FromJSON TelegramDocument where
-    parseJSON (Object v) = 
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 16}
+    {-parseJSON (Object v) = 
         TelegramDocument <$> v .: "file_id"
                          <*> v .: "file_unique_id"
                          <*> v .:? "thumb"
                          <*> v .:? "file_name"
                          <*> v .:? "mime_type"
-                         <*> v .:? "file_size"
+                         <*> v .:? "file_size"-}
 
 
 data TelegramAudio = TelegramAudio { telegramAudioFileId :: String
@@ -374,7 +378,8 @@ data TelegramAudio = TelegramAudio { telegramAudioFileId :: String
                                    , telegramAudioThumb :: Maybe TelegramPhotoSize
                                    } deriving (Show, Generic)
 instance FromJSON TelegramAudio where
-    parseJSON (Object v) = 
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 13}
+    {-parseJSON (Object v) = 
         TelegramAudio <$> v .: "file_id"
                       <*> v .: "file_unique_id"
                       <*> v .: "duration"
@@ -383,7 +388,7 @@ instance FromJSON TelegramAudio where
                       <*> v .:? "file_name"
                       <*> v .:? "mime_type"
                       <*> v .:? "file_size"
-                      <*> v .:? "thumb"
+                      <*> v .:? "thumb"-}
 
 
 data TelegramVideo = TelegramVideo { telegramVideoFileId :: String
@@ -397,7 +402,8 @@ data TelegramVideo = TelegramVideo { telegramVideoFileId :: String
                                    , telegramVideoFileSize :: Maybe Int
                                    } deriving (Show, Generic)
 instance FromJSON TelegramVideo where
-    parseJSON (Object v) = 
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 13}
+    {-parseJSON (Object v) = 
         TelegramVideo <$> v .: "file_id"
                       <*> v .: "file_unique_id"
                       <*> v .: "width"
@@ -406,7 +412,7 @@ instance FromJSON TelegramVideo where
                       <*> v .:? "thumb"
                       <*> v .:? "file_name"
                       <*> v .:? "mime_type"
-                      <*> v .:? "file_size"
+                      <*> v .:? "file_size"-}
 
 
 data TelegramSticker = TelegramSticker { telegramStickerFileId :: String
@@ -421,7 +427,8 @@ data TelegramSticker = TelegramSticker { telegramStickerFileId :: String
                                        , telegramStickerFileSize :: Maybe Int 
                                        } deriving (Show, Generic)
 instance FromJSON TelegramSticker where
-    parseJSON (Object v) = 
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 15}
+    {-parseJSON (Object v) = 
         TelegramSticker <$> v .: "file_id"
                         <*> v .: "file_unique_id"
                         <*> v .: "width"
@@ -431,7 +438,7 @@ instance FromJSON TelegramSticker where
                         <*> v .:? "emoji"
                         <*> v .:? "set_name"
                         <*> v .:? "mask_position"
-                        <*> v .:? "file_size"
+                        <*> v .:? "file_size"-}
 
 data TelegramMaskPosition = TelegramMaskPosition { telegramMaskPositionPoint :: String
                                                  , telegramMaskPositionXShift :: Double
@@ -440,11 +447,12 @@ data TelegramMaskPosition = TelegramMaskPosition { telegramMaskPositionPoint :: 
                                                  } deriving (Show, Generic)
 
 instance FromJSON TelegramMaskPosition where
-    parseJSON (Object v) = 
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 20}
+    {-parseJSON (Object v) = 
         TelegramMaskPosition <$> v .: "point"
                              <*> v .: "x_shift"
                              <*> v .: "y_shift"
-                             <*> v .: "scale"
+                             <*> v .: "scale"-}
 
 
 data TelegramVideoNote = TelegramVideoNote { telegramVideoNoteFileId :: String
@@ -455,13 +463,14 @@ data TelegramVideoNote = TelegramVideoNote { telegramVideoNoteFileId :: String
                                            , telegramVideoNoteFileSize :: Maybe Int
                                            } deriving (Show, Generic)
 instance FromJSON TelegramVideoNote where
-    parseJSON (Object v) = 
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 17}
+    {-parseJSON (Object v) = 
         TelegramVideoNote <$> v .: "file_id"
                           <*> v .: "file_unique_id"
                           <*> v .: "length"
                           <*> v .: "duration"
                           <*> v .:? "thumb"
-                          <*> v .:? "file_size"
+                          <*> v .:? "file_size"-}
 
 data TelegramVoice = TelegramVoice { telegramVoiceFileId :: String
                                    , telegramVoiceFileUniqueId :: String
@@ -470,12 +479,13 @@ data TelegramVoice = TelegramVoice { telegramVoiceFileId :: String
                                    , telegramVoiceFileSize :: Maybe Int
                                    } deriving (Show, Generic)
 instance FromJSON TelegramVoice where
-    parseJSON (Object v) = 
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 13}
+    {-parseJSON (Object v) = 
         TelegramVoice <$> v .: "file_id"
                       <*> v .: "file_unique_id"
                       <*> v .: "duration"
                       <*> v .:? "mime_type"
-                      <*> v .:? "file_size"
+                      <*> v .:? "file_size"-}
 
 data TelegramContact = TelegramContact { telegramContactPhoneNumber :: String
                                        , telegramContactFirstName :: String
@@ -484,12 +494,13 @@ data TelegramContact = TelegramContact { telegramContactPhoneNumber :: String
                                        , telegramContactVcard :: Maybe String
                                        } deriving (Show, Generic)
 instance FromJSON TelegramContact where
-    parseJSON (Object v) = 
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 14}
+    {-parseJSON (Object v) = 
           TelegramContact <$> v .: "phone_number"
                           <*> v .: "first_name"
                           <*> v .:? "last_name"
                           <*> v .:? "user_id"
-                          <*> v .:? "vcard"
+                          <*> v .:? "vcard"-}
 
 data TelegramLocation = TelegramLocation { telegramLocationLatitude :: Double
                                          , telegramLocationLongitude :: Double
@@ -522,7 +533,7 @@ instance ToJSON TelegramInlineKeyboardButton where
     toJSON (TelegramInlineKeyboardButton text callback) = object [ "text" .= text
                                                                  , "callback_data" .= callback]
 
-data TelegramInlineKeyboardMarkup = TelegramInlineKeyboardMarkup { telegramInlineKeyboardMarkupInlineKeyboard :: [[TelegramInlineKeyboardButton]]} deriving (Show, Generic)
+newtype TelegramInlineKeyboardMarkup = TelegramInlineKeyboardMarkup { telegramInlineKeyboardMarkupInlineKeyboard :: [[TelegramInlineKeyboardButton]]} deriving (Show, Generic)
 instance ToJSON TelegramInlineKeyboardMarkup where
     toJSON = genericToJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 28}
 
@@ -536,12 +547,13 @@ data TelegramCallbackQuery = TelegramCallbackQuery { telegramCallbackQueryId :: 
                                                    , telegramCallbackQueryData :: Maybe String
                                                    } deriving (Show, Generic)
 instance FromJSON TelegramCallbackQuery where
-    parseJSON (Object v) =
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 21}
+    {-parseJSON (Object v) =
         TelegramCallbackQuery <$> v .: "id"
                               <*> v .: "from"
                               <*> v .: "message"
                               <*> v .: "chat_instance"
-                              <*> v .:? "data"
+                              <*> v .:? "data"-}
 
 --------------------------------------------------------------------------------------------------------
 data TelegramUserBaseUser = TelegramUserBaseUser { telegramUserBaseUserId :: Int
@@ -549,15 +561,17 @@ data TelegramUserBaseUser = TelegramUserBaseUser { telegramUserBaseUserId :: Int
                                                  } deriving (Show, Generic)
 
 instance FromJSON TelegramUserBaseUser where
-     parseJSON (Object v) = 
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 20}
+     {-parseJSON (Object v) = 
         TelegramUserBaseUser <$> v .: "id"
-                             <*> v .: "repeat"
+                             <*> v .: "repeat"-}
 
-data TelegramUserBase = TelegramUserBase { telegramUserBaseUsers :: [ TelegramUserBaseUser]
+newtype TelegramUserBase = TelegramUserBase { telegramUserBaseUsers :: [ TelegramUserBaseUser]
                                          } deriving (Show, Generic)
 instance FromJSON TelegramUserBase where
-     parseJSON (Object v) = 
-        TelegramUserBase <$> v .: "users"
+    parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 16}
+     {-parseJSON (Object v) = 
+        TelegramUserBase <$> v .: "users"-}
 
 
 
