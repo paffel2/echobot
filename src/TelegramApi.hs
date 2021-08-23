@@ -13,6 +13,7 @@ import TelegramResponses
 import Data.Aeson.Types
 import Control.Exception
 import Logger
+import Config
 
 instance MonadHttp IO where
     handleHttpException = throwIO
@@ -50,25 +51,6 @@ buildTelegramGetRequest hLogger token url params = do
                     logError hLogger "Unexpected errorr"
                     return $ Left "Unexpected errorr"
 
-
-{-buildTelegramPostRequest' :: ToJSON b => Handle -> String -> String -> b -> [(T.Text,T.Text)] -> IO (Either T.Text Int)
-buildTelegramPostRequest' hLogger token url body params = runReq defaultHttpConfig $ do
-    r <- req
-        POST
-        (https "api.telegram.org" /: T.pack ("bot" ++ token) /: T.pack url)
-        (ReqBodyJson body)
-        jsonResponse
-        param
-    --let status = responseStatusCode (r :: JsonResponse Value)
-    if responseStatusCode (r :: JsonResponse Value) == 200 then
-        return $ Right 200
-    else return $ Left "No response"
-        where param = buildParams params-}
-{-sendMessageTst :: String -> Int -> String -> Maybe [TelegramMessageEntity] -> IO Int
-sendMessageTst token chatId text ent = buildTelegramPostRequest token "sendMessage" (TelegramSendMessage chatId text ent Nothing) []-}
---sendMessageTst :: IO Int
---sendMessageTst = sendMessage testToken 274864287 "123" Nothing
-
 getUpdates :: FromJSON a => Handle ->
     TelegramToken -> Maybe Int -> IO (Either T.Text a)
 getUpdates hLogger token (Just updId) = buildTelegramGetRequest hLogger token "getUpdates" [("offset", T.pack $ show updId), ("timeout", "10")]
@@ -77,22 +59,27 @@ getUpdates hLogger token Nothing = buildTelegramGetRequest hLogger token "getUpd
 
 
 
-echo :: Handle -> String -> Maybe Int -> String -> [(Int,Int)]-> IO ()
+echo :: Handle -> TelegramToken -> Maybe Int -> String -> [(Int,Int)]-> IO ()
 echo hLogger token updateId help_message listOfUsers = do
   updates <- getUpdates hLogger token updateId
-  b <- answers hLogger help_message updates listOfUsers
-  let listOfUsers' = updateListUsers listOfUsers b
-  --print listOfUsers'
+  b <- answers hLogger help_message token updates listOfUsers
+  let newlistOfUsers = updateListUsers listOfUsers b
   nextUpdateID <- getLastUpdateId hLogger updates
-  echo hLogger token nextUpdateID help_message listOfUsers'
+  echo hLogger token nextUpdateID help_message newlistOfUsers
 
-{-et' :: IO ()
-et' = echo' testToken Nothing []-}
+
+
+startTelegramBot' :: Handle -> ConfigModules -> IO ()
+startTelegramBot' hLogger botConf = catch (do
+    logInfo hLogger "Bot Start"
+    echo hLogger (Config.token botConf) (Just 0) (Config.help botConf) []) $ \e -> do
+        let err = e :: HttpException
+        logError hLogger "Bad token"
+
 
 getLastUpdateId :: Handle -> Either T.Text [TelegramUpdate] -> IO (Maybe Int)
 getLastUpdateId hLogger updates = case updates of
     Left mes-> do
-        --putStrLn "err"
         return Nothing
     Right [] -> do
         logInfo hLogger "No updates"
@@ -100,11 +87,11 @@ getLastUpdateId hLogger updates = case updates of
     Right xs -> return $ Just $ (+ 1) $ telegramUpdateId $ last xs
 
 
-answers :: Handle -> String ->
+answers :: Handle -> String -> TelegramToken ->
     Either T.Text [TelegramUpdate]
     -> [(Int, Int)] -> IO [Maybe (Int, Int)]
-answers hLogger help_message (Right upd) list = mapM (answer' hLogger help_message list) upd
-answers hLogger _ _ _ = do
+answers hLogger help_message token (Right upd) list = mapM (answer' hLogger help_message token list) upd
+answers hLogger _ _ _ _ = do
     logError hLogger "Something wrong"
     return [Nothing]
 
@@ -123,312 +110,9 @@ findRepeatNumber listOfUsers chatId = do
   let n = lookup chatId listOfUsers
   case n of
     Just x -> do
-                 --putStrLn "user founded"
                  return x
     Nothing -> do
-                 --putStrLn "user not found"
                  return 1
-
-
-
-
-{-answer :: Handle -> String -> [(Int, Int)] -> TelegramUpdate -> IO (Maybe (Int, Int))
-answer hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ (Just "/repeat") _ _ _ _ _ _ _ _ _ _ _ _ _))  _) = do
-    n <- findRepeatNumber list chatId
-    sendKeyboard testToken chatId
-    return Nothing
-        where chatId = telegramChatId $ telegramMessageChat message
-
-answer hLogger help_message list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ (Just "/help") _ _ _ _ _ _ _ _ _ _ _ _ _))  _) = do
-    sendMessage testToken chatId help_message Nothing
-    return Nothing
-        where chatId = telegramChatId $ telegramMessageChat message
-
-answer hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ (Just text) _ _ _ _ _ _ _ _ _ _ _ _ _))  _) = do
-    n <- findRepeatNumber list chatId
-    repeatSendMessage n testToken chatId ansText entities
-    return Nothing
-        where ansText = text
-              entities = telegramMessageEntities message
-              chatId = telegramChatId $ telegramMessageChat message
-
-answer hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ (Just anim) _ _ _ _ _ _ _ _ _ _ _)) _ ) = do
-    n <- findRepeatNumber list chatId
-    repeatSendAnimation n testToken chatId animid cap
-    return Nothing
-        where cap = telegramMessageCaption message
-              animid = telegramAnimationFileId anim
-              chatId = telegramChatId $ telegramMessageChat message
-
-answer hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just audio) _ _ _ _ _ _ _ _)) _ ) = do
-    n <- findRepeatNumber list chatId
-    repeatSendAudio n testToken chatId audioid cap
-    return Nothing
-        where cap = telegramMessageCaption message
-              audioid = telegramAudioFileId audio
-              chatId = telegramChatId $ telegramMessageChat message
-
-answer hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ Nothing _ (Just doc) _ _ _ _ _ _ _ _ _)) _ ) = do
-    n <- findRepeatNumber list chatId
-    repeatSendDocument n testToken chatId docid cap
-    return Nothing
-        where cap = telegramMessageCaption message
-              docid = telegramDocumentFileId doc
-              chatId = telegramChatId $ telegramMessageChat message
-
-answer hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just (photo:_)) _ _ _ _ _ _ _)) _ ) = do
-    n <- findRepeatNumber list chatId
-    repeatSendPhoto n testToken chatId photoid cap
-    return Nothing
-        where cap = telegramMessageCaption message
-              photoid = telegramPhotoSizeFileId photo
-              chatId = telegramChatId $ telegramMessageChat message
-
-answer hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just video) _ _ _ _ _ _)) _ ) = do
-    n <- findRepeatNumber list chatId
-    repeatSendVideo n testToken chatId videoid cap
-    return Nothing
-        where cap = telegramMessageCaption message
-              videoid = telegramVideoFileId video
-              chatId = telegramChatId $ telegramMessageChat message
-
-answer hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just sticker) _ _ _ _ _)) _ ) = do
-    n <- findRepeatNumber list chatId
-    repeatSendSticker n testToken chatId stickerid
-    return Nothing
-        where stickerid = telegramStickerFileId sticker
-              chatId = telegramChatId $ telegramMessageChat message
-
-answer hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just videoNote) _ _ _ _)) _ ) = do
-    n <- findRepeatNumber list chatId
-    repeatSendVideoNote n testToken chatId videoid
-    return Nothing
-        where videoid = telegramVideoNoteFileId videoNote
-              chatId = telegramChatId $ telegramMessageChat message
-
-
-answer hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just voice) _ _ _)) _ ) = do
-    n <- findRepeatNumber list chatId
-    repeatSendVoice n testToken chatId voiceid cap
-    return Nothing
-        where cap = telegramMessageCaption message
-              voiceid = telegramVoiceFileId voice
-              chatId = telegramChatId $ telegramMessageChat message
-
-answer hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _(Just contact) _ _)) _ ) = do
-    n <- findRepeatNumber list chatId
-    repeatSendContact n testToken chatId phoneNumber fname lname vcard
-    return Nothing
-      where chatId = telegramChatId $ telegramMessageChat message
-            phoneNumber = telegramContactPhoneNumber contact
-            fname = telegramContactFirstName contact
-            lname = telegramContactLastName contact
-            vcard = telegramContactVcard contact
-
-answer hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just location) Nothing)) _ ) = do
-    n <- findRepeatNumber list chatId
-    repeatSendLocation n testToken chatId lat long horac lp hea par
-    return Nothing
-      where chatId = telegramChatId $ telegramMessageChat message
-            lat = telegramLocationLatitude location
-            long = telegramLocationLongitude location
-            horac = telegramLocationHorizontalAccuracy location
-            lp = telegramLocationLivePeriod location
-            hea = telegramLocationHeading location
-            par = telegramLocationProximityAlertRadius location
-
-answer hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just venue))) _ ) = do
-    n <- findRepeatNumber list chatId
-    repeatSendVenue n testToken chatId lat long title address fsid fstype gpid gptype
-    return Nothing
-      where chatId = telegramChatId $ telegramMessageChat message
-            lat =  telegramLocationLatitude $ telegramVenueLocation venue
-            long = telegramLocationLongitude $ telegramVenueLocation venue
-            title = telegramVenueTitle venue
-            address = telegramVenueAddress venue
-            fsid = telegramVenueFoursquareId venue
-            fstype = telegramVenueFoursquareType venue
-            gpid = telegramVenueGooglePlaceId venue
-            gptype = telegramVenueGooglePlaceType venue
-
-
-
-
-answer hLogger _ list (TelegramUpdate _ _(Just callback@(TelegramCallbackQuery _ user (Just message) _ (Just dat)))) = do
-    sendMessage testToken chatId text Nothing
-    putStrLn "sended"
-    return $ Just(chatId, read dat :: Int)
-        where chatId = telegramUserId user
-              text = "число повторов теперь равно " ++ dat
-answer hLogger _ _ _ =
-    return Nothing
-
-
-------------------------------------------------------------------------------------------------------------------------------------------}
-{-
-repeatSendMessage :: Int -> String -> Int -> String -> Maybe [TelegramMessageEntity] -> IO ()
-repeatSendMessage n token chatId text entities | n > 0 = do
-                                                      sendMessage token chatId text entities
-                                                      putStrLn "sended"
-                                                      repeatSendMessage (n-1) token chatId text entities
-                                               | otherwise = putStrLn "all sended"
-
-repeatSendAnimation :: Int -> String -> Int -> String -> Maybe String -> IO ()
-repeatSendAnimation n token chatId anim cap | n > 0 = do
-                                                        sendAnimation token chatId anim cap
-                                                        putStrLn "sended"
-                                                        repeatSendAnimation (n-1) token chatId anim cap
-                                            | otherwise = putStrLn "all sended"
-
-repeatSendAudio :: Int -> String -> Int -> String -> Maybe String -> IO ()
-repeatSendAudio n token chatId audio cap | n > 0 = do
-                                                        sendAudio token chatId audio cap
-                                                        putStrLn "sended"
-                                                        repeatSendAudio (n-1) token chatId audio cap
-                                         | otherwise = putStrLn "all sended"
-
-repeatSendDocument :: Int -> String -> Int -> String -> Maybe String -> IO ()
-repeatSendDocument n token chatId doc cap | n > 0 = do
-                                                        sendDocument token chatId doc cap
-                                                        putStrLn "sended"
-                                                        repeatSendDocument (n-1) token chatId doc cap
-                                          | otherwise = putStrLn "all sended"
-
-repeatSendPhoto ::  Int -> String -> Int -> String -> Maybe String -> IO ()
-repeatSendPhoto n token chatId photo cap | n > 0 = do
-                                                        sendPhoto token chatId photo cap
-                                                        putStrLn "sended"
-                                                        repeatSendPhoto (n-1) token chatId photo cap
-                                         | otherwise = putStrLn "all sended"
-
-repeatSendVideo ::  Int -> String -> Int -> String -> Maybe String -> IO ()
-repeatSendVideo n token chatId video cap | n > 0 = do
-                                                        sendVideo token chatId video cap
-                                                        putStrLn "sended"
-                                                        repeatSendVideo (n-1) token chatId video cap
-                                         | otherwise = putStrLn "all sended"
-
-repeatSendSticker ::  Int -> String -> Int -> String -> IO ()
-repeatSendSticker n token chatId sticker | n > 0 = do
-                                                        sendSticker token chatId sticker
-                                                        putStrLn "sended"
-                                                        repeatSendSticker (n-1) token chatId sticker
-                                         | otherwise = putStrLn "all sended"
-
-repeatSendVideoNote ::  Int -> String -> Int -> String -> IO ()
-repeatSendVideoNote n token chatId videonote | n > 0 = do
-                                                        sendVideoNote token chatId videonote
-                                                        putStrLn "sended"
-                                                        repeatSendVideoNote (n-1) token chatId videonote
-                                             | otherwise = putStrLn "all sended"
-
-repeatSendVoice :: Int -> String -> Int -> String -> Maybe String -> IO ()
-repeatSendVoice n token chatId voice cap | n > 0 = do
-                                                        sendVoice token chatId voice cap
-                                                        putStrLn "sended"
-                                                        repeatSendVoice (n-1) token chatId voice cap
-                                         | otherwise = putStrLn "all sended"
-
-repeatSendContact :: Int -> String -> Int -> String -> String -> Maybe String -> Maybe String -> IO ()
-repeatSendContact n token chatId phoneNum fname lname vcard | n > 0 = do
-                                                                sendContact token chatId phoneNum fname lname vcard
-                                                                putStrLn "sended"
-                                                                repeatSendContact (n-1) token chatId phoneNum fname lname vcard
-                                                            | otherwise = putStrLn "all sended"
-
-repeatSendLocation :: Int -> String -> Int -> Double -> Double -> Maybe Double -> Maybe Int -> Maybe Int -> Maybe Int -> IO ()
-repeatSendLocation n token chatId lat long horac lp hea par   | n > 0 = do
-                                                                sendLocation token chatId lat long horac lp hea par
-                                                                putStrLn "sended"
-                                                                repeatSendLocation (n-1) token chatId lat long horac lp hea par
-                                                              | otherwise = putStrLn "all sended"
-
-repeatSendVenue :: Int -> String -> Int -> Double -> Double -> String -> String -> Maybe String -> Maybe String -> Maybe String -> Maybe String -> IO ()
-repeatSendVenue n token chatId lat long title address fsid fstype gpid gptype   | n > 0 = do
-                                                                                    sendVenue token chatId lat long title address fsid fstype gpid gptype
-                                                                                    putStrLn "sended"
-                                                                                    repeatSendVenue (n-1) token chatId lat long title address fsid fstype gpid gptype
-                                                                                | otherwise = putStrLn "all sended"
------------------------
-buildTelegramPostRequest :: ToJSON b => String -> String -> b -> [(T.Text,T.Text)] -> IO Int
-buildTelegramPostRequest token url body params = runReq defaultHttpConfig $ do
-    r <- req
-        POST
-        (https "api.telegram.org" /: T.pack ("bot" ++ token) /: T.pack url)
-        (ReqBodyJson body)
-        jsonResponse
-        param
-    return $ responseStatusCode (r :: JsonResponse Value)
-        where param = buildParams params
-
-
-sendMessage :: String -> Int -> String -> Maybe [TelegramMessageEntity] -> IO Int
-sendMessage token chatId text ent = buildTelegramPostRequest token "sendMessage" (TelegramSendMessage chatId text ent Nothing) []
-
-sendAnimation :: String -> Int -> String -> Maybe String -> IO Int
-sendAnimation token chatId anim cap = buildTelegramPostRequest token "sendAnimation" (TelegramSendAnimation chatId anim cap) []
-
-sendAudio :: String -> Int -> String -> Maybe String -> IO Int
-sendAudio token chatId audio cap = buildTelegramPostRequest token "sendAudio" (TelegramSendAudio chatId audio cap) []
-
-sendDocument :: String -> Int -> String -> Maybe String -> IO Int
-sendDocument token chatId doc cap = buildTelegramPostRequest token "sendDocument" (TelegramSendDocument chatId doc cap) []
-
-sendPhoto :: String -> Int -> String -> Maybe String -> IO Int
-sendPhoto token chatId photo cap = buildTelegramPostRequest token "sendPhoto" (TelegramSendPhoto chatId photo cap) []
-
-sendVideo :: String -> Int -> String -> Maybe String -> IO Int
-sendVideo token chatId video cap = buildTelegramPostRequest token "sendVideo" (TelegramSendVideo chatId video cap) []
-
-sendSticker :: String -> Int -> String -> IO Int
-sendSticker token chatId sticker = buildTelegramPostRequest token "sendSticker" (TelegramSendSticker chatId sticker) []
-
-sendVideoNote :: String -> Int -> String -> IO Int
-sendVideoNote token chatId video = buildTelegramPostRequest token "sendVideoNote" (TelegramSendVideoNote chatId video) []
-
-sendVoice :: String -> Int -> String -> Maybe String -> IO Int
-sendVoice token chatId voice cap = buildTelegramPostRequest token "sendVoice" (TelegramSendVoice chatId voice cap) []
-
-sendContact :: String
-    -> Int
-    -> String
-    -> String
-    -> Maybe String
-    -> Maybe String
-    -> IO Int
-sendContact token chatId phoneNum fname lname vcard = buildTelegramPostRequest token "sendContact" (TelegramSendContact chatId phoneNum fname lname vcard) []
-
-sendLocation :: String
-    -> Int
-    -> Double
-    -> Double
-    -> Maybe Double
-    -> Maybe Int
-    -> Maybe Int
-    -> Maybe Int
-    -> IO Int
-sendLocation token chatId lat long horac lp hea par = buildTelegramPostRequest token "sendLocation" (TelegramSendLocation chatId lat long horac lp hea par) []
-
-sendVenue :: String
-    -> Int
-    -> Double
-    -> Double
-    -> String
-    -> String
-    -> Maybe String
-    -> Maybe String
-    -> Maybe String
-    -> Maybe String
-    -> IO Int
-sendVenue token chatId lat long title address fsid fstype gpid gptype = buildTelegramPostRequest token "sendVenue" (TelegramSendVenue chatId lat long title address fsid fstype gpid gptype) []-}
-
-{-buttons = [[x]| x <-(TelegramKeyboardButton <$> ["1","2","3","4","ы"])]
-
-keyboard = TelegramReplyKeyboardMarkup buttons (Just False)
-
-sendKeyboard token chatId = buildTelegramPostRequest token "sendMessage" (TelegramSendMessage chatId "типа клава" Nothing (Just keyboard)) []
-
-removeKeyboard = buildTelegramPostRequest testToken "sendMessage" (TelegramSendMessage 274864287 "1" Nothing (Just (TelegramReplyKeyboardRemove True))) []-}
 
 buttons :: [[TelegramInlineKeyboardButton]]
 buttons =  [ [TelegramInlineKeyboardButton x x] | x <- ["1","2","3","4","5"]]
@@ -436,107 +120,98 @@ buttons =  [ [TelegramInlineKeyboardButton x x] | x <- ["1","2","3","4","5"]]
 keyboard :: TelegramInlineKeyboardMarkup
 keyboard = TelegramInlineKeyboardMarkup buttons
 
---sendKeyboard :: String -> Int -> IO Int
---sendKeyboard token chatId = buildTelegramPostRequest token "sendMessage" (TelegramSendMessage chatId "Choose number reapiting" Nothing (Just keyboard)) []
-
-
-
-
-
-
-
-answer' :: Handle -> String -> [(Int, Int)] -> TelegramUpdate -> IO (Maybe (Int, Int))
-answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ (Just "/repeat") _ _ _ _ _ _ _ _ _ _ _ _ _))  _) = do
+answer' :: Handle -> String -> TelegramToken -> [(Int, Int)] -> TelegramUpdate -> IO (Maybe (Int, Int))
+answer' hLogger _ token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ (Just "/repeat") _ _ _ _ _ _ _ _ _ _ _ _ _))  _) = do
     n <- findRepeatNumber list chatId
-    status <- sendKeyboard' hLogger testToken chatId
+    status <- sendKeyboard' hLogger token chatId
     case status of
         Left txt -> logError hLogger "Keyboard not send"
         Right i -> logDebug hLogger "Keyboard sended"
     return Nothing
         where chatId = telegramChatId $ telegramMessageChat message
 
-answer' hLogger help_message list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ (Just "/help") _ _ _ _ _ _ _ _ _ _ _ _ _))  _) = do
-    status <- sendMessage' hLogger testToken chatId help_message Nothing
+answer' hLogger help_message token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ (Just "/help") _ _ _ _ _ _ _ _ _ _ _ _ _))  _) = do
+    status <- sendMessage' hLogger token chatId help_message Nothing
     case status of
         Left txt -> logError hLogger "Help message not sended"
         Right i -> logDebug hLogger "Help message sended"
     return Nothing
         where chatId = telegramChatId $ telegramMessageChat message
 
-answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ (Just text) _ _ _ _ _ _ _ _ _ _ _ _ _))  _) = do
+answer' hLogger _ token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ (Just text) _ _ _ _ _ _ _ _ _ _ _ _ _))  _) = do
     n <- findRepeatNumber list chatId
-    repeatSendMessage' hLogger n testToken chatId ansText entities
+    repeatSendMessage' hLogger n token chatId ansText entities
     return Nothing
         where ansText = text
               entities = telegramMessageEntities message
               chatId = telegramChatId $ telegramMessageChat message
 
-answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ (Just anim) _ _ _ _ _ _ _ _ _ _ _)) _ ) = do
+answer' hLogger _ token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ (Just anim) _ _ _ _ _ _ _ _ _ _ _)) _ ) = do
     n <- findRepeatNumber list chatId
-    repeatSendAnimation' hLogger n testToken chatId animid cap
+    repeatSendAnimation' hLogger n token chatId animid cap
     return Nothing
         where cap = telegramMessageCaption message
               animid = telegramAnimationFileId anim
               chatId = telegramChatId $ telegramMessageChat message
 
-answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just audio) _ _ _ _ _ _ _ _)) _ ) = do
+answer' hLogger _ token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just audio) _ _ _ _ _ _ _ _)) _ ) = do
     n <- findRepeatNumber list chatId
-    repeatSendAudio' hLogger n testToken chatId audioid cap
+    repeatSendAudio' hLogger n token chatId audioid cap
     return Nothing
         where cap = telegramMessageCaption message
               audioid = telegramAudioFileId audio
               chatId = telegramChatId $ telegramMessageChat message
 
-answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ Nothing _ (Just doc) _ _ _ _ _ _ _ _ _)) _ ) = do
+answer' hLogger _ token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ Nothing _ (Just doc) _ _ _ _ _ _ _ _ _)) _ ) = do
     n <- findRepeatNumber list chatId
-    repeatSendDocument' hLogger n testToken chatId docid cap
+    repeatSendDocument' hLogger n token chatId docid cap
     return Nothing
         where cap = telegramMessageCaption message
               docid = telegramDocumentFileId doc
               chatId = telegramChatId $ telegramMessageChat message
 
-answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just (photo:_)) _ _ _ _ _ _ _)) _ ) = do
+answer' hLogger _ token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just (photo:_)) _ _ _ _ _ _ _)) _ ) = do
     n <- findRepeatNumber list chatId
-    repeatSendPhoto' hLogger n testToken chatId photoid cap
+    repeatSendPhoto' hLogger n token chatId photoid cap
     return Nothing
         where cap = telegramMessageCaption message
               photoid = telegramPhotoSizeFileId photo
               chatId = telegramChatId $ telegramMessageChat message
 
-answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just video) _ _ _ _ _ _)) _ ) = do
+answer' hLogger _ token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just video) _ _ _ _ _ _)) _ ) = do
     n <- findRepeatNumber list chatId
-    repeatSendVideo' hLogger n testToken chatId videoid cap
+    repeatSendVideo' hLogger n token chatId videoid cap
     return Nothing
         where cap = telegramMessageCaption message
               videoid = telegramVideoFileId video
               chatId = telegramChatId $ telegramMessageChat message
 
-answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just sticker) _ _ _ _ _)) _ ) = do
+answer' hLogger _ token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just sticker) _ _ _ _ _)) _ ) = do
     n <- findRepeatNumber list chatId
-    repeatSendSticker' hLogger n testToken chatId stickerid
+    repeatSendSticker' hLogger n token chatId stickerid
     return Nothing
         where stickerid = telegramStickerFileId sticker
               chatId = telegramChatId $ telegramMessageChat message
 
-answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just videoNote) _ _ _ _)) _ ) = do
+answer' hLogger _ token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just videoNote) _ _ _ _)) _ ) = do
     n <- findRepeatNumber list chatId
-    repeatSendVideoNote' hLogger n testToken chatId videoid
+    repeatSendVideoNote' hLogger n token chatId videoid
     return Nothing
         where videoid = telegramVideoNoteFileId videoNote
               chatId = telegramChatId $ telegramMessageChat message
 
 
-answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just voice) _ _ _)) _ ) = do
+answer' hLogger _ token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just voice) _ _ _)) _ ) = do
     n <- findRepeatNumber list chatId
-    repeatSendVoice' hLogger n testToken chatId voiceid cap
+    repeatSendVoice' hLogger n token chatId voiceid cap
     return Nothing
         where cap = telegramMessageCaption message
               voiceid = telegramVoiceFileId voice
               chatId = telegramChatId $ telegramMessageChat message
 
-answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _(Just contact) _ _)) _ ) = do
+answer' hLogger _ token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _(Just contact) _ _)) _ ) = do
     n <- findRepeatNumber list chatId
-    repeatSendContact' hLogger n testToken chatId phoneNumber fname lname vcard
+    repeatSendContact' hLogger n token chatId phoneNumber fname lname vcard
     return Nothing
       where chatId = telegramChatId $ telegramMessageChat message
             phoneNumber = telegramContactPhoneNumber contact
@@ -544,9 +219,9 @@ answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ 
             lname = telegramContactLastName contact
             vcard = telegramContactVcard contact
 
-answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just location) Nothing)) _ ) = do
+answer' hLogger _ token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just location) Nothing)) _ ) = do
     n <- findRepeatNumber list chatId
-    repeatSendLocation' hLogger n testToken chatId lat long horac lp hea par
+    repeatSendLocation' hLogger n token chatId lat long horac lp hea par
     return Nothing
       where chatId = telegramChatId $ telegramMessageChat message
             lat = telegramLocationLatitude location
@@ -556,9 +231,9 @@ answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ 
             hea = telegramLocationHeading location
             par = telegramLocationProximityAlertRadius location
 
-answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just venue))) _ ) = do
+answer' hLogger _ token list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Just venue))) _ ) = do
     n <- findRepeatNumber list chatId
-    repeatSendVenue' hLogger n testToken chatId lat long title address fsid fstype gpid gptype
+    repeatSendVenue' hLogger n token chatId lat long title address fsid fstype gpid gptype
     return Nothing
       where chatId = telegramChatId $ telegramMessageChat message
             lat =  telegramLocationLatitude $ telegramVenueLocation venue
@@ -571,11 +246,8 @@ answer' hLogger _ list (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ 
             gptype = telegramVenueGooglePlaceType venue
 
 
-
-
-answer' hLogger _ list (TelegramUpdate _ _(Just callback@(TelegramCallbackQuery _ user (Just message) _ (Just dat)))) = do
-    status <- sendMessage' hLogger testToken chatId text Nothing
-    --putStrLn "sended"
+answer' hLogger _ token list (TelegramUpdate _ _(Just callback@(TelegramCallbackQuery _ user (Just message) _ (Just dat)))) = do
+    status <- sendMessage' hLogger token chatId text Nothing
     case status of
         Left txt -> do
             logError hLogger "Keyboard not sended"
@@ -585,7 +257,7 @@ answer' hLogger _ list (TelegramUpdate _ _(Just callback@(TelegramCallbackQuery 
             return $ Just(chatId, read dat :: Int)
         where chatId = telegramUserId user
               text = "Number of reapeting " ++ dat
-answer' hLogger _ _ _ =
+answer' hLogger _ _ _ _ =
     return Nothing
 
 buildTelegramPostRequest' :: ToJSON b => Handle -> String -> String -> b -> [(T.Text,T.Text)] -> IO (Either T.Text Int)
@@ -596,7 +268,6 @@ buildTelegramPostRequest' hLogger token url body params = runReq defaultHttpConf
         (ReqBodyJson body)
         jsonResponse
         param
-    --let status = responseStatusCode (r :: JsonResponse Value)
     if responseStatusCode (r :: JsonResponse Value) == 200 then
         return $ Right 200
     else return $ Left "No response"
@@ -663,19 +334,6 @@ sendVenue' :: Handle -> String
     -> IO (Either T.Text Int)
 sendVenue' hLogger token chatId lat long title address fsid fstype gpid gptype = buildTelegramPostRequest' hLogger token "sendVenue" (TelegramSendVenue chatId lat long title address fsid fstype gpid gptype) []
 
-{-buttons = [[x]| x <-(TelegramKeyboardButton <$> ["1","2","3","4","ы"])]
-
-keyboard = TelegramReplyKeyboardMarkup buttons (Just False)
-
-sendKeyboard token chatId = buildTelegramPostRequest token "sendMessage" (TelegramSendMessage chatId "типа клава" Nothing (Just keyboard)) []
-
-removeKeyboard = buildTelegramPostRequest testToken "sendMessage" (TelegramSendMessage 274864287 "1" Nothing (Just (TelegramReplyKeyboardRemove True))) []-}
-
-{-buttons' :: [[TelegramInlineKeyboardButton]]
-buttons' =  [ [TelegramInlineKeyboardButton x x] | x <- ["1","2","3","4","5"]]
-
-keyboard' :: TelegramInlineKeyboardMarkup
-keyboard' = TelegramInlineKeyboardMarkup buttons-}
 
 sendKeyboard' :: Handle -> String -> Int -> IO (Either T.Text Int)
 sendKeyboard' hLogger token chatId = buildTelegramPostRequest' hLogger token "sendMessage" (TelegramSendMessage chatId "Choose number reapiting" Nothing (Just keyboard)) []
@@ -826,3 +484,9 @@ repeatSendVenue' hLogger n token chatId lat long title address fsid fstype gpid 
                                                                                 | otherwise = do
                                                                                         logDebug hLogger "All Venues sended"
                                                                                         return $ Right 0
+
+
+
+
+
+

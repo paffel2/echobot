@@ -1,10 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Lib
-import Logger
+--import Lib
+import Logger ( printLog, Handle(Handle) )
 import Config
-import TelegramBot
+    ( getBtConfig,
+      getLgConfig,
+      newConfigHandle,
+      BotType(TelegramBot, VKBot),
+      ConfigModules(bot_type, log_priority) )
+import TelegramBot ( startTelegramBot )
+import VkBot
 
 
 main :: IO ()
@@ -13,21 +19,7 @@ main = do
     confBot <- getBtConfig hConfig
     confLogger <- getLgConfig hConfig
     case bot_type confBot of
-      VKBot -> print "In develop"
+      VKBot -> startVkBot (Handle (log_priority confLogger) printLog) confBot
       TelegramBot -> startTelegramBot (Handle (log_priority confLogger) printLog) confBot
     
 
-    {-main = do
-    hConfig <- newConfigHandle
-    confToken <- getTkConfig hConfig
-    confLogger <- getLgConfig hConfig
-    confServer <- getSrConfig hConfig
-    confDb <- getDbConfig hConfig
-    let db_address = dbAddress confDb
-    let token_lifetime = lifeTime confToken
-    let hLogger = Handle (log_priority confLogger) printLog
-    logInfo hLogger "Serving"
-    runSettings
-        (setMaximumBodyFlush (server_maximum_body_flush confServer) $
-         setPort (server_port confServer) defaultSettings) $
-        routes hLogger db_address token_lifetime handler-}

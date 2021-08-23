@@ -1,6 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
+
 module Lib where
-import qualified Data.ByteString as B
+{-import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import Network.HTTP.Simple
 import qualified Data.Text.Encoding as E
@@ -50,7 +50,7 @@ sendMessage = do
     res <- httpBS rus'
     res' <- httpBS eng'
     return (getResponseBody res)
----------------------------------------------------------------------------------------}
+---------------------------------------------------------------------------------------}-}
 
 
 

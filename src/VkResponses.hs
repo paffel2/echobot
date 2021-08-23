@@ -4,11 +4,11 @@ import GHC.Generics
 import Control.Monad
 import Control.Applicative
 
-data VkResponse = VkResponse { someResponse :: VkResponseType
+newtype VkResponse = VkResponse { someResponse :: VkResponseType
                             } deriving (Show, Generic)
 instance FromJSON VkResponse where
-    parseJSON (Object v) = 
-        VkResponse <$> v .: "response"
+    parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 4}
+
 
 data VkResponseType = Server {   serverServer :: Maybe String
                                , serverKey :: Maybe String
@@ -19,11 +19,7 @@ data VkResponseType = Server {   serverServer :: Maybe String
                                } deriving (Show, Generic)
 instance FromJSON VkResponseType where
     parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 6}
-    {-parseJSON (Object v) = 
-        Server <$> v .: "server"
-               <*> v .: "key"
-               <*> v .: "ts"
-               <*> v .: "pts"-}
+
 
 data VkMessages =  VkMessages { vkMessagesCount :: Int 
                               , vkMessagesItems :: [VkItem]
@@ -204,7 +200,7 @@ data VkKeyboard = VkKeyboard { vkKeyboardOneTime :: Bool
 instance ToJSON VkKeyboard where
     toJSON  = genericToJSON defaultOptions { fieldLabelModifier = camelTo2 '_' . drop 10, omitNothingFields = True }
 
-data VkButton = VkButton { vkButtonAction :: VkAction
+newtype VkButton = VkButton { vkButtonAction :: VkAction
                          } deriving (Show, Generic)
 
 instance ToJSON VkButton where
