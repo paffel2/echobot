@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c43bb6aa8bce6d91535b642a69a9dca6b9104396fecce374304c3f308cd6968d
+-- hash: 6d2875c093b2b29a462d4dd82c4ca64ce003022839d02f8e15315aa9b18d17bc
 
 name:           echobot
 version:        0.1.0.0
@@ -28,7 +28,6 @@ source-repository head
 library
   exposed-modules:
       Config
-      Lib
       Logger
       TelegramApi
       TelegramBot
@@ -59,7 +58,7 @@ executable echobot-exe
       Paths_echobot
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Werror
   build-depends:
       aeson
     , base >=4.7 && <5

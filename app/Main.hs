@@ -1,17 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
---import Lib
-import Logger ( printLog, Handle(Handle) )
 import Config
-    ( getBtConfig,
-      getLgConfig,
-      newConfigHandle,
-      BotType(TelegramBot, VKBot),
-      ConfigModules(bot_type, log_priority) )
-import TelegramBot ( startTelegramBot )
-import VkBot
-
+    ( BotType(TelegramBot, VKBot)
+    , ConfigModules(bot_type, log_priority)
+    , getBtConfig
+    , getLgConfig
+    , newConfigHandle
+    )
+import Logger (Handle(Handle), printLog)
+import TelegramBot (startTelegramBot)
+import VkBot (startVkBot)
 
 main :: IO ()
 main = do
@@ -19,7 +19,8 @@ main = do
     confBot <- getBtConfig hConfig
     confLogger <- getLgConfig hConfig
     case bot_type confBot of
-      VKBot -> startVkBot (Handle (log_priority confLogger) printLog) confBot
-      TelegramBot -> startTelegramBot (Handle (log_priority confLogger) printLog) confBot
-    
+        VKBot -> startVkBot (Handle (log_priority confLogger) printLog) confBot
+        TelegramBot ->
+            startTelegramBot (Handle (log_priority confLogger) printLog) confBot
+
 

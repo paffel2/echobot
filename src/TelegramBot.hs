@@ -1,9 +1,8 @@
 module TelegramBot where
-import Config
-import Logger
-import TelegramApi
 
-
+import Config (ConfigModules)
+import Logger (Handle)
+import TelegramApi (startTelegramBot')
 
 startTelegramBot :: Handle -> ConfigModules -> IO ()
 startTelegramBot = startTelegramBot'
