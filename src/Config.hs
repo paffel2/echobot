@@ -47,9 +47,12 @@ getconfig module' = do
     conf <- C.load [C.Optional "bot.conf"]
     case module' of
         BT -> do
-            bot_type_param <- C.lookupDefault "" conf (T.pack "bot.type") :: IO String
-            token_param <- C.lookupDefault "" conf (T.pack "bot.token") :: IO String
-            help_param <- C.lookupDefault "" conf (T.pack "bot.help") :: IO String
+            bot_type_param <-
+                C.lookupDefault "" conf (T.pack "bot.type") :: IO String
+            token_param <-
+                C.lookupDefault "" conf (T.pack "bot.token") :: IO String
+            help_param <-
+                C.lookupDefault "" conf (T.pack "bot.help") :: IO String
             case bot_type_param of
                 "VKBot" -> return $ Bot VKBot token_param help_param
                 "TelegramBot" -> return $ Bot TelegramBot token_param help_param
@@ -63,4 +66,3 @@ getconfig module' = do
                 "Warning" -> return $ Log Warning
                 "Error" -> return $ Log Logger.Error
                 _ -> return $ Log Info
-

@@ -12,19 +12,19 @@
         {
             "label": "ghci",
             "type": "shell",
-            "command": "stack ghci",
+            "command": "chcp 65001; stack ghci",
             "problemMatcher": []
         },
         {
             "label": "hlint",
             "type": "shell",
-            "command": "stack build hlint",
+            "command": "stack hlint",
             "problemMatcher": []
         },
         {
             "label" : "exec",
             "type" : "shell",
-            "command" : "stack exec echobot-exe",
+            "command" : "chcp 65001; stack exec echobot-exe",
             "problemMatcher" : []
         }
     ]
