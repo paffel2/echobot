@@ -1,8 +1,9 @@
-module TelegramBot where
+module Telegram.Bot where
 
 import Config (ConfigModules(help, token))
 import Logger (Handle, logError, logInfo)
-import TelegramApi (echo, getMe)
+import Telegram.API (getMe)
+import Telegram.Echo (echo)
 
 startTelegramBot :: Handle -> ConfigModules -> IO ()
 startTelegramBot hLogger botConf = do
@@ -19,4 +20,3 @@ startTelegramBot hLogger botConf = do
                 (Just 0)
                 (Config.help botConf)
                 []
---1431530804:AAH5bSr9xr8o3WQlF55hnmpYZYtktn-rzWY

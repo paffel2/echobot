@@ -1,93 +1,34 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module VkAPI where
+module Vk.API where
 
-import Control.Concurrent (threadDelay)
-import Control.Exception (catch)
 import Control.Monad (when)
-import Data.Aeson (FromJSON(parseJSON), Value, encode)
-import Data.Aeson.Types (parseMaybe)
-import qualified Data.ByteString.Lazy.Internal as BLI
-import Data.Maybe ( fromMaybe, isJust ) 
+import Data.Maybe (fromMaybe, isJust)
 import qualified Data.Text as T
 import Logger (Handle, logDebug, logError)
-import Network.HTTP.Req
-    ( FormUrlEncodedParam
-    , GET(GET)
-    , HttpException
-    , JsonResponse
-    , NoReqBody(NoReqBody)
-    , POST(POST)
-    , QueryParam(..)
-    , ReqBodyUrlEnc(ReqBodyUrlEnc)
-    , (/:)
-    , (=:)
-    , https
-    , jsonResponse
-    , req
-    , responseBody
-    , responseStatusCode
-    )
-import VkResponses
-    ( VkAction(VkAction)
-    , VkAttachment(VkAttachmentAudio, VkAttachmentAudioMessage,
+import Vk.BuildRequests (VkToken, buildVkGetRequest, buildVkPostRequest)
+import Vk.Keyboard (encKeyboard)
+import Vk.Responses
+    ( VkAttachment(VkAttachmentAudio, VkAttachmentAudioMessage,
              VkAttachmentDoc, VkAttachmentMarket, VkAttachmentPhoto,
              VkAttachmentPoll, VkAttachmentSticker, VkAttachmentStory,
              VkAttachmentVideo, VkAttachmentWall)
     , VkAudio(VkAudio)
     , VkAudioMessage(VkAudioMessage)
-    , VkButton(VkButton)
     , VkCoordinates(vkCoordinatesLatitude, vkCoordinatesLongitude)
     , VkDoc(VkDoc)
     , VkGeo(vkGeoCoordinates)
     , VkItem(VkItem, vkItemFromId, vkItemText)
-    , VkKeyboard(VkKeyboard)
     , VkMarket(VkMarket)
     , VkMessages(vkMessagesItems)
     , VkPhoto(VkPhoto)
     , VkPoll(VkPoll)
-    , VkResponse(VkResponse)
     , VkResponseType(Server)
     , VkSticker(VkSticker)
     , VkStory(VkStory)
     , VkVideo(VkVideo)
     , VkWall(VkWall)
     )
-import InstanceMonadHttpIO ()
-
-type VkToken = String
-
-keyboardVk :: VkKeyboard
-keyboardVk = VkKeyboard True buttonsVk
-
-b1 :: [VkButton]
-b1 = [VkButton (VkAction "text" "1" "1")]
-
-b2 :: [VkButton]
-b2 = [VkButton (VkAction "text" "2" "2")]
-
-b3 :: [VkButton]
-b3 = [VkButton (VkAction "text" "3" "3")]
-
-b4 :: [VkButton]
-b4 = [VkButton (VkAction "text" "4" "4")]
-
-b5 :: [VkButton]
-b5 = [VkButton (VkAction "text" "5" "5")]
-
-buttonsVk :: [[VkButton]]
-buttonsVk = [b1, b2, b3, b4, b5]
-
-encKeyboard :: T.Text
-encKeyboard = T.pack $ BLI.unpackChars (encode keyboardVk)
-
-params :: [(T.Text, Maybe T.Text)] -> FormUrlEncodedParam
-params [] = mempty
-params ((a, b):xs) = queryParam a b <> params xs
-
-buildParams :: (QueryParam p, Monoid p) => [(T.Text, T.Text)] -> p
-buildParams [] = mempty
-buildParams parameters = mconcat $ fmap (uncurry (=:)) parameters
 
 getLongPollServer :: Handle -> VkToken -> IO (Maybe VkResponseType)
 getLongPollServer hLogger vktoken =
@@ -106,13 +47,6 @@ getLongPollHistory hLogger vktoken ts pts =
         "messages.getLongPollHistory"
         [("ts", T.pack $ show ts), ("pts", T.pack $ show pts), ("v", "5.130")]
 
-{-tsAndPts :: VkResponseType -> (Int, Int)
-tsAndPts (Server _ _ (Just ts) (Just pts) _ _) = (ts, pts)
-tsAndPts _ = (0, 0)
-
-newPts :: Maybe VkResponseType -> Int
-newPts (Just (Server _ _ _ _ (Just npts) _)) = npts
-newPts _ = 0-}
 getTsAndPts :: Handle -> VkToken -> IO (Maybe (Int, Int))
 getTsAndPts hLogger vktoken = do
     serverInf <- getLongPollServer hLogger vktoken
@@ -238,7 +172,6 @@ findRepeatNumber listOfUsers chatId = do
     case n of
         Just x -> return x
         Nothing -> return 1-}
-
 findRepeatNumber' :: [(Int, Int)] -> Int -> Int
 findRepeatNumber' listOfUsers chatId = fromMaybe 1 $ lookup chatId listOfUsers
 
@@ -332,8 +265,7 @@ answer hLogger _ _ (Just _) xs =
 answer hLogger _ _ Nothing xs = do
     logError hLogger "Unexcepted error"
     return xs
-
-buildVkPostRequest ::
+{-buildVkPostRequest ::
        Handle -> String -> String -> [(T.Text, Maybe T.Text)] -> IO (Maybe Int)
 buildVkPostRequest hLogger vktoken method param =
     catch
@@ -388,9 +320,8 @@ buildVkGetRequest hLogger vktoken url parameters =
             Just (VkResponse result) -> return $ Just result
             Nothing -> do
                 logError hLogger "Unexpected error"
-                return Nothing
-
-echo :: Handle -> VkToken -> String -> [(Int, Int)] -> Int -> Int -> IO ()
+                return Nothing-}
+{-echo :: Handle -> VkToken -> String -> [(Int, Int)] -> Int -> Int -> IO ()
 echo hLogger vktoken help_message listOfUsers ts pts = do
     updates <- getLongPollHistory hLogger vktoken ts pts
     newListOfUsers <- answer hLogger vktoken help_message updates listOfUsers
@@ -399,4 +330,4 @@ echo hLogger vktoken help_message listOfUsers ts pts = do
         Just (ts', pts') -> do
             threadDelay 3000000
             echo hLogger vktoken help_message newListOfUsers ts' pts'
-        Nothing -> logError hLogger "No pts and ts parameter"
+        Nothing -> logError hLogger "No pts and ts parameter"-}

@@ -10,7 +10,7 @@
             "problemMatcher": []
         },
         {
-            "label": "ghci",
+            "label": "ghci with cyrillic",
             "type": "shell",
             "command": "chcp 65001; stack ghci",
             "problemMatcher": []
@@ -26,6 +26,12 @@
             "type" : "shell",
             "command" : "chcp 65001; stack exec echobot-exe",
             "problemMatcher" : []
+        },
+        {
+            "label": "ghci",
+            "type": "shell",
+            "command": "stack ghci",
+            "problemMatcher": []
         }
     ]
 }

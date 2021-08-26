@@ -1,8 +1,9 @@
-module VkBot where
+module Vk.Bot where
 
 import Config (ConfigModules(help, token))
 import Logger (Handle, logError, logInfo)
-import VkAPI (echo, getTsAndPts)
+import Vk.API (getTsAndPts)
+import Vk.Echo (echo)
 
 startVkBot :: Handle -> ConfigModules -> IO ()
 startVkBot hLogger botConf = do

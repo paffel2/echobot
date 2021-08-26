@@ -1,4 +1,3 @@
-
 module Main where
 
 import Config
@@ -9,8 +8,8 @@ import Config
     , newConfigHandle
     )
 import Logger (Handle(Handle), printLog)
-import TelegramBot (startTelegramBot)
-import VkBot (startVkBot)
+import Telegram.Bot (startTelegramBot)
+import Vk.Bot (startVkBot)
 
 main :: IO ()
 main = do
@@ -21,5 +20,3 @@ main = do
         VKBot -> startVkBot (Handle (log_priority confLogger) printLog) confBot
         TelegramBot ->
             startTelegramBot (Handle (log_priority confLogger) printLog) confBot
-
-

@@ -1,50 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module TelegramApi where
+module Telegram.API where
 
-import Control.Exception (Exception(displayException), catch)
-import Control.Monad.IO.Class ()
-import Data.Aeson (FromJSON(parseJSON), ToJSON, Value)
-import Data.Aeson.Types (parseMaybe)
+import Data.Aeson (FromJSON)
 import qualified Data.Text as T
-import InstanceMonadHttpIO ()
 import Logger (Handle, logDebug, logError, logInfo)
-import Network.HTTP.Req
-    ( GET(GET)
-    , HttpException
-    , JsonResponse
-    , NoReqBody(NoReqBody)
-    , POST(POST)
-    , QueryParam
-    , ReqBodyJson(ReqBodyJson)
-    , (/:)
-    , (=:)
-    , https
-    , jsonResponse
-    , req
-    , responseBody
-    , responseStatusCode
+import Telegram.BuildRequest
+    ( TelegramToken
+    , buildTelegramGetRequest
+    , buildTelegramPostRequest
     )
-import TelegramResponses
-    ( TelegramAnimation(telegramAnimationFileId)
-    , TelegramAudio(telegramAudioFileId)
-    , TelegramCallbackQuery(TelegramCallbackQuery)
-    , TelegramChat(telegramChatId)
-    , TelegramContact(telegramContactFirstName, telegramContactLastName,
-                telegramContactPhoneNumber, telegramContactVcard)
-    , TelegramDocument(telegramDocumentFileId)
-    , TelegramInlineKeyboardButton(TelegramInlineKeyboardButton)
-    , TelegramInlineKeyboardMarkup(TelegramInlineKeyboardMarkup)
-    , TelegramLocation(telegramLocationHeading,
-                 telegramLocationHorizontalAccuracy, telegramLocationLatitude,
-                 telegramLocationLivePeriod, telegramLocationLongitude,
-                 telegramLocationProximityAlertRadius)
-    , TelegramMessage(TelegramMessage, telegramMessageCaption,
-                telegramMessageChat, telegramMessageEntities)
-    , TelegramMessageEntity
-    , TelegramPhotoSize(telegramPhotoSizeFileId)
-    , TelegramResponse(TelegramResponse)
-    , TelegramSendAnimation(TelegramSendAnimation)
+import Telegram.Keyboard (keyboard)
+import Telegram.Requests
+    ( TelegramSendAnimation(TelegramSendAnimation)
     , TelegramSendAudio(TelegramSendAudio)
     , TelegramSendContact(TelegramSendContact)
     , TelegramSendDocument(TelegramSendDocument)
@@ -56,6 +24,23 @@ import TelegramResponses
     , TelegramSendVideo(TelegramSendVideo)
     , TelegramSendVideoNote(TelegramSendVideoNote)
     , TelegramSendVoice(TelegramSendVoice)
+    )
+import Telegram.Responses
+    ( TelegramAnimation(telegramAnimationFileId)
+    , TelegramAudio(telegramAudioFileId)
+    , TelegramCallbackQuery(TelegramCallbackQuery)
+    , TelegramChat(telegramChatId)
+    , TelegramContact(telegramContactFirstName, telegramContactLastName,
+                telegramContactPhoneNumber, telegramContactVcard)
+    , TelegramDocument(telegramDocumentFileId)
+    , TelegramLocation(telegramLocationHeading,
+                 telegramLocationHorizontalAccuracy, telegramLocationLatitude,
+                 telegramLocationLivePeriod, telegramLocationLongitude,
+                 telegramLocationProximityAlertRadius)
+    , TelegramMessage(TelegramMessage, telegramMessageCaption,
+                telegramMessageChat, telegramMessageEntities)
+    , TelegramMessageEntity
+    , TelegramPhotoSize(telegramPhotoSizeFileId)
     , TelegramSticker(telegramStickerFileId)
     , TelegramUpdate(TelegramUpdate, telegramUpdateId)
     , TelegramUser(telegramUserId)
@@ -67,81 +52,6 @@ import TelegramResponses
     , TelegramVideoNote(telegramVideoNoteFileId)
     , TelegramVoice(telegramVoiceFileId)
     )
-
-type TelegramToken = String
-
-buildParams :: (QueryParam p, Monoid p) => [(T.Text, T.Text)] -> p
-buildParams [] = mempty
-buildParams params = mconcat $ fmap (uncurry (=:)) params
-
-buildTelegramGetRequest ::
-       FromJSON a
-    => Handle
-    -> TelegramToken
-    -> String
-    -> [(T.Text, T.Text)]
-    -> IO (Maybe a)
-buildTelegramGetRequest hLogger tgtoken url params =
-    catch
-        (do response <- responseBody <$> request
-            parseResult response) $ \e -> do
-        let _ = (e :: HttpException)
-        logError hLogger "Bad request. "
-        return Nothing
-  where
-    request =
-        req
-            GET
-            (https "api.telegram.org" /: T.pack ("bot" ++ tgtoken) /: T.pack url)
-            NoReqBody
-            jsonResponse
-            param
-    param = buildParams params
-    parseResult r =
-        case parseMaybe parseJSON r of
-            Just (TelegramResponse True _ (Just result)) -> do
-                return $ Just result
-            Just (TelegramResponse False (Just _) _) -> do
-                logError hLogger "No response"
-                return Nothing
-            Just (TelegramResponse True _ Nothing) -> do
-                logError hLogger "No result"
-                return Nothing
-            _ -> do
-                logError hLogger "Unexpected error"
-                return Nothing
-
-buildTelegramPostRequest ::
-       ToJSON b
-    => Handle
-    -> String
-    -> String
-    -> b
-    -> [(T.Text, T.Text)]
-    -> IO (Maybe Int)
-buildTelegramPostRequest hLogger tgtoken url body params =
-    catch
-        (do response <- request :: (IO (JsonResponse Value))
-            if responseStatusCode response == 200
-                then return $ Just 200
-                else do
-                    logError hLogger "No response"
-                    return Nothing) $ \e -> do
-        logError hLogger $
-            T.concat
-                [ "Bad request. "
-                , T.pack $ displayException (e :: HttpException)
-                ]
-        return Nothing
-  where
-    request =
-        req
-            POST
-            (https "api.telegram.org" /: T.pack ("bot" ++ tgtoken) /: T.pack url)
-            (ReqBodyJson body)
-            jsonResponse
-            param
-    param = buildParams params
 
 getMe :: Handle -> TelegramToken -> IO (Maybe TelegramUser)
 getMe hLogger tgtoken = buildTelegramGetRequest hLogger tgtoken "getMe" []
@@ -170,19 +80,6 @@ getLastUpdateId hLogger updates =
             return Nothing
         Just xs -> return $ Just $ (+ 1) $ telegramUpdateId $ last xs
 
-answers ::
-       Handle
-    -> String
-    -> TelegramToken
-    -> Maybe [TelegramUpdate]
-    -> [(Int, Int)]
-    -> IO [Maybe (Int, Int)]
-answers hLogger help_message tgtoken (Just upd) list =
-    mapM (answer hLogger help_message tgtoken list) upd
-answers hLogger _ _ _ _ = do
-    logError hLogger "Something wrong"
-    return [Nothing]
-
 updateListUsers :: [(Int, Int)] -> [Maybe (Int, Int)] -> [(Int, Int)]
 updateListUsers xs (u:us) = updateListUsers newList us
   where
@@ -202,11 +99,18 @@ findRepeatNumber listOfUsers chatId = do
         Nothing -> do
             return 1
 
-buttons :: [[TelegramInlineKeyboardButton]]
-buttons = [[TelegramInlineKeyboardButton x x] | x <- ["1", "2", "3", "4", "5"]]
-
-keyboard :: TelegramInlineKeyboardMarkup
-keyboard = TelegramInlineKeyboardMarkup buttons
+answers ::
+       Handle
+    -> String
+    -> TelegramToken
+    -> Maybe [TelegramUpdate]
+    -> [(Int, Int)]
+    -> IO [Maybe (Int, Int)]
+answers hLogger help_message tgtoken (Just upd) list =
+    mapM (answer hLogger help_message tgtoken list) upd
+answers hLogger _ _ _ _ = do
+    logError hLogger "Something wrong"
+    return [Nothing]
 
 answer ::
        Handle
@@ -215,9 +119,7 @@ answer ::
     -> [(Int, Int)]
     -> TelegramUpdate
     -> IO (Maybe (Int, Int))
-answer hLogger _ tgtoken _ (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ (Just "/repeat") _ _ _ _ _ _ _ _ _ _ _ _ _)) _)
-    --n <- findRepeatNumber list chatId
- = do
+answer hLogger _ tgtoken _ (TelegramUpdate _ (Just message@(TelegramMessage _ _ _ _ _ _ _ _ _ (Just "/repeat") _ _ _ _ _ _ _ _ _ _ _ _ _)) _) = do
     status <- sendKeyboard hLogger tgtoken chatId
     case status of
         Nothing -> logError hLogger "Keyboard not send"
@@ -365,7 +267,6 @@ answer hLogger _ tgtoken _ (TelegramUpdate _ _ (Just (TelegramCallbackQuery _ us
   where
     chatId = telegramUserId user
     text = "Number of reapeting " ++ dat
---answer' hLogger _ tgtoken list (TelegramUpdate _ _ (Just callback@(TelegramCallbackQuery _ user (Just message) _ (Just dat)))) = do
 answer _ _ _ _ _ = return Nothing
 
 sendMessage ::
@@ -813,12 +714,3 @@ repeatSendVenue hLogger n tgtoken chatId lat long title address fsid fstype gpid
     | otherwise = do
         logDebug hLogger "All Venues sended"
         return $ Just 200
-
--------------------------------------------------
-echo :: Handle -> TelegramToken -> Maybe Int -> String -> [(Int, Int)] -> IO ()
-echo hLogger tgtoken updateId help_message listOfUsers = do
-    updates <- getUpdates hLogger tgtoken updateId
-    b <- answers hLogger help_message tgtoken updates listOfUsers
-    let newlistOfUsers = updateListUsers listOfUsers b
-    nextUpdateID <- getLastUpdateId hLogger updates
-    echo hLogger tgtoken nextUpdateID help_message newlistOfUsers
