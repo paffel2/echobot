@@ -32,6 +32,12 @@
             "type": "shell",
             "command": "stack ghci",
             "problemMatcher": []
+        },
+        {
+            "label": "tests",
+            "type": "shell",
+            "command": "stack test",
+            "problemMatcher": []
         }
     ]
 }

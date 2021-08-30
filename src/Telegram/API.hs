@@ -12,46 +12,25 @@ import Telegram.BuildRequest
     )
 import Telegram.Keyboard (keyboard)
 import Telegram.Requests
-    ( TelegramSendAnimation(TelegramSendAnimation)
-    , TelegramSendAudio(TelegramSendAudio)
-    , TelegramSendContact(TelegramSendContact)
-    , TelegramSendDocument(TelegramSendDocument)
-    , TelegramSendLocation(TelegramSendLocation)
-    , TelegramSendMessage(TelegramSendMessage)
-    , TelegramSendPhoto(TelegramSendPhoto)
-    , TelegramSendSticker(TelegramSendSticker)
-    , TelegramSendVenue(TelegramSendVenue)
-    , TelegramSendVideo(TelegramSendVideo)
-    , TelegramSendVideoNote(TelegramSendVideoNote)
-    , TelegramSendVoice(TelegramSendVoice)
-    )
+    ( TelegramSendVenue(TelegramSendVenue),
+      TelegramSendLocation(TelegramSendLocation),
+      TelegramSendContact(TelegramSendContact),
+      TelegramSendVoice(TelegramSendVoice),
+      TelegramSendVideoNote(TelegramSendVideoNote),
+      TelegramSendSticker(TelegramSendSticker),
+      TelegramSendVideo(TelegramSendVideo),
+      TelegramSendPhoto(TelegramSendPhoto),
+      TelegramSendDocument(TelegramSendDocument),
+      TelegramSendAudio(TelegramSendAudio),
+      TelegramSendAnimation(TelegramSendAnimation),
+      TelegramSendMessage(TelegramSendMessage) )
+
 import Telegram.Responses
-    ( TelegramAnimation(telegramAnimationFileId)
-    , TelegramAudio(telegramAudioFileId)
-    , TelegramCallbackQuery(TelegramCallbackQuery)
-    , TelegramChat(telegramChatId)
-    , TelegramContact(telegramContactFirstName, telegramContactLastName,
-                telegramContactPhoneNumber, telegramContactVcard)
-    , TelegramDocument(telegramDocumentFileId)
-    , TelegramLocation(telegramLocationHeading,
-                 telegramLocationHorizontalAccuracy, telegramLocationLatitude,
-                 telegramLocationLivePeriod, telegramLocationLongitude,
-                 telegramLocationProximityAlertRadius)
-    , TelegramMessage(TelegramMessage, telegramMessageCaption,
-                telegramMessageChat, telegramMessageEntities)
-    , TelegramMessageEntity
-    , TelegramPhotoSize(telegramPhotoSizeFileId)
-    , TelegramSticker(telegramStickerFileId)
-    , TelegramUpdate(TelegramUpdate, telegramUpdateId)
-    , TelegramUser(telegramUserId)
-    , TelegramVenue(telegramVenueAddress, telegramVenueFoursquareId,
-              telegramVenueFoursquareType, telegramVenueGooglePlaceId,
-              telegramVenueGooglePlaceType, telegramVenueLocation,
-              telegramVenueTitle)
-    , TelegramVideo(telegramVideoFileId)
-    , TelegramVideoNote(telegramVideoNoteFileId)
-    , TelegramVoice(telegramVoiceFileId)
-    )
+    ( TelegramMessageEntity,
+      TelegramUpdate(telegramUpdateId),
+      TelegramUser )
+
+
 
 getMe :: Handle -> TelegramToken -> IO (Maybe TelegramUser)
 getMe hLogger tgtoken = buildTelegramGetRequest hLogger tgtoken "getMe" []
@@ -99,7 +78,7 @@ findRepeatNumber listOfUsers chatId = do
         Nothing -> do
             return 1
 
-answers ::
+{-answers ::
        Handle
     -> String
     -> TelegramToken
@@ -267,8 +246,7 @@ answer hLogger _ tgtoken _ (TelegramUpdate _ _ (Just (TelegramCallbackQuery _ us
   where
     chatId = telegramUserId user
     text = "Number of reapeting " ++ dat
-answer _ _ _ _ _ = return Nothing
-
+answer _ _ _ _ _ = return Nothing-}
 sendMessage ::
        Handle
     -> String

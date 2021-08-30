@@ -20,7 +20,6 @@ import Vk.Responses
     , VkGeo(vkGeoCoordinates)
     , VkItem(VkItem, vkItemFromId, vkItemText)
     , VkMarket(VkMarket)
-    , VkMessages(vkMessagesItems)
     , VkPhoto(VkPhoto)
     , VkPoll(VkPoll)
     , VkResponseType(Server)
@@ -52,7 +51,9 @@ getTsAndPts hLogger vktoken = do
     serverInf <- getLongPollServer hLogger vktoken
     case serverInf of
         Just (Server _ _ (Just ts) (Just pts) _ _) -> return $ Just (ts, pts)
-        _ -> return Nothing --подумать на счет ошибки
+        _ -> do
+            logError hLogger "Error of getting ts and pts parameters"
+            return Nothing
 
 createParams :: VkItem -> [(T.Text, Maybe T.Text)]
 createParams vkMessage =
@@ -120,7 +121,7 @@ createParamsAttachment (VkAttachmentAudioMessage "audio_message" (VkAudioMessage
     attachStr =
         "audio_message" ++
         show ownerId ++ "_" ++ show audioId ++ "_" ++ accessKey
-createParamsAttachment _ = []
+createParamsAttachment _ = [] --подумать о форвардах
 
 sendMessageAttachment :: Handle -> VkToken -> VkItem -> IO ()
 sendMessageAttachment hLogger vktoken (VkItem _ fromId _ (x:xs) _ _ _ _) =
@@ -166,14 +167,8 @@ sendGeoVK hLogger vktoken (VkItem _ fromId _ _ _ (Just geo) _ _) =
     long = vkCoordinatesLongitude $ vkGeoCoordinates geo
 sendGeoVK _ _ _ = return ()
 
-{-findRepeatNumber :: [(Int, Int)] -> Int -> IO Int
-findRepeatNumber listOfUsers chatId = do
-    let n = lookup chatId listOfUsers
-    case n of
-        Just x -> return x
-        Nothing -> return 1-}
-findRepeatNumber' :: [(Int, Int)] -> Int -> Int
-findRepeatNumber' listOfUsers chatId = fromMaybe 1 $ lookup chatId listOfUsers
+findRepeatNumber :: [(Int, Int)] -> Int -> Int
+findRepeatNumber listOfUsers chatId = fromMaybe 1 $ lookup chatId listOfUsers
 
 sendMessageRepeatText ::
        Handle -> String -> [(Int, Int)] -> VkItem -> IO (Maybe (Int, Int))
@@ -202,7 +197,7 @@ sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)
         ]
 sendMessageRepeatText _ _ _ (VkItem _ _ _ _ _ _ _ Nothing) = return Nothing
 
-answers ::
+{-answers ::
        Handle
     -> VkToken
     -> String
@@ -214,12 +209,11 @@ answers hLogger vktoken help_message list xs = do
     mapM_ (sendKeyboardVk hLogger vktoken) xs
     mapM_ (sendMessageHelp hLogger vktoken help_message) xs
     update <- mapM (sendMessageRepeatText hLogger vktoken list) xs
-    return $ updateListUsers list update
-
+    return $ updateListUsers list update-}
 repeatMessage :: Handle -> VkToken -> [(Int, Int)] -> VkItem -> IO ()
 repeatMessage hLogger vktoken list item@(VkItem _ fromId _ _ _ _ _ _) =
     when (fromId > 0) $ do
-        repeatMessage' (findRepeatNumber' list fromId) vktoken item
+        repeatMessage' (findRepeatNumber list fromId) vktoken item
   where
     repeatMessage' 0 _ _ = logDebug hLogger "All sended"
     repeatMessage' x token' item' = do
@@ -250,8 +244,7 @@ updateListUsers xs (u:us) = updateListUsers newList us
             Just (cid, n) -> newlist' ++ [(cid, n)]
                 where newlist' = filter ((/= cid) . fst) xs
 updateListUsers xs [] = xs
-
-answer ::
+{-answer ::
        Handle
     -> VkToken
     -> String
@@ -264,70 +257,4 @@ answer hLogger _ _ (Just _) xs =
     logError hLogger "Unexcepted error" >> return xs
 answer hLogger _ _ Nothing xs = do
     logError hLogger "Unexcepted error"
-    return xs
-{-buildVkPostRequest ::
-       Handle -> String -> String -> [(T.Text, Maybe T.Text)] -> IO (Maybe Int)
-buildVkPostRequest hLogger vktoken method param =
-    catch
-        (do response <- request :: (IO (JsonResponse Value))
-            if responseStatusCode response == 200
-                then return $ Just 200
-                else do
-                    logError hLogger "No response"
-                    return Nothing) $ \e -> do
-        let _ = (e :: HttpException)
-        logError hLogger "Bad request"
-        return Nothing
-  where
-    request =
-        req
-            POST
-            (https "api.vk.com" /: "method" /: T.pack method)
-            (ReqBodyUrlEnc $ params param)
-            jsonResponse
-            tokenParam
-    tokenParam =
-        buildParams
-            [ ("access_token", T.pack vktoken)
-            , ("v", "5.130")
-            , ("random_id", "0")
-            ]
-
-buildVkGetRequest ::
-       Handle
-    -> String
-    -> T.Text
-    -> [(T.Text, T.Text)]
-    -> IO (Maybe VkResponseType)
-buildVkGetRequest hLogger vktoken url parameters =
-    catch
-        (do response <- responseBody <$> request
-            parseResult response) $ \e -> do
-        let _ = (e :: HttpException)
-        logError hLogger "Bad request"
-        return Nothing
-  where
-    request =
-        req
-            GET
-            (https "api.vk.com" /: "method" /: url)
-            NoReqBody
-            jsonResponse
-            param
-    param = buildParams (parameters ++ [("access_token", T.pack vktoken)])
-    parseResult r =
-        case parseMaybe parseJSON r of
-            Just (VkResponse result) -> return $ Just result
-            Nothing -> do
-                logError hLogger "Unexpected error"
-                return Nothing-}
-{-echo :: Handle -> VkToken -> String -> [(Int, Int)] -> Int -> Int -> IO ()
-echo hLogger vktoken help_message listOfUsers ts pts = do
-    updates <- getLongPollHistory hLogger vktoken ts pts
-    newListOfUsers <- answer hLogger vktoken help_message updates listOfUsers
-    tsPts <- getTsAndPts hLogger vktoken
-    case tsPts of
-        Just (ts', pts') -> do
-            threadDelay 3000000
-            echo hLogger vktoken help_message newListOfUsers ts' pts'
-        Nothing -> logError hLogger "No pts and ts parameter"-}
+    return xs-}

@@ -29,6 +29,7 @@ dependencies:
 - req-conduit
 - req
 - configurator
+- hspec
 
 library:
   source-dirs: src

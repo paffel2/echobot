@@ -9,7 +9,10 @@ import Config
     )
 import Logger (Handle(Handle), printLog)
 import Telegram.Bot (startTelegramBot)
-import Vk.Bot (startVkBot)
+import Telegram.TelegramHandle (telegramHandler)
+--import Vk.Bot (startVkBot)
+import Vk.Bot ( startVkBot )
+import Vk.VkHandle ( handlerVk )
 
 main :: IO ()
 main = do
@@ -17,6 +20,9 @@ main = do
     confBot <- getBtConfig hConfig
     confLogger <- getLgConfig hConfig
     case bot_type confBot of
-        VKBot -> startVkBot (Handle (log_priority confLogger) printLog) confBot
+        VKBot -> startVkBot (Handle (log_priority confLogger) printLog) handlerVk confBot  --startVkBot (Handle (log_priority confLogger) printLog) confBot
         TelegramBot ->
-            startTelegramBot (Handle (log_priority confLogger) printLog) confBot
+            startTelegramBot
+                (Handle (log_priority confLogger) printLog)
+                telegramHandler
+                confBot
