@@ -1,6 +1,6 @@
 # echobot
 
-This repository contains a echo bot for Telegram and VKontakte. The project was created as a test task of the Metalamp company.
+This repository contains a echo bot for Telegram and VKontakte. The bot sends messages from the user to him in response. The project was created as a test task of the Metalamp company.
  
 # Installation and Startup Guide
 To run and install the program, you must install the [stack](https://docs.haskellstack.org/en/stable/install_and_upgrade/).
@@ -10,7 +10,25 @@ After installing stack, clone this repository. Install the compiler (if required
       stack setup
     # build project
       stack build
+## Configuration file
+        bot {
+            type = "VKBot"/"TelegramBot"
+            token = "token"
+            help = "help message"
+            }
+        logger {
+            priority = "Debug"/"Info"/"Warning"/"Error"
+               }
+The database name must match the name specified in the file `sql/init_database.sql`
 
+To the run server use 
+
+    stack exec echobot-exe
+
+If the help message contains cyrillic characters, use (for Windows)
+
+    chcp 65001; stack exec echobot-exe
+    
 # Project structure
 
 * `app/Main.hs` - Preparing the bot settings and launch.

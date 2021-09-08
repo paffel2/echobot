@@ -121,7 +121,7 @@ createParamsAttachment (VkAttachmentAudioMessage "audio_message" (VkAudioMessage
     attachStr =
         "audio_message" ++
         show ownerId ++ "_" ++ show audioId ++ "_" ++ accessKey
-createParamsAttachment _ = [] --подумать о форвардах
+createParamsAttachment _ = []
 
 sendMessageAttachment :: Handle -> VkToken -> VkItem -> IO ()
 sendMessageAttachment hLogger vktoken (VkItem _ fromId _ (x:xs) _ _ _ _) =
@@ -197,19 +197,6 @@ sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)
         ]
 sendMessageRepeatText _ _ _ (VkItem _ _ _ _ _ _ _ Nothing) = return Nothing
 
-{-answers ::
-       Handle
-    -> VkToken
-    -> String
-    -> [(Int, Int)]
-    -> [VkItem]
-    -> IO [(Int, Int)]
-answers hLogger vktoken help_message list xs = do
-    mapM_ (repeatMessage hLogger vktoken list) xs
-    mapM_ (sendKeyboardVk hLogger vktoken) xs
-    mapM_ (sendMessageHelp hLogger vktoken help_message) xs
-    update <- mapM (sendMessageRepeatText hLogger vktoken list) xs
-    return $ updateListUsers list update-}
 repeatMessage :: Handle -> VkToken -> [(Int, Int)] -> VkItem -> IO ()
 repeatMessage hLogger vktoken list item@(VkItem _ fromId _ _ _ _ _ _) =
     when (fromId > 0) $ do
@@ -244,17 +231,3 @@ updateListUsers xs (u:us) = updateListUsers newList us
             Just (cid, n) -> newlist' ++ [(cid, n)]
                 where newlist' = filter ((/= cid) . fst) xs
 updateListUsers xs [] = xs
-{-answer ::
-       Handle
-    -> VkToken
-    -> String
-    -> Maybe VkResponseType
-    -> [(Int, Int)]
-    -> IO [(Int, Int)]
-answer hLogger vktoken help_message (Just (Server _ _ _ _ _ (Just messages))) xs =
-    answers hLogger vktoken help_message xs $ vkMessagesItems messages
-answer hLogger _ _ (Just _) xs =
-    logError hLogger "Unexcepted error" >> return xs
-answer hLogger _ _ Nothing xs = do
-    logError hLogger "Unexcepted error"
-    return xs-}
