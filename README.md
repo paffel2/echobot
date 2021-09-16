@@ -19,9 +19,9 @@ After installing stack, clone this repository. Install the compiler (if required
         logger {
             priority = "Debug"/"Info"/"Warning"/"Error"
                }
-The database name must match the name specified in the file `sql/init_database.sql`
 
-To the run server use 
+
+To the run bot use 
 
     stack exec echobot-exe
 

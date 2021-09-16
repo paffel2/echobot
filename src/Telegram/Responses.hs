@@ -142,6 +142,29 @@ instance FromJSON TelegramMessage where
         v .:? "venue"
     parseJSON _ = mzero
 
+data TelegramCommand
+    = Help
+    | Repeat
+    deriving (Show)
+
+type TelegramText = String
+
+data TgMessage
+    = TextMessage TelegramText
+    | CommandMessage TelegramCommand
+    | AnimationMessage TelegramAnimation
+    | AudioMessage TelegramAudio
+    | DocumentMessage TelegramDocument
+    | PhotoMessage [TelegramPhotoSize]
+    | VideoMessage TelegramVideo
+    | StickerMessage TelegramSticker
+    | VideoNoteMessage TelegramVideoNote
+    | VoiceMessage TelegramVoice
+    | ContactMessage TelegramContact
+    | LocationMessage TelegramLocation
+    | VenueMessage TelegramVenue
+    deriving (Show)
+
 data TelegramMessageEntity =
     TelegramMessageEntity
         { telegramMessageEntityType :: String

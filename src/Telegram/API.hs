@@ -4,7 +4,7 @@ module Telegram.API where
 
 import Data.Aeson (FromJSON)
 import qualified Data.Text as T
-import Logger (Handle, logDebug, logError, logInfo)
+import Logger (Handle, logInfo)
 import Telegram.BuildRequest
     ( TelegramToken
     , buildTelegramGetRequest
@@ -12,25 +12,43 @@ import Telegram.BuildRequest
     )
 import Telegram.Keyboard (keyboard)
 import Telegram.Requests
-    ( TelegramSendVenue(TelegramSendVenue),
-      TelegramSendLocation(TelegramSendLocation),
-      TelegramSendContact(TelegramSendContact),
-      TelegramSendVoice(TelegramSendVoice),
-      TelegramSendVideoNote(TelegramSendVideoNote),
-      TelegramSendSticker(TelegramSendSticker),
-      TelegramSendVideo(TelegramSendVideo),
-      TelegramSendPhoto(TelegramSendPhoto),
-      TelegramSendDocument(TelegramSendDocument),
-      TelegramSendAudio(TelegramSendAudio),
-      TelegramSendAnimation(TelegramSendAnimation),
-      TelegramSendMessage(TelegramSendMessage) )
-
+    ( TelegramSendAnimation(TelegramSendAnimation)
+    , TelegramSendAudio(TelegramSendAudio)
+    , TelegramSendContact(TelegramSendContact)
+    , TelegramSendDocument(TelegramSendDocument)
+    , TelegramSendLocation(TelegramSendLocation)
+    , TelegramSendMessage(TelegramSendMessage)
+    , TelegramSendPhoto(TelegramSendPhoto)
+    , TelegramSendSticker(TelegramSendSticker)
+    , TelegramSendVenue(TelegramSendVenue)
+    , TelegramSendVideo(TelegramSendVideo)
+    , TelegramSendVideoNote(TelegramSendVideoNote)
+    , TelegramSendVoice(TelegramSendVoice)
+    )
 import Telegram.Responses
-    ( TelegramMessageEntity,
-      TelegramUpdate(telegramUpdateId),
-      TelegramUser )
-
-
+    ( TelegramAnimation(telegramAnimationFileId)
+    , TelegramAudio(telegramAudioFileId)
+    , TelegramContact(telegramContactFirstName, telegramContactLastName,
+                telegramContactPhoneNumber, telegramContactVcard)
+    , TelegramDocument(telegramDocumentFileId)
+    , TelegramLocation(telegramLocationHeading,
+                 telegramLocationHorizontalAccuracy, telegramLocationLatitude,
+                 telegramLocationLivePeriod, telegramLocationLongitude,
+                 telegramLocationProximityAlertRadius)
+    , TelegramMessageEntity
+    , TelegramPhotoSize(telegramPhotoSizeFileId)
+    , TelegramSticker(telegramStickerFileId)
+    , TelegramText
+    , TelegramUpdate(telegramUpdateId)
+    , TelegramUser
+    , TelegramVenue(telegramVenueAddress, telegramVenueFoursquareId,
+              telegramVenueFoursquareType, telegramVenueGooglePlaceId,
+              telegramVenueGooglePlaceType, telegramVenueLocation,
+              telegramVenueTitle)
+    , TelegramVideo(telegramVideoFileId)
+    , TelegramVideoNote(telegramVideoNoteFileId)
+    , TelegramVoice(telegramVoiceFileId)
+    )
 
 getMe :: Handle -> TelegramToken -> IO (Maybe TelegramUser)
 getMe hLogger tgtoken = buildTelegramGetRequest hLogger tgtoken "getMe" []
@@ -78,14 +96,14 @@ findRepeatNumber listOfUsers chatId = do
         Nothing -> do
             return 1
 
-sendMessage ::
+sendTextMessage ::
        Handle
     -> String
     -> Int
-    -> String
+    -> TelegramText
     -> Maybe [TelegramMessageEntity]
     -> IO (Maybe Int)
-sendMessage hLogger tgtoken chatId text ent =
+sendTextMessage hLogger tgtoken chatId text ent =
     buildTelegramPostRequest
         hLogger
         tgtoken
@@ -93,136 +111,182 @@ sendMessage hLogger tgtoken chatId text ent =
         (TelegramSendMessage chatId text ent Nothing)
         []
 
-sendAnimation ::
-       Handle -> String -> Int -> String -> Maybe String -> IO (Maybe Int)
-sendAnimation hLogger tgtoken chatId anim cap =
+sendAnimationMessage ::
+       Handle
+    -> String
+    -> Int
+    -> TelegramAnimation
+    -> Maybe String
+    -> IO (Maybe Int)
+sendAnimationMessage hLogger tgtoken chatId anim cap =
     buildTelegramPostRequest
         hLogger
         tgtoken
         "sendAnimation"
-        (TelegramSendAnimation chatId anim cap)
+        (TelegramSendAnimation chatId animId cap)
         []
+  where
+    animId = telegramAnimationFileId anim
 
-sendAudio :: Handle -> String -> Int -> String -> Maybe String -> IO (Maybe Int)
-sendAudio hLogger tgtoken chatId audio cap =
+sendAudioMessage ::
+       Handle
+    -> String
+    -> Int
+    -> TelegramAudio
+    -> Maybe String
+    -> IO (Maybe Int)
+sendAudioMessage hLogger tgtoken chatId audio cap =
     buildTelegramPostRequest
         hLogger
         tgtoken
         "sendAudio"
-        (TelegramSendAudio chatId audio cap)
+        (TelegramSendAudio chatId audioId cap)
         []
+  where
+    audioId = telegramAudioFileId audio
 
-sendDocument ::
-       Handle -> String -> Int -> String -> Maybe String -> IO (Maybe Int)
-sendDocument hLogger tgtoken chatId doc cap =
+sendDocumentMessage ::
+       Handle
+    -> String
+    -> Int
+    -> TelegramDocument
+    -> Maybe String
+    -> IO (Maybe Int)
+sendDocumentMessage hLogger tgtoken chatId doc cap =
     buildTelegramPostRequest
         hLogger
         tgtoken
         "sendDocument"
-        (TelegramSendDocument chatId doc cap)
+        (TelegramSendDocument chatId docId cap)
         []
+  where
+    docId = telegramDocumentFileId doc
 
-sendPhoto :: Handle -> String -> Int -> String -> Maybe String -> IO (Maybe Int)
-sendPhoto hLogger tgtoken chatId photo cap =
+sendPhotoMessage ::
+       Handle
+    -> String
+    -> Int
+    -> [TelegramPhotoSize]
+    -> Maybe String
+    -> IO (Maybe Int)
+sendPhotoMessage hLogger tgtoken chatId (photo:_) cap =
     buildTelegramPostRequest
         hLogger
         tgtoken
         "sendPhoto"
-        (TelegramSendPhoto chatId photo cap)
+        (TelegramSendPhoto chatId photoId cap)
         []
+  where
+    photoId = telegramPhotoSizeFileId photo
+sendPhotoMessage _ _ _ _ _ = return Nothing
 
-sendVideo :: Handle -> String -> Int -> String -> Maybe String -> IO (Maybe Int)
-sendVideo hLogger tgtoken chatId video cap =
+sendVideoMessage ::
+       Handle
+    -> String
+    -> Int
+    -> TelegramVideo
+    -> Maybe String
+    -> IO (Maybe Int)
+sendVideoMessage hLogger tgtoken chatId video cap =
     buildTelegramPostRequest
         hLogger
         tgtoken
         "sendVideo"
-        (TelegramSendVideo chatId video cap)
+        (TelegramSendVideo chatId videoId cap)
         []
+  where
+    videoId = telegramVideoFileId video
 
-sendSticker :: Handle -> String -> Int -> String -> IO (Maybe Int)
-sendSticker hLogger tgtoken chatId sticker =
+sendStickerMessage ::
+       Handle -> String -> Int -> TelegramSticker -> IO (Maybe Int)
+sendStickerMessage hLogger tgtoken chatId sticker =
     buildTelegramPostRequest
         hLogger
         tgtoken
         "sendSticker"
-        (TelegramSendSticker chatId sticker)
+        (TelegramSendSticker chatId stickerId)
         []
+  where
+    stickerId = telegramStickerFileId sticker
 
-sendVideoNote :: Handle -> String -> Int -> String -> IO (Maybe Int)
-sendVideoNote hLogger tgtoken chatId video =
+sendVideoNoteMessage ::
+       Handle -> String -> Int -> TelegramVideoNote -> IO (Maybe Int)
+sendVideoNoteMessage hLogger tgtoken chatId videoNote =
     buildTelegramPostRequest
         hLogger
         tgtoken
         "sendVideoNote"
-        (TelegramSendVideoNote chatId video)
+        (TelegramSendVideoNote chatId videoNoteId)
         []
+  where
+    videoNoteId = telegramVideoNoteFileId videoNote
 
-sendVoice :: Handle -> String -> Int -> String -> Maybe String -> IO (Maybe Int)
-sendVoice hLogger tgtoken chatId voice cap =
+sendVoiceMessage ::
+       Handle
+    -> String
+    -> Int
+    -> TelegramVoice
+    -> Maybe String
+    -> IO (Maybe Int)
+sendVoiceMessage hLogger tgtoken chatId voice cap =
     buildTelegramPostRequest
         hLogger
         tgtoken
         "sendVoice"
-        (TelegramSendVoice chatId voice cap)
+        (TelegramSendVoice chatId voiceId cap)
         []
+  where
+    voiceId = telegramVoiceFileId voice
 
-sendContact ::
-       Handle
-    -> String
-    -> Int
-    -> String
-    -> String
-    -> Maybe String
-    -> Maybe String
-    -> IO (Maybe Int)
-sendContact hLogger tgtoken chatId phoneNum fname lname vcard =
+sendContactMessage ::
+       Handle -> String -> Int -> TelegramContact -> IO (Maybe Int)
+sendContactMessage hLogger tgtoken chatId contact =
     buildTelegramPostRequest
         hLogger
         tgtoken
         "sendContact"
         (TelegramSendContact chatId phoneNum fname lname vcard)
         []
+  where
+    phoneNum = telegramContactPhoneNumber contact
+    fname = telegramContactFirstName contact
+    lname = telegramContactLastName contact
+    vcard = telegramContactVcard contact
 
-sendLocation ::
-       Handle
-    -> String
-    -> Int
-    -> Double
-    -> Double
-    -> Maybe Double
-    -> Maybe Int
-    -> Maybe Int
-    -> Maybe Int
-    -> IO (Maybe Int)
-sendLocation hLogger tgtoken chatId lat long horac lp hea par =
+sendLocationMessage ::
+       Handle -> String -> Int -> TelegramLocation -> IO (Maybe Int)
+sendLocationMessage hLogger tgtoken chatId location =
     buildTelegramPostRequest
         hLogger
         tgtoken
         "sendLocation"
         (TelegramSendLocation chatId lat long horac lp hea par)
         []
+  where
+    lat = telegramLocationLatitude location
+    long = telegramLocationLongitude location
+    horac = telegramLocationHorizontalAccuracy location
+    lp = telegramLocationLivePeriod location
+    hea = telegramLocationHeading location
+    par = telegramLocationProximityAlertRadius location
 
-sendVenue ::
-       Handle
-    -> String
-    -> Int
-    -> Double
-    -> Double
-    -> String
-    -> String
-    -> Maybe String
-    -> Maybe String
-    -> Maybe String
-    -> Maybe String
-    -> IO (Maybe Int)
-sendVenue hLogger tgtoken chatId lat long title address fsid fstype gpid gptype =
+sendVenueMessage :: Handle -> String -> Int -> TelegramVenue -> IO (Maybe Int)
+sendVenueMessage hLogger tgtoken chatId venue =
     buildTelegramPostRequest
         hLogger
         tgtoken
         "sendVenue"
         (TelegramSendVenue chatId lat long title address fsid fstype gpid gptype)
         []
+  where
+    lat = telegramLocationLatitude $ telegramVenueLocation venue
+    long = telegramLocationLongitude $ telegramVenueLocation venue
+    title = telegramVenueTitle venue
+    address = telegramVenueAddress venue
+    fsid = telegramVenueFoursquareId venue
+    fstype = telegramVenueFoursquareType venue
+    gpid = telegramVenueGooglePlaceId venue
+    gptype = telegramVenueGooglePlaceType venue
 
 sendKeyboard :: Handle -> String -> Int -> IO (Maybe Int)
 sendKeyboard hLogger tgtoken chatId =
@@ -237,289 +301,17 @@ sendKeyboard hLogger tgtoken chatId =
              (Just keyboard))
         []
 
-repeatSendMessage ::
+sendMessage ::
        Handle
-    -> Int
     -> String
     -> Int
     -> String
     -> Maybe [TelegramMessageEntity]
     -> IO (Maybe Int)
-repeatSendMessage hLogger n tgtoken chatId text entities
-    | n > 0 = do
-        status <- sendMessage hLogger tgtoken chatId text entities
-        case status of
-            Nothing -> do
-                logError hLogger "Message not send"
-                return Nothing
-            Just _ ->
-                repeatSendMessage hLogger (n - 1) tgtoken chatId text entities
-    | otherwise = do
-        logDebug hLogger "All messages sended"
-        return $ Just 200
-
-repeatSendAnimation ::
-       Handle
-    -> Int
-    -> String
-    -> Int
-    -> String
-    -> Maybe String
-    -> IO (Maybe Int)
-repeatSendAnimation hLogger n tgtoken chatId anim cap
-    | n > 0 = do
-        status <- sendAnimation hLogger tgtoken chatId anim cap
-        case status of
-            Nothing -> do
-                logError hLogger "Animation not send"
-                return Nothing
-            Just _ ->
-                repeatSendAnimation hLogger (n - 1) tgtoken chatId anim cap
-    | otherwise = do
-        logDebug hLogger "All Animations sended"
-        return $ Just 200
-
-repeatSendAudio ::
-       Handle
-    -> Int
-    -> String
-    -> Int
-    -> String
-    -> Maybe String
-    -> IO (Maybe Int)
-repeatSendAudio hLogger n tgtoken chatId audio cap
-    | n > 0 = do
-        status <- sendAudio hLogger tgtoken chatId audio cap
-        case status of
-            Nothing -> do
-                logError hLogger "Audio not send"
-                return Nothing
-            Just _ -> repeatSendAudio hLogger (n - 1) tgtoken chatId audio cap
-    | otherwise = do
-        logDebug hLogger "All audios sended"
-        return $ Just 200
-
-repeatSendDocument ::
-       Handle
-    -> Int
-    -> String
-    -> Int
-    -> String
-    -> Maybe String
-    -> IO (Maybe Int)
-repeatSendDocument hLogger n tgtoken chatId doc cap
-    | n > 0 = do
-        status <- sendDocument hLogger tgtoken chatId doc cap
-        case status of
-            Nothing -> do
-                logError hLogger "Document not send"
-                return Nothing
-            Just _ -> repeatSendDocument hLogger (n - 1) tgtoken chatId doc cap
-    | otherwise = do
-        logDebug hLogger "All Documents sended"
-        return $ Just 200
-
-repeatSendPhoto ::
-       Handle
-    -> Int
-    -> String
-    -> Int
-    -> String
-    -> Maybe String
-    -> IO (Maybe Int)
-repeatSendPhoto hLogger n tgtoken chatId photo cap
-    | n > 0 = do
-        status <- sendPhoto hLogger tgtoken chatId photo cap
-        case status of
-            Nothing -> do
-                logError hLogger "Photo not send"
-                return Nothing
-            Just _ -> repeatSendPhoto hLogger (n - 1) tgtoken chatId photo cap
-    | otherwise = do
-        logDebug hLogger "All Photo sended"
-        return $ Just 200
-
-repeatSendVideo ::
-       Handle
-    -> Int
-    -> String
-    -> Int
-    -> String
-    -> Maybe String
-    -> IO (Maybe Int)
-repeatSendVideo hLogger n tgtoken chatId video cap
-    | n > 0 = do
-        status <- sendVideo hLogger tgtoken chatId video cap
-        case status of
-            Nothing -> do
-                logError hLogger "Video not send"
-                return Nothing
-            Just _ -> repeatSendVideo hLogger (n - 1) tgtoken chatId video cap
-    | otherwise = do
-        logDebug hLogger "All Video sended"
-        return $ Just 200
-
-repeatSendSticker :: Handle -> Int -> String -> Int -> String -> IO (Maybe Int)
-repeatSendSticker hLogger n tgtoken chatId sticker
-    | n > 0 = do
-        status <- sendSticker hLogger tgtoken chatId sticker
-        case status of
-            Nothing -> do
-                logError hLogger "Sticker not send"
-                return Nothing
-            Just _ -> repeatSendSticker hLogger (n - 1) tgtoken chatId sticker
-    | otherwise = do
-        logDebug hLogger "All stickers sended"
-        return $ Just 200
-
-repeatSendVideoNote ::
-       Handle -> Int -> String -> Int -> String -> IO (Maybe Int)
-repeatSendVideoNote hLogger n tgtoken chatId videonote
-    | n > 0 = do
-        status <- sendVideoNote hLogger tgtoken chatId videonote
-        case status of
-            Nothing -> do
-                logError hLogger "VideoNote not send"
-                return Nothing
-            Just _ ->
-                repeatSendVideoNote hLogger (n - 1) tgtoken chatId videonote
-    | otherwise = do
-        logDebug hLogger "All VideoNotes sended"
-        return $ Just 200
-
-repeatSendVoice ::
-       Handle
-    -> Int
-    -> String
-    -> Int
-    -> String
-    -> Maybe String
-    -> IO (Maybe Int)
-repeatSendVoice hLogger n tgtoken chatId voice cap
-    | n > 0 = do
-        status <- sendVoice hLogger tgtoken chatId voice cap
-        case status of
-            Nothing -> do
-                logError hLogger "Voice not send"
-                return Nothing
-            Just _ -> repeatSendVoice hLogger (n - 1) tgtoken chatId voice cap
-    | otherwise = do
-        logDebug hLogger "All Voices sended"
-        return $ Just 200
-
-repeatSendContact ::
-       Handle
-    -> Int
-    -> String
-    -> Int
-    -> String
-    -> String
-    -> Maybe String
-    -> Maybe String
-    -> IO (Maybe Int)
-repeatSendContact hLogger n tgtoken chatId phoneNum fname lname vcard
-    | n > 0 = do
-        status <- sendContact hLogger tgtoken chatId phoneNum fname lname vcard
-        case status of
-            Nothing -> do
-                logError hLogger "Contact not send"
-                return Nothing
-            Just _ ->
-                repeatSendContact
-                    hLogger
-                    (n - 1)
-                    tgtoken
-                    chatId
-                    phoneNum
-                    fname
-                    lname
-                    vcard
-    | otherwise = do
-        logDebug hLogger "All Contacts sended"
-        return $ Just 200
-
-repeatSendLocation ::
-       Handle
-    -> Int
-    -> String
-    -> Int
-    -> Double
-    -> Double
-    -> Maybe Double
-    -> Maybe Int
-    -> Maybe Int
-    -> Maybe Int
-    -> IO (Maybe Int)
-repeatSendLocation hLogger n tgtoken chatId lat long horac lp hea par
-    | n > 0 = do
-        status <- sendLocation hLogger tgtoken chatId lat long horac lp hea par
-        case status of
-            Nothing -> do
-                logError hLogger "Location not send"
-                return Nothing
-            Just _ ->
-                repeatSendLocation
-                    hLogger
-                    (n - 1)
-                    tgtoken
-                    chatId
-                    lat
-                    long
-                    horac
-                    lp
-                    hea
-                    par
-    | otherwise = do
-        logDebug hLogger "All Locations sended"
-        return $ Just 200
-
-repeatSendVenue ::
-       Handle
-    -> Int
-    -> String
-    -> Int
-    -> Double
-    -> Double
-    -> String
-    -> String
-    -> Maybe String
-    -> Maybe String
-    -> Maybe String
-    -> Maybe String
-    -> IO (Maybe Int)
-repeatSendVenue hLogger n tgtoken chatId lat long title address fsid fstype gpid gptype
-    | n > 0 = do
-        status <-
-            sendVenue
-                hLogger
-                tgtoken
-                chatId
-                lat
-                long
-                title
-                address
-                fsid
-                fstype
-                gpid
-                gptype
-        case status of
-            Nothing -> do
-                logError hLogger "Venue not send"
-                return Nothing
-            Just _ ->
-                repeatSendVenue
-                    hLogger
-                    (n - 1)
-                    tgtoken
-                    chatId
-                    lat
-                    long
-                    title
-                    address
-                    fsid
-                    fstype
-                    gpid
-                    gptype
-    | otherwise = do
-        logDebug hLogger "All Venues sended"
-        return $ Just 200
+sendMessage hLogger tgtoken chatId text ent =
+    buildTelegramPostRequest
+        hLogger
+        tgtoken
+        "sendMessage"
+        (TelegramSendMessage chatId text ent Nothing)
+        []

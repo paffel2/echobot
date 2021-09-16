@@ -7,7 +7,7 @@ import Telegram.TelegramHandle (TelegramHandle(getMe))
 
 startTelegramBot :: Handle -> TelegramHandle -> ConfigModules -> IO ()
 startTelegramBot hLogger hTelegram botConf = do
-    logInfo hLogger "Bot Start"
+    logInfo hLogger "New Bot Start"
     logInfo hLogger "Check token"
     ch <- getMe hTelegram hLogger (Config.token botConf)
     case ch of
