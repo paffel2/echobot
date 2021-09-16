@@ -5,7 +5,7 @@ import Logger (Handle, logError, logInfo)
 import Telegram.Echo (echo)
 import Telegram.TelegramHandle (TelegramHandle(getMe))
 
-startTelegramBot :: Handle -> TelegramHandle -> ConfigModules -> IO ()
+startTelegramBot :: Handle IO -> TelegramHandle IO -> ConfigModules -> IO ()
 startTelegramBot hLogger hTelegram botConf = do
     logInfo hLogger "New Bot Start"
     logInfo hLogger "Check token"

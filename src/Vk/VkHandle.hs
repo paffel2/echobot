@@ -2,25 +2,24 @@ module Vk.VkHandle where
 
 import Logger (Handle)
 import qualified Vk.API as API
-import Vk.BuildRequests (VkToken)
+import Vk.Types ( VkToken )
 import Vk.Responses (VkItem, VkResponseType)
 
-data VKHandle =
+data VKHandle m =
     VKHandle
-        { getLongPollServer :: Handle -> VkToken -> IO (Maybe VkResponseType)
-        , getLongPollHistory :: Handle -> VkToken -> Int -> Int -> IO (Maybe VkResponseType)
-        , getTsAndPts :: Handle -> VkToken -> IO (Maybe (Int, Int))
-        , sendMessageText :: Handle -> VkToken -> VkItem -> IO ()
-        , sendKeyboardVk :: Handle -> VkToken -> VkItem -> IO ()
+        { getLongPollServer :: Handle m -> VkToken -> m (Maybe VkResponseType)
+        , getLongPollHistory :: Handle m -> VkToken -> Int -> Int -> m (Maybe VkResponseType)
+        , getTsAndPts :: Handle m -> VkToken -> m (Maybe (Int, Int))
+        , sendMessageText :: Handle m -> VkToken -> VkItem -> m ()
+        , sendKeyboardVk :: Handle m -> VkToken -> VkItem -> m ()
         , findRepeatNumber :: [(Int, Int)] -> Int -> Int
-        , sendMessageRepeatText :: Handle -> String -> [(Int, Int)] -> VkItem -> IO (Maybe ( Int
-                                                                                           , Int))
-        , repeatMessage :: Handle -> VkToken -> [(Int, Int)] -> VkItem -> IO ()
-        , sendMessageHelp :: Handle -> VkToken -> String -> VkItem -> IO ()
+        , sendMessageRepeatText :: Handle m -> String -> [(Int, Int)] -> VkItem -> m (Maybe ( Int, Int))
+        , repeatMessage :: Handle m -> VkToken -> [(Int, Int)] -> VkItem -> m ()
+        , sendMessageHelp :: Handle m-> VkToken -> String -> VkItem -> m ()
         , updateListUsers :: [(Int, Int)] -> [Maybe (Int, Int)] -> [(Int, Int)]
         }
 
-handlerVk :: VKHandle
+handlerVk :: VKHandle IO
 handlerVk =
     VKHandle
         API.getLongPollServer
@@ -33,3 +32,4 @@ handlerVk =
         API.repeatMessage
         API.sendMessageHelp
         API.updateListUsers
+

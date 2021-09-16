@@ -30,14 +30,16 @@ import Telegram.Types
       RepeatsList,
       Caption,
       StatusResult )
-echo ::
-       Handle
-    -> TelegramHandle
+
+
+echo :: Monad m =>
+       Handle m
+    -> TelegramHandle m
     -> TelegramToken
     -> Maybe UpdateId
     -> HelpMessage
     -> RepeatsList
-    -> IO ()
+    -> m ()
 echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
     updates <- getUpdates hTelegram' hLogger' tgtoken' updateId
     listOfUsersUpd <-
@@ -87,15 +89,15 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
         text = "Number of reapeting " ++ dat
     answer _ _ _ _ _ _ = return Nothing
 
-sendAnswer ::
-       Handle
-    -> TelegramHandle
+sendAnswer :: Monad m =>
+       Handle m
+    -> TelegramHandle m
     -> TelegramToken
     -> ChatId
     -> TgMessage
     -> Maybe [TelegramMessageEntity]
     -> Maybe Caption
-    -> IO (Maybe StatusResult)
+    -> m (Maybe StatusResult)
 sendAnswer hLogger hTelegram tgtoken chatId tg_message ent cap =
     case tg_message of
         TextMessage telegram_text ->
@@ -152,9 +154,9 @@ sendAnswer hLogger hTelegram tgtoken chatId tg_message ent cap =
             sendVenueMessage hTelegram hLogger tgtoken chatId telegram_venue
         _ -> return Nothing
 
-repeatSendMessage ::
-       Handle
-    -> TelegramHandle
+repeatSendMessage :: Monad m =>
+       Handle m
+    -> TelegramHandle m
     -> ReapeatsNum
     -> TelegramToken
     -> ChatId
@@ -162,7 +164,7 @@ repeatSendMessage ::
     -> Maybe [TelegramMessageEntity]
     -> Maybe Caption
     -> HelpMessage
-    -> IO (Maybe StatusResult)
+    -> m (Maybe StatusResult)
 repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap help_message = do
     case tg_message of
         CommandMessage telegram_command ->
@@ -195,14 +197,14 @@ repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap hel
             logDebug hLogger "All messages sended"
             return $ Just 200
 
-sendServiceMessage ::
-       Handle
-    -> TelegramHandle
+sendServiceMessage :: Monad m =>
+       Handle m
+    -> TelegramHandle m
     -> TelegramToken
     -> ChatId
     -> TelegramCommand
     -> HelpMessage
-    -> IO (Maybe StatusResult)
+    -> m (Maybe StatusResult)
 sendServiceMessage hLogger hTelegram tgtoken chatId Repeat _ =
     sendKeyboard hTelegram hLogger tgtoken chatId
 sendServiceMessage hLogger hTelegram tgtoken chatId Help help_message =

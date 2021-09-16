@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c3287761c3371917dc53105d764d690bdc6349edfa5e3bf96eeb96bae72e4e77
+-- hash: d0f2a5ae0df4db6db38c373507cf0e20e49b74026b226cf116ffcd24d664bc39
 
 name:           echobot
 version:        0.1.0.0
@@ -46,6 +46,7 @@ library
       Vk.Keyboard
       Vk.KeyboardJSON
       Vk.Responses
+      Vk.Types
       Vk.VkHandle
   other-modules:
       Paths_echobot

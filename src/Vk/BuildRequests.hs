@@ -27,22 +27,26 @@ import Network.HTTP.Req
     , runReq
     )
 import Vk.Responses (VkResponse(VkResponse), VkResponseType)
+import Vk.Types
 
-type VkToken = String
+type PostParams = [(T.Text, Maybe T.Text)]
+type GetParams = [(T.Text, T.Text)]
+type GetMethod = T.Text
+type PostMethod = String
 
-params :: [(T.Text, Maybe T.Text)] -> FormUrlEncodedParam
+params :: PostParams -> FormUrlEncodedParam
 params [] = mempty
 params ((a, b):xs) = queryParam a b <> params xs
 
-buildParams :: (QueryParam p, Monoid p) => [(T.Text, T.Text)] -> p
+buildParams :: (QueryParam p, Monoid p) => GetParams -> p
 buildParams [] = mempty
 buildParams parameters = mconcat $ fmap (uncurry (=:)) parameters
 
 buildVkGetRequest ::
-       Handle
-    -> String
-    -> T.Text
-    -> [(T.Text, T.Text)]
+       Handle IO
+    -> VkToken
+    -> GetMethod
+    -> GetParams
     -> IO (Maybe VkResponseType)
 buildVkGetRequest hLogger vktoken url parameters =
     catch
@@ -66,7 +70,7 @@ buildVkGetRequest hLogger vktoken url parameters =
     param = buildParams (parameters ++ [("access_token", T.pack vktoken)])
 
 buildVkPostRequest ::
-       Handle -> String -> String -> [(T.Text, Maybe T.Text)] -> IO (Maybe Int)
+       Handle IO -> VkToken -> PostMethod -> PostParams -> IO (Maybe Int)
 buildVkPostRequest hLogger vktoken method param =
     catch
         (runReq defaultHttpConfig $ do

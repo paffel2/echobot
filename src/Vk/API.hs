@@ -6,7 +6,7 @@ import Control.Monad (when)
 import Data.Maybe (fromMaybe, isJust)
 import qualified Data.Text as T
 import Logger (Handle, logDebug, logError)
-import Vk.BuildRequests (VkToken, buildVkGetRequest, buildVkPostRequest)
+import Vk.BuildRequests (buildVkGetRequest, buildVkPostRequest)
 import Vk.Keyboard (encKeyboard)
 import Vk.Responses
     ( VkAttachment(VkAttachmentAudio, VkAttachmentAudioMessage,
@@ -28,8 +28,11 @@ import Vk.Responses
     , VkVideo(VkVideo)
     , VkWall(VkWall)
     )
+    
+import Vk.Types
+    ( VkToken, HelpMessage, RepeatsList, UserId, Ts, Pts, RepeatsNum )
 
-getLongPollServer :: Handle -> VkToken -> IO (Maybe VkResponseType)
+getLongPollServer :: Handle IO -> VkToken -> IO (Maybe VkResponseType)
 getLongPollServer hLogger vktoken =
     buildVkGetRequest
         hLogger
@@ -38,7 +41,7 @@ getLongPollServer hLogger vktoken =
         [("lp_version", "3"), ("need_pts", "1"), ("v", "5.130")]
 
 getLongPollHistory ::
-       Handle -> VkToken -> Int -> Int -> IO (Maybe VkResponseType)
+       Handle IO -> VkToken -> Ts -> Pts -> IO (Maybe VkResponseType)
 getLongPollHistory hLogger vktoken ts pts =
     buildVkGetRequest
         hLogger
@@ -46,7 +49,7 @@ getLongPollHistory hLogger vktoken ts pts =
         "messages.getLongPollHistory"
         [("ts", T.pack $ show ts), ("pts", T.pack $ show pts), ("v", "5.130")]
 
-getTsAndPts :: Handle -> VkToken -> IO (Maybe (Int, Int))
+getTsAndPts :: Handle IO -> VkToken -> IO (Maybe (Ts, Pts))
 getTsAndPts hLogger vktoken = do
     serverInf <- getLongPollServer hLogger vktoken
     case serverInf of
@@ -61,7 +64,7 @@ createParams vkMessage =
     , ("message", Just $ T.pack $ vkItemText vkMessage)
     ]
 
-sendMessageText :: Handle -> VkToken -> VkItem -> IO ()
+sendMessageText :: Handle IO-> VkToken -> VkItem -> IO ()
 sendMessageText hLogger vktoken (VkItem _ fromId (x:xs) _ _ _ _ Nothing) =
     when ((fromId > 0) && ((x : xs) /= "/repeat") && ((x : xs) /= "/help")) $ do
         status <- buildVkPostRequest hLogger vktoken "messages.send" params'
@@ -123,7 +126,7 @@ createParamsAttachment (VkAttachmentAudioMessage "audio_message" (VkAudioMessage
         show ownerId ++ "_" ++ show audioId ++ "_" ++ accessKey
 createParamsAttachment _ = []
 
-sendMessageAttachment :: Handle -> VkToken -> VkItem -> IO ()
+sendMessageAttachment :: Handle IO -> VkToken -> VkItem -> IO ()
 sendMessageAttachment hLogger vktoken (VkItem _ fromId _ (x:xs) _ _ _ _) =
     when (fromId > 0) $ do
         let parameters = createParamsAttachment <$> (x : xs)
@@ -136,7 +139,7 @@ sendMessageAttachment hLogger vktoken (VkItem _ fromId _ (x:xs) _ _ _ _) =
             else logError hLogger "One or all attachments not sended"
 sendMessageAttachment _ _ (VkItem _ _ _ [] _ _ _ _) = return ()
 
-sendKeyboardVk :: Handle -> VkToken -> VkItem -> IO ()
+sendKeyboardVk :: Handle IO -> VkToken -> VkItem -> IO ()
 sendKeyboardVk hLogger vktoken (VkItem _ fromId text _ _ _ _ _) =
     when ((fromId > 0) && (text == "/repeat")) $ do
         status <- buildVkPostRequest hLogger vktoken "messages.send" params'
@@ -150,7 +153,7 @@ sendKeyboardVk hLogger vktoken (VkItem _ fromId text _ _ _ _ _) =
         , ("keyboard", Just encKeyboard)
         ]
 
-sendGeoVK :: Handle -> VkToken -> VkItem -> IO ()
+sendGeoVK :: Handle IO -> VkToken -> VkItem -> IO ()
 sendGeoVK hLogger vktoken (VkItem _ fromId _ _ _ (Just geo) _ _) =
     when (fromId > 0) $ do
         status <- buildVkPostRequest hLogger vktoken "messages.send" params'
@@ -167,11 +170,11 @@ sendGeoVK hLogger vktoken (VkItem _ fromId _ _ _ (Just geo) _ _) =
     long = vkCoordinatesLongitude $ vkGeoCoordinates geo
 sendGeoVK _ _ _ = return ()
 
-findRepeatNumber :: [(Int, Int)] -> Int -> Int
-findRepeatNumber listOfUsers chatId = fromMaybe 1 $ lookup chatId listOfUsers
+findRepeatNumber :: RepeatsList -> UserId -> RepeatsNum 
+findRepeatNumber listOfUsers userId = fromMaybe 1 $ lookup userId listOfUsers
 
 sendMessageRepeatText ::
-       Handle -> String -> [(Int, Int)] -> VkItem -> IO (Maybe (Int, Int))
+       Handle IO -> String -> RepeatsList -> VkItem -> IO (Maybe (Int, Int))
 sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)) =
     if fromId > 0
         then do
@@ -197,7 +200,7 @@ sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)
         ]
 sendMessageRepeatText _ _ _ (VkItem _ _ _ _ _ _ _ Nothing) = return Nothing
 
-repeatMessage :: Handle -> VkToken -> [(Int, Int)] -> VkItem -> IO ()
+repeatMessage :: Handle IO -> VkToken -> RepeatsList -> VkItem -> IO ()
 repeatMessage hLogger vktoken list item@(VkItem _ fromId _ _ _ _ _ _) =
     when (fromId > 0) $ do
         repeatMessage' (findRepeatNumber list fromId) vktoken item
@@ -209,7 +212,7 @@ repeatMessage hLogger vktoken list item@(VkItem _ fromId _ _ _ _ _ _) =
         sendGeoVK hLogger token' item'
         repeatMessage' (x - 1) token' item'
 
-sendMessageHelp :: Handle -> VkToken -> String -> VkItem -> IO ()
+sendMessageHelp :: Handle IO -> VkToken -> HelpMessage -> VkItem -> IO ()
 sendMessageHelp hLogger vktoken help_message (VkItem _ fromId text _ _ _ _ _) =
     when ((fromId > 0) && (text == "/help")) $ do
         status <- buildVkPostRequest hLogger vktoken "messages.send" params'
@@ -222,7 +225,7 @@ sendMessageHelp hLogger vktoken help_message (VkItem _ fromId text _ _ _ _ _) =
         , ("message", Just $ T.pack help_message)
         ]
 
-updateListUsers :: [(Int, Int)] -> [Maybe (Int, Int)] -> [(Int, Int)]
+updateListUsers :: RepeatsList -> [Maybe (UserId, RepeatsNum)] -> RepeatsList
 updateListUsers xs (u:us) = updateListUsers newList us
   where
     newList =
