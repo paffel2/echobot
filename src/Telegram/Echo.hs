@@ -1,7 +1,6 @@
 module Telegram.Echo where
 
 import Logger (Handle, logDebug, logError)
-import Telegram.BuildRequest (TelegramToken)
 import Telegram.Impl (telegramMessageToTgMessage)
 import Telegram.Responses
     ( TelegramCallbackQuery(TelegramCallbackQuery)
@@ -22,14 +21,22 @@ import Telegram.TelegramHandle
                sendVenueMessage, sendVideoMessage, sendVideoNoteMessage,
                sendVoiceMessage, updateListUsers)
     )
-
+import Telegram.Types
+    ( TelegramToken,
+      HelpMessage,
+      UpdateId,
+      ChatId,
+      ReapeatsNum,
+      RepeatsList,
+      Caption,
+      StatusResult )
 echo ::
        Handle
     -> TelegramHandle
     -> TelegramToken
-    -> Maybe Int
-    -> String
-    -> [(Int, Int)]
+    -> Maybe UpdateId
+    -> HelpMessage
+    -> RepeatsList
     -> IO ()
 echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
     updates <- getUpdates hTelegram' hLogger' tgtoken' updateId
@@ -83,12 +90,12 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
 sendAnswer ::
        Handle
     -> TelegramHandle
-    -> String
-    -> Int
+    -> TelegramToken
+    -> ChatId
     -> TgMessage
     -> Maybe [TelegramMessageEntity]
-    -> Maybe String
-    -> IO (Maybe Int)
+    -> Maybe Caption
+    -> IO (Maybe StatusResult)
 sendAnswer hLogger hTelegram tgtoken chatId tg_message ent cap =
     case tg_message of
         TextMessage telegram_text ->
@@ -148,14 +155,14 @@ sendAnswer hLogger hTelegram tgtoken chatId tg_message ent cap =
 repeatSendMessage ::
        Handle
     -> TelegramHandle
-    -> Int
-    -> String
-    -> Int
+    -> ReapeatsNum
+    -> TelegramToken
+    -> ChatId
     -> TgMessage
     -> Maybe [TelegramMessageEntity]
-    -> Maybe String
-    -> String
-    -> IO (Maybe Int)
+    -> Maybe Caption
+    -> HelpMessage
+    -> IO (Maybe StatusResult)
 repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap help_message = do
     case tg_message of
         CommandMessage telegram_command ->
@@ -191,11 +198,11 @@ repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap hel
 sendServiceMessage ::
        Handle
     -> TelegramHandle
-    -> String
-    -> Int
+    -> TelegramToken
+    -> ChatId
     -> TelegramCommand
-    -> String
-    -> IO (Maybe Int)
+    -> HelpMessage
+    -> IO (Maybe StatusResult)
 sendServiceMessage hLogger hTelegram tgtoken chatId Repeat _ =
     sendKeyboard hTelegram hLogger tgtoken chatId
 sendServiceMessage hLogger hTelegram tgtoken chatId Help help_message =

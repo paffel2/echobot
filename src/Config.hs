@@ -11,7 +11,8 @@ data Modules
     | LG
 
 type VKBot = String
-
+type HelpMessage = String
+type Token = String
 type TelegramBot = String
 
 data BotType
@@ -22,8 +23,8 @@ data BotType
 data ConfigModules
     = Bot
           { bot_type :: BotType
-          , token :: String
-          , help :: String
+          , token :: Token
+          , help :: HelpMessage
           }
     | Log
           { log_priority :: Priority

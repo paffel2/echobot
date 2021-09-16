@@ -2,7 +2,7 @@ module Telegram.TelegramHandle where
 
 import Logger (Handle)
 import qualified Telegram.API as API
-import Telegram.BuildRequest (TelegramToken)
+import Telegram.Types
 import Telegram.Requests ()
 import Telegram.Responses
     ( TelegramAnimation
