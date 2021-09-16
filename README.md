@@ -32,7 +32,7 @@ If the help message contains cyrillic characters, use (for Windows)
 # Project structure
 
 * `app/Main.hs` - Preparing the bot settings and launch.
-* `Telegram` - contains all code used by telegram bot.
+* `src/Telegram` - contains all code used by telegram bot.
     * `Telegram/API.hs` - contains functions that implement Telegram API.
     * `Telegram/Bot.hs` - telegram bot launcher
     * `Telegram/BuildRequests.hs` - contains the functions for creating requests to the telegram server.
@@ -41,7 +41,7 @@ If the help message contains cyrillic characters, use (for Windows)
     * `Telegram/Requests.hs` - contains data models received during requests to the telegram server.
     * `Telegram/Responses.hs` - contains models of responses sent to the telegram server.
     * `Telegram/TelegramHandle.hs` - contains a handle using all necessary functions.
-* `VK` - contains all code used by VKontakte bot.
+* `src/VK` - contains all code used by VKontakte bot.
     * `VK/API.hs` - contains functions that implement VKontakte API.
     * `VK/Bot.hs` - VKontakte bot launcher
     * `VK/BuildRequests.hs` - contains the functions for creating requests to the VKontakte server.
@@ -50,9 +50,9 @@ If the help message contains cyrillic characters, use (for Windows)
     * `VK/KeyboardJSON.hs` - contains keyboard data models received during requests to the VKontakte server.
     * `VK/Responses.hs` - contains models of responses sent to the VKontakte server.
     * `VK/VKHandle.hs` - contains a handle using all necessary functions.
-* `Config.hs` - contains operations related to bot settings.
-* `Logger.hs` - contains the logger implementation.
+* `src/Config.hs` - contains operations related to bot settings.
+* `src/Logger.hs` - contains the logger implementation.
 * `test` - contains tests.
-* `bot.conf` - bot's config file.
+* `config/bot.template.conf` - bot's config file. Сontains a configuration file with a description of the parameters 
 
 
