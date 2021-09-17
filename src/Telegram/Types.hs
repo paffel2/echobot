@@ -4,8 +4,8 @@ type TelegramToken = String
 type HelpMessage = String
 type UpdateId = Int
 type ChatId = Int
-type ReapeatsNum = Int
-type RepeatsList = [(ChatId,ReapeatsNum)]
+type RepeatsNum = Int
+type RepeatsList = [(ChatId,RepeatsNum)]
 type Caption = String
 type StatusResult = Int
 

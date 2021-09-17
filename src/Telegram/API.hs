@@ -78,7 +78,7 @@ getLastUpdateId hLogger updates =
             return Nothing
         Just xs -> return $ Just $ (+ 1) $ telegramUpdateId $ last xs
 
-updateListUsers :: RepeatsList -> [Maybe (ChatId, ReapeatsNum )] -> RepeatsList
+updateListUsers :: RepeatsList -> [Maybe (ChatId, RepeatsNum )] -> RepeatsList
 updateListUsers xs (u:us) = updateListUsers newList us
   where
     newList =
@@ -88,7 +88,7 @@ updateListUsers xs (u:us) = updateListUsers newList us
                 where newlist' = filter ((/= cid) . fst) xs
 updateListUsers xs [] = xs
 
-findRepeatNumber :: RepeatsList -> ChatId -> IO ReapeatsNum
+findRepeatNumber :: RepeatsList -> ChatId -> IO RepeatsNum
 findRepeatNumber listOfUsers chatId = do
     let n = lookup chatId listOfUsers
     case n of

@@ -26,7 +26,7 @@ import Telegram.Types
       HelpMessage,
       UpdateId,
       ChatId,
-      ReapeatsNum,
+      RepeatsNum,
       RepeatsList,
       Caption,
       StatusResult )
@@ -157,7 +157,7 @@ sendAnswer hLogger hTelegram tgtoken chatId tg_message ent cap =
 repeatSendMessage :: Monad m =>
        Handle m
     -> TelegramHandle m
-    -> ReapeatsNum
+    -> RepeatsNum
     -> TelegramToken
     -> ChatId
     -> TgMessage

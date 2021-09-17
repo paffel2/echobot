@@ -174,7 +174,7 @@ findRepeatNumber :: RepeatsList -> UserId -> RepeatsNum
 findRepeatNumber listOfUsers userId = fromMaybe 1 $ lookup userId listOfUsers
 
 sendMessageRepeatText ::
-       Handle IO -> String -> RepeatsList -> VkItem -> IO (Maybe (Int, Int))
+       Handle IO -> VkToken  -> RepeatsList -> VkItem -> IO (Maybe (UserId, RepeatsNum))
 sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)) =
     if fromId > 0
         then do
