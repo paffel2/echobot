@@ -1,10 +1,10 @@
 module Vk.VkHandle where
 
 import Logger (Handle)
+import UsersLists (RepeatsList, RepeatsNum)
 import qualified Vk.API as API
-import Vk.Types
-    ( HelpMessage, Pts, RepeatsList, RepeatsNum, Ts, UserId, VkToken )
 import Vk.Responses (VkItem, VkResponseType)
+import Vk.Types (HelpMessage, Pts, Ts, UserId, VkToken)
 
 data VKHandle m =
     VKHandle
@@ -13,11 +13,10 @@ data VKHandle m =
         , getTsAndPts :: Handle m -> VkToken -> m (Maybe (Ts, Pts))
         , sendMessageText :: Handle m -> VkToken -> VkItem -> m ()
         , sendKeyboardVk :: Handle m -> VkToken -> VkItem -> m ()
-        , findRepeatNumber :: RepeatsList  -> UserId -> RepeatsNum 
-        , sendMessageRepeatText :: Handle m -> VkToken  -> RepeatsList -> VkItem -> m (Maybe ( UserId, RepeatsNum))
+        , sendMessageRepeatText :: Handle m -> VkToken -> RepeatsList -> VkItem -> m (Maybe ( UserId
+                                                                                            , RepeatsNum))
         , repeatMessage :: Handle m -> VkToken -> RepeatsList -> VkItem -> m ()
-        , sendMessageHelp :: Handle m-> VkToken -> HelpMessage  -> VkItem -> m ()
-        , updateListUsers :: RepeatsList -> [Maybe (UserId, RepeatsNum)] -> RepeatsList
+        , sendMessageHelp :: Handle m -> VkToken -> HelpMessage -> VkItem -> m ()
         }
 
 handlerVk :: VKHandle IO
@@ -28,9 +27,6 @@ handlerVk =
         API.getTsAndPts
         API.sendMessageText
         API.sendKeyboardVk
-        API.findRepeatNumber
         API.sendMessageRepeatText
         API.repeatMessage
         API.sendMessageHelp
-        API.updateListUsers
-

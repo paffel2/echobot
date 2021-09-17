@@ -1,17 +1,17 @@
 module Vk.Bot where
 
 import Config (ConfigModules(help, token))
-import Logger (Handle, logError, logInfo)
-import Vk.Echo (echo)
-import Vk.VkHandle (VKHandle(getTsAndPts))
 import Control.Concurrent (threadDelay)
-import Vk.Types 
+import Logger (Handle, logError, logInfo)
+import UsersLists (RepeatsList)
+import Vk.Echo (echo)
+import Vk.Types (HelpMessage, Pts, Ts, VkToken)
+import Vk.VkHandle (VKHandle(getTsAndPts))
 
-
-
-loopBot :: Handle IO
+loopBot ::
+       Handle IO
     -> VKHandle IO
-    -> VkToken 
+    -> VkToken
     -> HelpMessage
     -> RepeatsList
     -> Ts
@@ -22,7 +22,7 @@ loopBot hLogger hVk token' help_message [] ts pts = do
     case newLoopInformation of
         Nothing -> do
             logError hLogger "Bad token or server is not available"
-        Just ((ts',pts'),newList) -> do
+        Just ((ts', pts'), newList) -> do
             threadDelay 3000000
             loopBot hLogger hVk token' help_message newList ts' pts'
 loopBot hLogger hVk token' help_message users_list ts pts = do
@@ -30,11 +30,9 @@ loopBot hLogger hVk token' help_message users_list ts pts = do
     case newLoopInformation of
         Nothing -> do
             logError hLogger ""
-        Just ((ts',pts'),newList) -> do
+        Just ((ts', pts'), newList) -> do
             threadDelay 3000000
             loopBot hLogger hVk token' help_message newList ts' pts'
-
-
 
 startVkBot :: Handle IO -> VKHandle IO -> ConfigModules -> IO ()
 startVkBot hLogger hVK botConf = do
@@ -46,5 +44,11 @@ startVkBot hLogger hVK botConf = do
             logError hLogger "Bad token or server is not available"
         Just (ts, pts) -> do
             logInfo hLogger "Good token"
-            loopBot hLogger hVK (Config.token botConf) (Config.help botConf) [] ts pts
-                
+            loopBot
+                hLogger
+                hVK
+                (Config.token botConf)
+                (Config.help botConf)
+                []
+                ts
+                pts

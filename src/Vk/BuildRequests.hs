@@ -27,7 +27,7 @@ import Network.HTTP.Req
     , runReq
     )
 import Vk.Responses (VkResponse(VkResponse), VkResponseType)
-import Vk.Types
+import Vk.Types ( VkToken )
 
 type PostParams = [(T.Text, Maybe T.Text)]
 type GetParams = [(T.Text, T.Text)]

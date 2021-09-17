@@ -7,29 +7,30 @@ import Data.Aeson.Types (parseMaybe)
 import qualified Data.Text as T
 import Logger (Handle, logError)
 import Network.HTTP.Req
-    ( QueryParam,
-      (/:),
-      (=:),
-      defaultHttpConfig,
-      https,
-      jsonResponse,
-      req,
-      responseBody,
-      responseStatusCode,
-      runReq,
-      GET(GET),
-      HttpException,
-      JsonResponse,
-      NoReqBody(NoReqBody),
-      POST(POST),
-      Req,
-      ReqBodyJson(ReqBodyJson) )
+    ( GET(GET)
+    , HttpException
+    , JsonResponse
+    , NoReqBody(NoReqBody)
+    , POST(POST)
+    , QueryParam
+    , Req
+    , ReqBodyJson(ReqBodyJson)
+    , (/:)
+    , (=:)
+    , defaultHttpConfig
+    , https
+    , jsonResponse
+    , req
+    , responseBody
+    , responseStatusCode
+    , runReq
+    )
 
-import Telegram.Types ( TelegramToken, StatusResult )
 import Telegram.Responses (TelegramResponse(TelegramResponse))
-
+import Telegram.Types (StatusResult, TelegramToken)
 
 type ParametersList = [(T.Text, T.Text)]
+
 type TelegramMethod = String
 
 buildParams :: (QueryParam p, Monoid p) => ParametersList -> p
@@ -101,8 +102,3 @@ buildTelegramPostRequest hLogger tgtoken url body params =
         return Nothing
   where
     param = buildParams params
-
-
-
-
-

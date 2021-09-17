@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d0f2a5ae0df4db6db38c373507cf0e20e49b74026b226cf116ffcd24d664bc39
+-- hash: ea20128a362a4b291b94d1ea8d0408ccc976a3d6ad6c1f366f2f9b3b56c35a03
 
 name:           echobot
 version:        0.1.0.0
@@ -39,6 +39,7 @@ library
       Telegram.Responses
       Telegram.TelegramHandle
       Telegram.Types
+      UsersLists
       Vk.API
       Vk.Bot
       Vk.BuildRequests
@@ -91,7 +92,9 @@ test-suite echobot-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      APITests
+      TelegramPatternTests
+      UsersListsTests
+      VkPatternTests
       Paths_echobot
   hs-source-dirs:
       test

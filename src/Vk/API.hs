@@ -3,7 +3,7 @@
 module Vk.API where
 
 import Control.Monad (when)
-import Data.Maybe (fromMaybe, isJust)
+import Data.Maybe (isJust)
 import qualified Data.Text as T
 import Logger (Handle, logDebug, logError)
 import Vk.BuildRequests (buildVkGetRequest, buildVkPostRequest)
@@ -28,9 +28,9 @@ import Vk.Responses
     , VkVideo(VkVideo)
     , VkWall(VkWall)
     )
-    
-import Vk.Types
-    ( VkToken, HelpMessage, RepeatsList, UserId, Ts, Pts, RepeatsNum )
+
+import UsersLists (RepeatsList, RepeatsNum, findRepeatNumber)
+import Vk.Types (HelpMessage, Pts, Ts, UserId, VkToken)
 
 getLongPollServer :: Handle IO -> VkToken -> IO (Maybe VkResponseType)
 getLongPollServer hLogger vktoken =
@@ -64,7 +64,7 @@ createParams vkMessage =
     , ("message", Just $ T.pack $ vkItemText vkMessage)
     ]
 
-sendMessageText :: Handle IO-> VkToken -> VkItem -> IO ()
+sendMessageText :: Handle IO -> VkToken -> VkItem -> IO ()
 sendMessageText hLogger vktoken (VkItem _ fromId (x:xs) _ _ _ _ Nothing) =
     when ((fromId > 0) && ((x : xs) /= "/repeat") && ((x : xs) /= "/help")) $ do
         status <- buildVkPostRequest hLogger vktoken "messages.send" params'
@@ -170,11 +170,12 @@ sendGeoVK hLogger vktoken (VkItem _ fromId _ _ _ (Just geo) _ _) =
     long = vkCoordinatesLongitude $ vkGeoCoordinates geo
 sendGeoVK _ _ _ = return ()
 
-findRepeatNumber :: RepeatsList -> UserId -> RepeatsNum 
-findRepeatNumber listOfUsers userId = fromMaybe 1 $ lookup userId listOfUsers
-
 sendMessageRepeatText ::
-       Handle IO -> VkToken  -> RepeatsList -> VkItem -> IO (Maybe (UserId, RepeatsNum))
+       Handle IO
+    -> VkToken
+    -> RepeatsList
+    -> VkItem
+    -> IO (Maybe (UserId, RepeatsNum))
 sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)) =
     if fromId > 0
         then do
@@ -224,13 +225,3 @@ sendMessageHelp hLogger vktoken help_message (VkItem _ fromId text _ _ _ _ _) =
         [ ("user_id", Just $ T.pack $ show fromId)
         , ("message", Just $ T.pack help_message)
         ]
-
-updateListUsers :: RepeatsList -> [Maybe (UserId, RepeatsNum)] -> RepeatsList
-updateListUsers xs (u:us) = updateListUsers newList us
-  where
-    newList =
-        case u of
-            Nothing -> xs
-            Just (cid, n) -> newlist' ++ [(cid, n)]
-                where newlist' = filter ((/= cid) . fst) xs
-updateListUsers xs [] = xs
