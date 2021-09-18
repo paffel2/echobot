@@ -45,7 +45,7 @@ newConfigHandle = return $ ConfigHandle {getConfig = getconfig}
 
 getconfig :: Modules -> IO ConfigModules
 getconfig module' = do
-    conf <- C.load [C.Optional "bot.conf"]
+    conf <- C.load [C.Optional "config/bot.conf"]
     case module' of
         BT -> do
             bot_type_param <-
