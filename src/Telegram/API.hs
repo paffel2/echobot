@@ -77,14 +77,12 @@ getLastUpdateId hLogger updates =
             return Nothing
         Just xs -> return $ Just $ (+ 1) $ telegramUpdateId $ last xs
 
-updateListUsers :: [(Int, Int)] -> [Maybe (Int, Int)] -> [(Int, Int)]
-updateListUsers xs (u:us) = updateListUsers newList us
+updateListUsers :: [(Int, Int)] -> [(Int, Int)] -> [(Int, Int)]
+updateListUsers xs ((cid,n):us) = updateListUsers newList us
   where
     newList =
-        case u of
-            Nothing -> xs
-            Just (cid, n) -> newlist' ++ [(cid, n)]
-                where newlist' = filter ((/= cid) . fst) xs
+        newlist' ++ [(cid, n)]
+    newlist' = filter ((/= cid) . fst) xs
 updateListUsers xs [] = xs
 
 findRepeatNumber :: [(Int, Int)] -> Int -> IO Int

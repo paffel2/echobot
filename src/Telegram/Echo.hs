@@ -22,7 +22,7 @@ import Telegram.TelegramHandle
                sendVenueMessage, sendVideoMessage, sendVideoNoteMessage,
                sendVoiceMessage, updateListUsers)
     )
-
+import Data.Maybe ( catMaybes )
 echo ::
        Handle
     -> TelegramHandle
@@ -34,7 +34,7 @@ echo ::
 echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
     updates <- getUpdates hTelegram' hLogger' tgtoken' updateId
     listOfUsersUpd <-
-        answers hLogger' hTelegram' help_message' tgtoken' updates listOfUsers
+        catMaybes <$> answers hLogger' hTelegram' help_message' tgtoken' updates listOfUsers
     let newListOfUsers = updateListUsers hTelegram' listOfUsers listOfUsersUpd
     nextUpdateID <- getLastUpdateId hTelegram' hLogger' updates
     echo hLogger' hTelegram' tgtoken' nextUpdateID help_message' newListOfUsers
@@ -155,7 +155,7 @@ repeatSendMessage ::
     -> Maybe [TelegramMessageEntity]
     -> Maybe String
     -> String
-    -> IO (Maybe Int)
+    -> IO ()
 repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap help_message = do
     case tg_message of
         CommandMessage telegram_command ->
@@ -182,11 +182,11 @@ repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap hel
             case status of
                 Nothing -> do
                     logError hLogger "Message not send"
-                    return Nothing
+                    return ()
                 Just _ -> repeatedMessages (n' - 1)
         | otherwise = do
             logDebug hLogger "All messages sended"
-            return $ Just 200
+            return ()
 
 sendServiceMessage ::
        Handle
@@ -195,8 +195,10 @@ sendServiceMessage ::
     -> Int
     -> TelegramCommand
     -> String
-    -> IO (Maybe Int)
-sendServiceMessage hLogger hTelegram tgtoken chatId Repeat _ =
+    -> IO ()
+sendServiceMessage hLogger hTelegram tgtoken chatId Repeat _ = do
     sendKeyboard hTelegram hLogger tgtoken chatId
-sendServiceMessage hLogger hTelegram tgtoken chatId Help help_message =
+    return ()
+sendServiceMessage hLogger hTelegram tgtoken chatId Help help_message = do
     sendMessage hTelegram hLogger tgtoken chatId help_message Nothing
+    return ()
