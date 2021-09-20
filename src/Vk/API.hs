@@ -29,8 +29,9 @@ import Vk.Responses
     , VkWall(VkWall)
     )
 
-import UsersLists (RepeatsList, RepeatsNum, findRepeatNumber)
-import Vk.Types (HelpMessage, Pts, Ts, UserId, VkToken)
+import UsersLists
+    ( Repeats(Repeats), RepeatsList, findRepeatNumber ) 
+import Vk.Types ( Pts, HelpMessage, Ts, VkToken ) 
 
 getLongPollServer :: Handle IO -> VkToken -> IO (Maybe VkResponseType)
 getLongPollServer hLogger vktoken =
@@ -175,7 +176,7 @@ sendMessageRepeatText ::
     -> VkToken
     -> RepeatsList
     -> VkItem
-    -> IO (Maybe (UserId, RepeatsNum))
+    -> IO (Maybe Repeats)
 sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)) =
     if fromId > 0
         then do
@@ -192,7 +193,7 @@ sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)
                             , " change the number of repetitions to "
                             , T.pack button
                             ]
-                    return $ Just (fromId, read button)
+                    return $ Just $ Repeats fromId (read button)
         else return Nothing
   where
     params' =

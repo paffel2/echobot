@@ -1,6 +1,6 @@
 module Vk.Types where
 
-type VkToken = String
+newtype VkToken = VkToken {vk_token :: String}
 type HelpMessage = String
 type UserId = Int
 type Ts = Int 

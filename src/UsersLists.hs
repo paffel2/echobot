@@ -1,18 +1,20 @@
 module UsersLists where
 
-import Data.Maybe (fromMaybe)
+import Data.List ( find )
+
 
 type RepeatsNum = Int
+type RepeatsList = [Repeats]
 
-type RepeatsList = [(ChatId, RepeatsNum)]
-
+data Repeats = Repeats {chat_id :: ChatId, repeats_num :: RepeatsNum} deriving (Show,Eq)
 type ChatId = Int
 
 findRepeatNumber :: RepeatsList -> ChatId -> RepeatsNum
-findRepeatNumber listOfUsers userId = fromMaybe 1 $ lookup userId listOfUsers
+findRepeatNumber listOfUsers chatId = maybe 1 repeats_num (find (\x -> chatId == chat_id x) listOfUsers)
 
-updateListUsers :: RepeatsList -> [(ChatId, RepeatsNum)] -> RepeatsList
-updateListUsers xs ((cid, n):us) = updateListUsers newList us
+
+updateListUsers :: RepeatsList -> RepeatsList -> RepeatsList
+updateListUsers xs ((Repeats cid n):us) = updateListUsers newList us
   where
-    newList = filter ((/= cid) . fst) xs ++ [(cid, n)]
+    newList = filter ((/= cid) . chat_id) xs ++ [Repeats cid n]
 updateListUsers xs [] = xs

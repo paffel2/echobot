@@ -22,16 +22,21 @@ import Telegram.TelegramHandle
     )
 
 import Telegram.Types
-    ( Caption
-    , ChatId
-    , HelpMessage
-    , StatusResult
-    , TelegramToken
-    , UpdateId
-    )
+    ( StatusResult,
+      HelpMessage,
+      Caption,
+      UpdateId,
+      TelegramToken )
+
 
 import Data.Maybe (catMaybes)
-import UsersLists (RepeatsList, RepeatsNum, findRepeatNumber, updateListUsers)
+import UsersLists
+    ( updateListUsers,
+      findRepeatNumber,
+      RepeatsNum,
+      RepeatsList,
+      ChatId,
+      Repeats(Repeats) ) 
 
 echo ::
        Monad m
@@ -41,14 +46,14 @@ echo ::
     -> Maybe UpdateId
     -> HelpMessage
     -> RepeatsList
-    -> m ()
+    -> m (Maybe UpdateId,RepeatsList)
 echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
     updates <- getUpdates hTelegram' hLogger' tgtoken' updateId
     listOfUsersUpd <-
         answers hLogger' hTelegram' help_message' tgtoken' updates listOfUsers
     let newListOfUsers = updateListUsers listOfUsers listOfUsersUpd
     nextUpdateID <- getLastUpdateId hTelegram' hLogger' updates
-    echo hLogger' hTelegram' tgtoken' nextUpdateID help_message' newListOfUsers
+    return (nextUpdateID,newListOfUsers)
   where
     answers hLogger hTelegram help_message tgtoken (Just upd) list =
         catMaybes <$>
@@ -85,7 +90,7 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
                 return Nothing
             Just _ -> do
                 logDebug hLogger "New repeats num updated"
-                return $ Just (chatId, read dat :: Int)
+                return $ Just $ Repeats chatId (read dat :: Int)
       where
         chatId = telegramUserId user
         text = "Number of reapeting " ++ dat

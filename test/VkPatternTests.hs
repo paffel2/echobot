@@ -11,6 +11,8 @@ import Vk.Responses
     , VkResponseType(Server)
     )
 import Vk.VkHandle (VKHandle(..))
+import Vk.Types ( VkToken(VkToken) )
+import UsersLists ( Repeats(Repeats) )
 
 logHandle :: Handle Identity
 logHandle = Handle {priority = Debug, Logger.log = \prior message -> return ()}
@@ -34,7 +36,7 @@ echoVkTests =
     hspec $ do
         describe "Testing vk echo function" $ do
             it "Should return Nothing, because don't have update " $ do
-                echo logHandle vkHandle "token" "help_message" [] 1 1 `shouldBe`
+                echo logHandle vkHandle (VkToken "token") "help_message" [] 1 1 `shouldBe`
                     return Nothing
             it
                 "Should return (Just ((1,1),[]), because server return ts and pts parameters" $ do
@@ -44,14 +46,14 @@ echoVkTests =
                          { getTsAndPts =
                                \logHandle token -> return (Just (1, 1))
                          })
-                    "token"
+                    (VkToken "token")
                     "help_message"
                     []
                     1
                     1 `shouldBe`
                     return (Just ((1, 1), []))
             it
-                "Should return (Just ((1,1),[(1,2)]), because server return ts and pts parameters and one user change repeat parameter" $ do
+                "Should return (Just ((1,1),[Repeats 1 2]), because server return ts and pts parameters and one user change repeat parameter" $ do
                 echo
                     logHandle
                     (vkHandle
@@ -59,19 +61,19 @@ echoVkTests =
                                \logHandle token -> return (Just (1, 1))
                          , sendMessageRepeatText =
                                \logHandle token reapeatsList vktem ->
-                                   return $ Just (1, 2)
+                                   return $ Just $ Repeats 1 2
                          , getLongPollHistory =
                                \logHandle token ts pts ->
                                    return $ Just vkResponse
                          })
-                    "token"
+                    (VkToken "token")
                     "help_message"
                     []
                     1
                     1 `shouldBe`
-                    return (Just ((1, 1), [(1, 2)]))
+                    return (Just ((1, 1), [Repeats 1 2]))
             it
-                "Should return (Just ((1,1),[(1,2)]), because server return ts and pts parameters and one user change already existing repeat parameter" $ do
+                "Should return (Just ((1,1),[Repeats 1 2]), because server return ts and pts parameters and one user change already existing repeat parameter" $ do
                 echo
                     logHandle
                     (vkHandle
@@ -79,17 +81,17 @@ echoVkTests =
                                \logHandle token -> return (Just (1, 1))
                          , sendMessageRepeatText =
                                \logHandle token reapeatsList vktem ->
-                                   return $ Just (1, 2)
+                                   return $ Just $ Repeats 1 2
                          , getLongPollHistory =
                                \logHandle token ts pts ->
                                    return $ Just vkResponse
                          })
-                    "token"
+                    (VkToken "token")
                     "help_message"
-                    [(1, 5)]
+                    [Repeats 1 5]
                     1
                     1 `shouldBe`
-                    return (Just ((1, 1), [(1, 2)]))
+                    return (Just ((1, 1), [Repeats 1 2]))
 
 vkResponse :: VkResponseType
 vkResponse = Server (Just "") (Just "") (Just 1) (Just 1) (Just 2) (Just vkMess)

@@ -30,6 +30,7 @@ dependencies:
 - req
 - configurator
 - hspec
+- mtl
 
 library:
   source-dirs: src
@@ -42,6 +43,7 @@ library:
     - req-conduit
     - req
     - configurator
+    - mtl
   default-extensions:
       - OverloadedStrings
       - DeriveGeneric

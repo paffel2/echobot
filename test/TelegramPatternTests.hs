@@ -3,10 +3,16 @@ module TelegramPatternTests where
 import Data.Functor.Identity (Identity)
 import qualified Data.Text.IO as TIO
 import Logger (Handle(..), Priority(Debug))
-import Telegram.Bot
 import Telegram.Echo (echo)
 import Telegram.TelegramHandle (TelegramHandle(..))
+import Telegram.Types ( TelegramToken(TelegramToken) )
 import Test.Hspec (describe, hspec, it, shouldBe)
+import UsersLists ( Repeats(Repeats) )
+import Telegram.Responses
+    ( TelegramUpdate(TelegramUpdate),
+      TelegramUser(TelegramUser, telegramUserId),
+      TelegramCallbackQuery(..),
+      TelegramMessage(TelegramMessage) )
 
 logHandle :: Handle Identity
 logHandle = Handle {priority = Debug, Logger.log = \prior message -> return ()}
@@ -40,3 +46,72 @@ telegramHandle =
               \logHandle token chatId location -> return Nothing
         , sendVenueMessage = \logHandle token chatId venue -> return Nothing
         }
+
+{-echo ::
+       Monad m
+    => Handle m
+    -> TelegramHandle m
+    -> TelegramToken
+    -> Maybe UpdateId
+    -> HelpMessage
+    -> RepeatsList
+    -> m (Maybe UpdateId,RepeatsList)-}
+echoTelegramTests :: IO ()
+echoTelegramTests =
+    hspec $ do
+        describe "Testing vk echo function" $ do
+            it "Should return (Nothing,[]), because don't have updates " $ do
+                echo
+                    logHandle
+                    telegramHandle
+                    (TelegramToken "token")
+                    (Just 0)
+                    "help_message"
+                    [] `shouldBe`
+                    return (Nothing, [])
+            it "Should return (Just 1, []) because server has new update" $ do
+                echo
+                    logHandle
+                    (telegramHandle
+                         { getLastUpdateId =
+                               \logHandle updates -> return (Just 1)
+                         })
+                    (TelegramToken "token")
+                    (Just 0)
+                    "help_message"
+                    [] `shouldBe`
+                    return (Just 1, [])
+            it "Should return (Nothing, [Repeats 1 2]), because user changed the number of repetitions for the first time" $ do
+                  echo
+                        logHandle
+                        (telegramHandle {getUpdates = \logHandle token updateId -> return $ Just [numsUpdate],
+                                         sendTextMessage = \logHandle token chatId text entities -> return $ Just 200})
+                        (TelegramToken "token")
+                        (Just 0)
+                        "help_message"
+                        [] `shouldBe`
+                        return (Nothing, [Repeats 1 2])
+            it "Should return (Nothing, [Repeats 1 2]), because user change num of repeats" $ do
+                  echo
+                        logHandle
+                        (telegramHandle {getUpdates = \logHandle token updateId -> return $ Just [numsUpdate],
+                                         sendTextMessage = \logHandle token chatId text entities -> return $ Just 200})
+                        (TelegramToken "token")
+                        (Just 0)
+                        "help_message"
+                        [Repeats 1 5] `shouldBe`
+                        return (Nothing, [Repeats 1 2])
+
+
+
+numsUpdate :: TelegramUpdate
+numsUpdate = TelegramUpdate 0 Nothing (Just callback)
+
+callback :: TelegramCallbackQuery
+callback = TelegramCallbackQuery {telegramCallbackQueryId = "", telegramCallbackQueryFrom = someUser,telegramCallbackQueryMessage = Just someMessage ,telegramCallbackQueryChatInstance = "", telegramCallbackQueryData= Just "2"}
+
+someUser :: TelegramUser
+someUser = TelegramUser {telegramUserId = 1}
+
+someMessage :: TelegramMessage
+someMessage = TelegramMessage {}

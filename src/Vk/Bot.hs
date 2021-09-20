@@ -5,7 +5,7 @@ import Control.Concurrent (threadDelay)
 import Logger (Handle, logError, logInfo)
 import UsersLists (RepeatsList)
 import Vk.Echo (echo)
-import Vk.Types (HelpMessage, Pts, Ts, VkToken)
+import Vk.Types 
 import Vk.VkHandle (VKHandle(getTsAndPts))
 
 loopBot ::
@@ -38,7 +38,7 @@ startVkBot :: Handle IO -> VKHandle IO -> ConfigModules -> IO ()
 startVkBot hLogger hVK botConf = do
     logInfo hLogger "Bot started"
     logInfo hLogger "Checking token"
-    chToken <- getTsAndPts hVK hLogger (Config.token botConf)
+    chToken <- getTsAndPts hVK hLogger $ VkToken (Config.token botConf)
     case chToken of
         Nothing -> do
             logError hLogger "Bad token or server is not available"
@@ -47,7 +47,7 @@ startVkBot hLogger hVK botConf = do
             loopBot
                 hLogger
                 hVK
-                (Config.token botConf)
+                (VkToken (Config.token botConf))
                 (Config.help botConf)
                 []
                 ts

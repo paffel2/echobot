@@ -6,4 +6,4 @@ main :: IO ()
 main = do
     usersListsTests
     echoVkTests
-    --echoTelegramTests
+    echoTelegramTests

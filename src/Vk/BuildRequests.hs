@@ -27,7 +27,7 @@ import Network.HTTP.Req
     , runReq
     )
 import Vk.Responses (VkResponse(VkResponse), VkResponseType)
-import Vk.Types ( VkToken )
+import Vk.Types 
 
 type PostParams = [(T.Text, Maybe T.Text)]
 type GetParams = [(T.Text, T.Text)]
@@ -48,7 +48,7 @@ buildVkGetRequest ::
     -> GetMethod
     -> GetParams
     -> IO (Maybe VkResponseType)
-buildVkGetRequest hLogger vktoken url parameters =
+buildVkGetRequest hLogger (VkToken vktoken) url parameters =
     catch
         (runReq defaultHttpConfig $ do
              request <-
@@ -71,7 +71,7 @@ buildVkGetRequest hLogger vktoken url parameters =
 
 buildVkPostRequest ::
        Handle IO -> VkToken -> PostMethod -> PostParams -> IO (Maybe Int)
-buildVkPostRequest hLogger vktoken method param =
+buildVkPostRequest hLogger (VkToken vktoken) method param =
     catch
         (runReq defaultHttpConfig $ do
              request <-
