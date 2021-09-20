@@ -50,6 +50,7 @@ import Telegram.Responses
     , TelegramVoice(telegramVoiceFileId)
     )
 import Telegram.Types 
+import Data.List
 
 getMe :: Handle -> TelegramToken -> IO (Maybe TelegramUser)
 getMe hLogger tgtoken = buildTelegramGetRequest hLogger tgtoken "getMe" []
@@ -78,24 +79,28 @@ getLastUpdateId hLogger updates =
             return Nothing
         Just xs -> return $ Just $ (+ 1) $ telegramUpdateId $ last xs
 
-updateListUsers :: RepeatsList -> [Maybe (ChatId, ReapeatsNum )] -> RepeatsList
+updateListUsers :: RepeatsList -> [Maybe Repeats] -> RepeatsList
 updateListUsers xs (u:us) = updateListUsers newList us
   where
     newList =
         case u of
             Nothing -> xs
-            Just (cid, n) -> newlist' ++ [(cid, n)]
-                where newlist' = filter ((/= cid) . fst) xs
+            Just (Repeats cid n) -> newList' ++ [Repeats cid n]
+                where --newlist' = filter ((/= cid) . fst) xs
+                    newList' = filter ((/= cid) . chat_id) xs
 updateListUsers xs [] = xs
 
-findRepeatNumber :: RepeatsList -> ChatId -> IO ReapeatsNum
+findRepeatNumber :: RepeatsList -> ChatId -> IO RepeatsNum
 findRepeatNumber listOfUsers chatId = do
-    let n = lookup chatId listOfUsers
-    case n of
-        Just x -> do
+    --let n = lookup chatId listOfUsers
+    let rep = find (\x -> chatId == chat_id x ) listOfUsers
+    case rep of
+      Nothing -> return 1
+      Just re -> return $ repeats_num re
+        {-Just x -> do
             return x
         Nothing -> do
-            return 1
+            return 1-}
 
 sendTextMessage ::
        Handle

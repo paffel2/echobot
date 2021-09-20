@@ -22,14 +22,16 @@ import Telegram.TelegramHandle
                sendVoiceMessage, updateListUsers)
     )
 import Telegram.Types
-    ( TelegramToken,
-      HelpMessage,
-      UpdateId,
-      ChatId,
-      ReapeatsNum,
-      RepeatsList,
+    ( StatusResult,
       Caption,
-      StatusResult )
+      ChatId,
+      UpdateId,
+      HelpMessage,
+      TelegramToken,
+      Repeats(Repeats),
+      RepeatsList,
+      RepeatsNum )
+
 echo ::
        Handle
     -> TelegramHandle
@@ -50,7 +52,7 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
         mapM (answer hLogger hTelegram help_message tgtoken list) upd
     answers hLogger _ _ _ _ _ = do
         logError hLogger "Something wrong"
-        return [Nothing]
+        return []
     answer hLogger hTelegram help_message tgtoken list (TelegramUpdate _ (Just message) _) = do
         let tg_message = telegramMessageToTgMessage message
         case tg_message of
@@ -81,7 +83,8 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
                 return Nothing
             Just _ -> do
                 logDebug hLogger "Keyboard sended"
-                return $ Just (chatId, read dat :: Int)
+                --return $ Just (chatId, read dat :: Int)
+                return $ Just $ Repeats chatId (read dat :: Int)
       where
         chatId = telegramUserId user
         text = "Number of reapeting " ++ dat
@@ -155,7 +158,7 @@ sendAnswer hLogger hTelegram tgtoken chatId tg_message ent cap =
 repeatSendMessage ::
        Handle
     -> TelegramHandle
-    -> ReapeatsNum
+    -> RepeatsNum
     -> TelegramToken
     -> ChatId
     -> TgMessage

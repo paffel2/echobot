@@ -25,7 +25,8 @@ import Network.HTTP.Req
     , responseStatusCode
     , runReq
     )
-import Telegram.Types ( TelegramToken, StatusResult )
+import Telegram.Types
+    ( StatusResult, TelegramToken(TelegramToken) ) 
 import Telegram.Responses (TelegramResponse(TelegramResponse))
 
 type ParametersList = [(T.Text, T.Text)]
@@ -42,7 +43,7 @@ buildTelegramGetRequest ::
     -> TelegramMethod
     -> ParametersList
     -> IO (Maybe a)
-buildTelegramGetRequest hLogger tgtoken url params =
+buildTelegramGetRequest hLogger (TelegramToken tgtoken) url params =
     catch
         (runReq defaultHttpConfig $ do
              request <-
@@ -79,7 +80,7 @@ buildTelegramPostRequest ::
     -> b
     -> ParametersList
     -> IO (Maybe StatusResult)
-buildTelegramPostRequest hLogger tgtoken url body params =
+buildTelegramPostRequest hLogger (TelegramToken tgtoken) url body params =
     catch
         (runReq defaultHttpConfig $ do
              request <-
