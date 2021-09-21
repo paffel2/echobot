@@ -4,7 +4,11 @@ import Config (ConfigModules(help, token))
 import Logger (Handle, logError, logInfo)
 import Telegram.Echo (echo)
 import Telegram.TelegramHandle (TelegramHandle(getMe))
-import Telegram.Types ( TelegramToken(TelegramToken) )
+import Telegram.Types
+    ( UpdateId(UpdateId),
+      HelpMessage(HelpMessage),
+      TelegramToken(TelegramToken) )
+   
 startTelegramBot :: Handle -> TelegramHandle -> ConfigModules -> IO ()
 startTelegramBot hLogger hTelegram botConf = do
     logInfo hLogger "New Bot Start"
@@ -18,6 +22,6 @@ startTelegramBot hLogger hTelegram botConf = do
                 hLogger
                 hTelegram
                 (TelegramToken (Config.token botConf))
-                (Just 0)
-                (Config.help botConf)
+                (Just $ UpdateId 0)
+                (HelpMessage $ Config.help botConf)
                 []

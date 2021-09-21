@@ -1,12 +1,12 @@
 module Telegram.Types where
 
 newtype TelegramToken = TelegramToken {tg_token :: String}
-type HelpMessage = String
-type UpdateId = Int
-type ChatId = Int
-type RepeatsNum = Int
+newtype HelpMessage = HelpMessage {help_mess :: String}
+newtype UpdateId = UpdateId {upd_id :: Int}
+newtype ChatId = ChatId {chat_id' :: Int} deriving Eq
+newtype RepeatsNum = RepeatsNum {repeats_num' :: Int}
 type RepeatsList = [Repeats]
-type Caption = String
-type StatusResult = Int
+newtype Caption = Caption {caption :: String}
+newtype StatusResult = StatusResult {status_result :: Int}
 
 data Repeats = Repeats {chat_id :: ChatId, repeats_num :: RepeatsNum} 
