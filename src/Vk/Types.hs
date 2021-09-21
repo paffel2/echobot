@@ -1,7 +1,7 @@
 module Vk.Types where
 
 newtype VkToken = VkToken {vk_token :: String}
-type HelpMessage = String
-type UserId = Int
-type Ts = Int 
-type Pts = Int
+newtype HelpMessage = HelpMessage {help_mess :: String}
+--type UserId = Int
+newtype Ts = Ts {ts' :: Int} deriving (Eq,Show)
+newtype Pts = Pts {pts' :: Int} deriving (Eq,Show)

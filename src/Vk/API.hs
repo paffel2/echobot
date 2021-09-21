@@ -30,8 +30,8 @@ import Vk.Responses
     )
 
 import UsersLists
-    ( Repeats(Repeats), RepeatsList, findRepeatNumber ) 
-import Vk.Types ( Pts, HelpMessage, Ts, VkToken ) 
+
+import Vk.Types 
 
 getLongPollServer :: Handle IO -> VkToken -> IO (Maybe VkResponseType)
 getLongPollServer hLogger vktoken =
@@ -48,13 +48,13 @@ getLongPollHistory hLogger vktoken ts pts =
         hLogger
         vktoken
         "messages.getLongPollHistory"
-        [("ts", T.pack $ show ts), ("pts", T.pack $ show pts), ("v", "5.130")]
+        [("ts", T.pack $ show $ ts' ts), ("pts", T.pack $ show $ pts' pts), ("v", "5.130")]
 
 getTsAndPts :: Handle IO -> VkToken -> IO (Maybe (Ts, Pts))
 getTsAndPts hLogger vktoken = do
     serverInf <- getLongPollServer hLogger vktoken
     case serverInf of
-        Just (Server _ _ (Just ts) (Just pts) _ _) -> return $ Just (ts, pts)
+        Just (Server _ _ (Just ts) (Just pts) _ _) -> return $ Just (Ts ts, Pts pts)
         _ -> do
             logError hLogger "Error of getting ts and pts parameters"
             return Nothing
@@ -193,7 +193,7 @@ sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)
                             , " change the number of repetitions to "
                             , T.pack button
                             ]
-                    return $ Just $ Repeats fromId (read button)
+                    return $ Just $ Repeats (ChatId fromId) (RepeatsNum (read button :: Int))
         else return Nothing
   where
     params' =
@@ -205,14 +205,14 @@ sendMessageRepeatText _ _ _ (VkItem _ _ _ _ _ _ _ Nothing) = return Nothing
 repeatMessage :: Handle IO -> VkToken -> RepeatsList -> VkItem -> IO ()
 repeatMessage hLogger vktoken list item@(VkItem _ fromId _ _ _ _ _ _) =
     when (fromId > 0) $ do
-        repeatMessage' (findRepeatNumber list fromId) vktoken item
+        repeatMessage' (findRepeatNumber list $ ChatId fromId) vktoken item
   where
-    repeatMessage' 0 _ _ = logDebug hLogger "All sended"
-    repeatMessage' x token' item' = do
+    repeatMessage' (RepeatsNum 0) _ _ = logDebug hLogger "All sended"
+    repeatMessage' (RepeatsNum x) token' item' = do
         sendMessageText hLogger token' item'
         sendMessageAttachment hLogger token' item'
         sendGeoVK hLogger token' item'
-        repeatMessage' (x - 1) token' item'
+        repeatMessage' (RepeatsNum (x - 1)) token' item'
 
 sendMessageHelp :: Handle IO -> VkToken -> HelpMessage -> VkItem -> IO ()
 sendMessageHelp hLogger vktoken help_message (VkItem _ fromId text _ _ _ _ _) =
@@ -224,5 +224,5 @@ sendMessageHelp hLogger vktoken help_message (VkItem _ fromId text _ _ _ _ _) =
   where
     params' =
         [ ("user_id", Just $ T.pack $ show fromId)
-        , ("message", Just $ T.pack help_message)
+        , ("message", Just $ T.pack $ help_mess help_message)
         ]

@@ -5,7 +5,7 @@ import Logger (Handle, logError, logInfo)
 import Telegram.Echo (echo)
 import Telegram.TelegramHandle (TelegramHandle(getMe))
 import Telegram.Types
-    ( HelpMessage, TelegramToken(TelegramToken), UpdateId ) 
+   
 import UsersLists ( RepeatsList )
 
 
@@ -18,7 +18,7 @@ startTelegramBot hLogger hTelegram botConf = do
         Nothing -> logError hLogger "Bad token"
         Just _ -> do
             logInfo hLogger "Good token"
-            loopBot hLogger hTelegram (TelegramToken (Config.token botConf)) (Config.help botConf) (Just 0) []
+            loopBot hLogger hTelegram (TelegramToken (Config.token botConf)) (HelpMessage (Config.help botConf)) (Just $ UpdateId 0) []
 
 loopBot :: Monad m => Handle m
     -> TelegramHandle m

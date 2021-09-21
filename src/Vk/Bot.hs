@@ -29,7 +29,7 @@ loopBot hLogger hVk token' help_message users_list ts pts = do
     newLoopInformation <- echo hLogger hVk token' help_message users_list ts pts
     case newLoopInformation of
         Nothing -> do
-            logError hLogger ""
+            logError hLogger "Bad token or server is not available"
         Just ((ts', pts'), newList) -> do
             threadDelay 3000000
             loopBot hLogger hVk token' help_message newList ts' pts'
@@ -48,7 +48,7 @@ startVkBot hLogger hVK botConf = do
                 hLogger
                 hVK
                 (VkToken (Config.token botConf))
-                (Config.help botConf)
+                (HelpMessage (Config.help botConf))
                 []
                 ts
                 pts

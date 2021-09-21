@@ -50,7 +50,8 @@ import Telegram.Responses
     , TelegramVoice(telegramVoiceFileId)
     )
 import Telegram.Types
-    ( Caption, ChatId, StatusResult, TelegramToken, UpdateId ) 
+import UsersLists
+    
 
 
 getMe :: Handle IO-> TelegramToken -> IO (Maybe TelegramUser)
@@ -62,7 +63,7 @@ getUpdates hLogger tgtoken (Just updId) =
         hLogger
         tgtoken
         "getUpdates"
-        [("offset", T.pack $ show updId), ("timeout", "10")]
+        [("offset", T.pack $ show $ upd_id updId), ("timeout", "10")]
 getUpdates hLogger tgtoken Nothing =
     buildTelegramGetRequest
         hLogger
@@ -78,7 +79,7 @@ getLastUpdateId hLogger updates =
         Just [] -> do
             logInfo hLogger "No updates"
             return Nothing
-        Just xs -> return $ Just $ (+ 1) $ telegramUpdateId $ last xs
+        Just xs -> return $ Just $ UpdateId $ (+ 1) $ telegramUpdateId $ last xs
 
 {-updateListUsers :: RepeatsList -> [Maybe Repeats] -> RepeatsList
 updateListUsers xs (u:us) = updateListUsers newList us
@@ -115,7 +116,7 @@ sendTextMessage hLogger tgtoken chatId text ent =
         hLogger
         tgtoken
         "sendMessage"
-        (TelegramSendMessage chatId text ent Nothing)
+        (TelegramSendMessage (chat_id' chatId) text ent Nothing)
         []
 
 sendAnimationMessage ::
@@ -130,7 +131,7 @@ sendAnimationMessage hLogger tgtoken chatId anim cap =
         hLogger
         tgtoken
         "sendAnimation"
-        (TelegramSendAnimation chatId animId cap)
+        (TelegramSendAnimation (chat_id' chatId) animId (caption <$> cap))
         []
   where
     animId = telegramAnimationFileId anim
@@ -147,7 +148,7 @@ sendAudioMessage hLogger tgtoken chatId audio cap =
         hLogger
         tgtoken
         "sendAudio"
-        (TelegramSendAudio chatId audioId cap)
+        (TelegramSendAudio (chat_id' chatId) audioId (caption <$> cap))
         []
   where
     audioId = telegramAudioFileId audio
@@ -164,7 +165,7 @@ sendDocumentMessage hLogger tgtoken chatId doc cap =
         hLogger
         tgtoken
         "sendDocument"
-        (TelegramSendDocument chatId docId cap)
+        (TelegramSendDocument (chat_id' chatId) docId (caption <$> cap))
         []
   where
     docId = telegramDocumentFileId doc
@@ -181,7 +182,7 @@ sendPhotoMessage hLogger tgtoken chatId (photo:_) cap =
         hLogger
         tgtoken
         "sendPhoto"
-        (TelegramSendPhoto chatId photoId cap)
+        (TelegramSendPhoto (chat_id' chatId) photoId (caption <$> cap))
         []
   where
     photoId = telegramPhotoSizeFileId photo
@@ -199,7 +200,7 @@ sendVideoMessage hLogger tgtoken chatId video cap =
         hLogger
         tgtoken
         "sendVideo"
-        (TelegramSendVideo chatId videoId cap)
+        (TelegramSendVideo (chat_id' chatId) videoId (caption <$> cap))
         []
   where
     videoId = telegramVideoFileId video
@@ -211,7 +212,7 @@ sendStickerMessage hLogger tgtoken chatId sticker =
         hLogger
         tgtoken
         "sendSticker"
-        (TelegramSendSticker chatId stickerId)
+        (TelegramSendSticker (chat_id' chatId) stickerId)
         []
   where
     stickerId = telegramStickerFileId sticker
@@ -223,7 +224,7 @@ sendVideoNoteMessage hLogger tgtoken chatId videoNote =
         hLogger
         tgtoken
         "sendVideoNote"
-        (TelegramSendVideoNote chatId videoNoteId)
+        (TelegramSendVideoNote (chat_id' chatId) videoNoteId)
         []
   where
     videoNoteId = telegramVideoNoteFileId videoNote
@@ -240,7 +241,7 @@ sendVoiceMessage hLogger tgtoken chatId voice cap =
         hLogger
         tgtoken
         "sendVoice"
-        (TelegramSendVoice chatId voiceId cap)
+        (TelegramSendVoice (chat_id' chatId) voiceId (caption <$> cap))
         []
   where
     voiceId = telegramVoiceFileId voice
@@ -252,7 +253,7 @@ sendContactMessage hLogger tgtoken chatId contact =
         hLogger
         tgtoken
         "sendContact"
-        (TelegramSendContact chatId phoneNum fname lname vcard)
+        (TelegramSendContact (chat_id' chatId) phoneNum fname lname vcard)
         []
   where
     phoneNum = telegramContactPhoneNumber contact
@@ -267,7 +268,7 @@ sendLocationMessage hLogger tgtoken chatId location =
         hLogger
         tgtoken
         "sendLocation"
-        (TelegramSendLocation chatId lat long horac lp hea par)
+        (TelegramSendLocation (chat_id' chatId) lat long horac lp hea par)
         []
   where
     lat = telegramLocationLatitude location
@@ -283,7 +284,7 @@ sendVenueMessage hLogger tgtoken chatId venue =
         hLogger
         tgtoken
         "sendVenue"
-        (TelegramSendVenue chatId lat long title address fsid fstype gpid gptype)
+        (TelegramSendVenue (chat_id' chatId) lat long title address fsid fstype gpid gptype)
         []
   where
     lat = telegramLocationLatitude $ telegramVenueLocation venue
@@ -302,7 +303,7 @@ sendKeyboard hLogger tgtoken chatId =
         tgtoken
         "sendMessage"
         (TelegramSendMessage
-             chatId
+             (chat_id' chatId)
              "Choose number reapiting"
              Nothing
              (Just keyboard))
@@ -320,5 +321,5 @@ sendMessage hLogger tgtoken chatId text ent =
         hLogger
         tgtoken
         "sendMessage"
-        (TelegramSendMessage chatId text ent Nothing)
+        (TelegramSendMessage (chat_id' chatId) text ent Nothing)
         []

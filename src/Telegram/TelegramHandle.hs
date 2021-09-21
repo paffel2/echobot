@@ -3,7 +3,7 @@ module Telegram.TelegramHandle where
 import Logger (Handle)
 import qualified Telegram.API as API
 import Telegram.Types
-    ( Caption, StatusResult, ChatId, UpdateId, TelegramToken )
+    ( Caption, StatusResult, UpdateId, TelegramToken )
 import Telegram.Requests ()
 import Telegram.Responses
     ( TelegramAnimation
@@ -22,6 +22,7 @@ import Telegram.Responses
     , TelegramVideoNote
     , TelegramVoice
     )
+import UsersLists
 
 
 data TelegramHandle m =

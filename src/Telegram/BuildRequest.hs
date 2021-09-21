@@ -28,7 +28,7 @@ import Network.HTTP.Req
 
 import Telegram.Responses (TelegramResponse(TelegramResponse))
 import Telegram.Types
-    ( StatusResult, TelegramToken(TelegramToken) ) 
+
 
 type ParametersList = [(T.Text, T.Text)]
 
@@ -94,7 +94,7 @@ buildTelegramPostRequest hLogger (TelegramToken tgtoken) url body params =
                      jsonResponse
                      param :: Req (JsonResponse Value)
              if responseStatusCode request == 200
-                 then liftIO $ return $ Just 200
+                 then liftIO $ return $ Just $ StatusResult 200
                  else do
                      liftIO $ logError hLogger "No response"
                      liftIO $ return Nothing) $ \e -> do

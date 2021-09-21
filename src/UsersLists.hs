@@ -3,14 +3,14 @@ module UsersLists where
 import Data.List ( find )
 
 
-type RepeatsNum = Int
+newtype RepeatsNum = RepeatsNum { repeats_num' :: Int} deriving (Show,Eq)
 type RepeatsList = [Repeats]
 
 data Repeats = Repeats {chat_id :: ChatId, repeats_num :: RepeatsNum} deriving (Show,Eq)
-type ChatId = Int
+newtype ChatId = ChatId {chat_id' :: Int} deriving (Eq,Show)
 
 findRepeatNumber :: RepeatsList -> ChatId -> RepeatsNum
-findRepeatNumber listOfUsers chatId = maybe 1 repeats_num (find (\x -> chatId == chat_id x) listOfUsers)
+findRepeatNumber listOfUsers chatId = maybe (RepeatsNum 1) repeats_num (find (\x -> chatId == chat_id x) listOfUsers)
 
 
 updateListUsers :: RepeatsList -> RepeatsList -> RepeatsList

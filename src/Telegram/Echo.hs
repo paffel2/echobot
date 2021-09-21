@@ -22,21 +22,13 @@ import Telegram.TelegramHandle
     )
 
 import Telegram.Types
-    ( StatusResult,
-      HelpMessage,
-      Caption,
-      UpdateId,
-      TelegramToken )
+
+
 
 
 import Data.Maybe (catMaybes)
 import UsersLists
-    ( updateListUsers,
-      findRepeatNumber,
-      RepeatsNum,
-      RepeatsList,
-      ChatId,
-      Repeats(Repeats) ) 
+
 
 echo ::
        Monad m
@@ -79,9 +71,9 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
                         help_message
                 return Nothing
       where
-        chatId = telegramChatId $ telegramMessageChat message
+        chatId = ChatId $ telegramChatId $ telegramMessageChat message
         entities = telegramMessageEntities message
-        cap = telegramMessageCaption message
+        cap = Caption <$> telegramMessageCaption message
     answer hLogger hTelegram _ tgtoken _ (TelegramUpdate _ _ (Just (TelegramCallbackQuery _ user (Just _) _ (Just dat)))) = do
         status <- sendTextMessage hTelegram hLogger tgtoken chatId text Nothing
         case status of
@@ -90,9 +82,9 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
                 return Nothing
             Just _ -> do
                 logDebug hLogger "New repeats num updated"
-                return $ Just $ Repeats chatId (read dat :: Int)
+                return $ Just $ Repeats chatId (RepeatsNum (read dat :: Int))
       where
-        chatId = telegramUserId user
+        chatId = ChatId $ telegramUserId user
         text = "Number of reapeting " ++ dat
     answer _ _ _ _ _ _ = return Nothing
 
@@ -188,7 +180,7 @@ repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap hel
             return ()
         _ -> repeatedMessages n
   where
-    repeatedMessages n'
+    repeatedMessages (RepeatsNum n')
         | n' > 0 = do
             status <-
                 sendAnswer
@@ -203,7 +195,7 @@ repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap hel
                 Nothing -> do
                     logError hLogger "Message not send"
                     return ()
-                Just _ -> repeatedMessages (n' - 1)
+                Just _ -> repeatedMessages $ RepeatsNum (n' - 1)
         | otherwise = do
             logDebug hLogger "All messages sended"
             return ()
@@ -220,4 +212,4 @@ sendServiceMessage ::
 sendServiceMessage hLogger hTelegram tgtoken chatId Repeat _ =
     sendKeyboard hTelegram hLogger tgtoken chatId
 sendServiceMessage hLogger hTelegram tgtoken chatId Help help_message =
-    sendTextMessage hTelegram hLogger tgtoken chatId help_message Nothing
+    sendTextMessage hTelegram hLogger tgtoken chatId (help_mess help_message) Nothing

@@ -5,14 +5,15 @@ import qualified Data.Text.IO as TIO
 import Logger (Handle(..), Priority(Debug))
 import Telegram.Echo (echo)
 import Telegram.TelegramHandle (TelegramHandle(..))
-import Telegram.Types ( TelegramToken(TelegramToken) )
+import Telegram.Types
 import Test.Hspec (describe, hspec, it, shouldBe)
-import UsersLists ( Repeats(Repeats) )
+import UsersLists
 import Telegram.Responses
     ( TelegramUpdate(TelegramUpdate),
       TelegramUser(TelegramUser, telegramUserId),
       TelegramCallbackQuery(..),
       TelegramMessage(TelegramMessage) )
+
 
 logHandle :: Handle Identity
 logHandle = Handle {priority = Debug, Logger.log = \prior message -> return ()}
@@ -65,8 +66,8 @@ echoTelegramTests =
                     logHandle
                     telegramHandle
                     (TelegramToken "token")
-                    (Just 0)
-                    "help_message"
+                    (Just $ UpdateId 0)
+                    (HelpMessage "help_message")
                     [] `shouldBe`
                     return (Nothing, [])
             it "Should return (Just 1, []) because server has new update" $ do
@@ -74,34 +75,33 @@ echoTelegramTests =
                     logHandle
                     (telegramHandle
                          { getLastUpdateId =
-                               \logHandle updates -> return (Just 1)
+                               \logHandle updates -> return (Just $ UpdateId 1)
                          })
                     (TelegramToken "token")
-                    (Just 0)
-                    "help_message"
+                    (Just $ UpdateId 0)
+                    (HelpMessage "help_message")
                     [] `shouldBe`
-                    return (Just 1, [])
+                    return (Just $ UpdateId 1, [])
             it "Should return (Nothing, [Repeats 1 2]), because user changed the number of repetitions for the first time" $ do
                   echo
                         logHandle
                         (telegramHandle {getUpdates = \logHandle token updateId -> return $ Just [numsUpdate],
-                                         sendTextMessage = \logHandle token chatId text entities -> return $ Just 200})
+                                         sendTextMessage = \logHandle token chatId text entities -> return $ Just $ StatusResult 200})
                         (TelegramToken "token")
-                        (Just 0)
-                        "help_message"
+                        (Just $ UpdateId 0)
+                        (HelpMessage "help_message")
                         [] `shouldBe`
-                        return (Nothing, [Repeats 1 2])
+                        return (Nothing, [Repeats (ChatId 1) (RepeatsNum 2)])
             it "Should return (Nothing, [Repeats 1 2]), because user change num of repeats" $ do
                   echo
                         logHandle
                         (telegramHandle {getUpdates = \logHandle token updateId -> return $ Just [numsUpdate],
-                                         sendTextMessage = \logHandle token chatId text entities -> return $ Just 200})
+                                         sendTextMessage = \logHandle token chatId text entities -> return $ Just $ StatusResult 200})
                         (TelegramToken "token")
-                        (Just 0)
-                        "help_message"
-                        [Repeats 1 5] `shouldBe`
-                        return (Nothing, [Repeats 1 2])
-
+                        (Just $ UpdateId 0)
+                        (HelpMessage "help_message")
+                        [Repeats (ChatId 1) (RepeatsNum 5)] `shouldBe`
+                        return (Nothing, [Repeats (ChatId 1) (RepeatsNum 2)])
 
 
 numsUpdate :: TelegramUpdate
