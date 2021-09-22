@@ -11,10 +11,12 @@ import Data.Aeson
     )
 import GHC.Generics (Generic)
 import Telegram.Responses (TelegramInlineKeyboardMarkup, TelegramMessageEntity)
+import UsersLists ( ChatId )
+import Telegram.Types ( Caption )
 
 data TelegramSendMessage =
     TelegramSendMessage
-        { telegramSendMessageChatId :: Int
+        { telegramSendMessageChatId :: ChatId
         , telegramSendMessageText :: String
         , telegramSendMessageEntities :: Maybe [TelegramMessageEntity]
         , telegramSendMessageReplyMarkup :: Maybe TelegramInlineKeyboardMarkup
@@ -31,9 +33,9 @@ instance ToJSON TelegramSendMessage where
 
 data TelegramSendAnimation =
     TelegramSendAnimation
-        { telegramSendAnimationChatId :: Int
+        { telegramSendAnimationChatId :: ChatId
         , telegramSendAnimationAnimation :: String
-        , telegramSendAnimationCaption :: Maybe String
+        , telegramSendAnimationCaption :: Maybe Caption
         }
     deriving (Show, Generic)
 
@@ -45,9 +47,9 @@ instance ToJSON TelegramSendAnimation where
 
 data TelegramSendAudio =
     TelegramSendAudio
-        { telegramSendAudioChatId :: Int
+        { telegramSendAudioChatId :: ChatId
         , telegramSendAudioAudio :: String
-        , telegramSendAudioCaption :: Maybe String
+        , telegramSendAudioCaption :: Maybe Caption
         }
     deriving (Show, Generic)
 
@@ -59,9 +61,9 @@ instance ToJSON TelegramSendAudio where
 
 data TelegramSendDocument =
     TelegramSendDocument
-        { telegramSendDocumentChatId :: Int
+        { telegramSendDocumentChatId :: ChatId
         , telegramSendDocumentDocument :: String
-        , telegramSendDocumentCaption :: Maybe String
+        , telegramSendDocumentCaption :: Maybe Caption
         }
     deriving (Show, Generic)
 
@@ -73,9 +75,9 @@ instance ToJSON TelegramSendDocument where
 
 data TelegramSendPhoto =
     TelegramSendPhoto
-        { telegramSendPhotoChatId :: Int
+        { telegramSendPhotoChatId :: ChatId
         , telegramSendPhotoPhoto :: String
-        , telegramSendPhotoCaption :: Maybe String
+        , telegramSendPhotoCaption :: Maybe Caption
         }
     deriving (Show, Generic)
 
@@ -86,9 +88,9 @@ instance ToJSON TelegramSendPhoto where
 
 data TelegramSendVideo =
     TelegramSendVideo
-        { telegramSendVideoChatId :: Int
+        { telegramSendVideoChatId :: ChatId
         , telegramSendVideoVideo :: String
-        , telegramSendVideoCaption :: Maybe String
+        , telegramSendVideoCaption :: Maybe Caption
         }
     deriving (Show, Generic)
 
@@ -100,7 +102,7 @@ instance ToJSON TelegramSendVideo where
 
 data TelegramSendSticker =
     TelegramSendSticker
-        { telegramSendStickerChatId :: Int
+        { telegramSendStickerChatId :: ChatId
         , tlegramSendStickerSticker :: String
         }
     deriving (Show, Generic)
@@ -111,7 +113,7 @@ instance ToJSON TelegramSendSticker where
 
 data TelegramSendVideoNote =
     TelegramSendVideoNote
-        { telegramSendVideoNoteChatId :: Int
+        { telegramSendVideoNoteChatId :: ChatId
         , tlegramSendVideoNoteVideoNote :: String
         }
     deriving (Show, Generic)
@@ -122,9 +124,9 @@ instance ToJSON TelegramSendVideoNote where
 
 data TelegramSendVoice =
     TelegramSendVoice
-        { telegramSendVoiceChatId :: Int
+        { telegramSendVoiceChatId :: ChatId
         , telegramSendVoiceVoice :: String
-        , telegramSendVoiceCaption :: Maybe String
+        , telegramSendVoiceCaption :: Maybe Caption
         }
     deriving (Show, Generic)
 
@@ -136,7 +138,7 @@ instance ToJSON TelegramSendVoice where
 
 data TelegramSendContact =
     TelegramSendContact
-        { telegramSendContactChatId :: Int
+        { telegramSendContactChatId :: ChatId
         , telegramSendContactPhoneNumber :: String
         , telegramSendContactFirstName :: String
         , telegramSendContactLastName :: Maybe String
@@ -154,7 +156,7 @@ instance ToJSON TelegramSendContact where
 
 data TelegramSendLocation =
     TelegramSendLocation
-        { telegramSendLocationChatId :: Int
+        { telegramSendLocationChatId :: ChatId
         , telegramSendLocationLatitude :: Double
         , telegramSendLocationLongitude :: Double
         , telegramSendLocationHorizontalAccuracy :: Maybe Double
@@ -174,7 +176,7 @@ instance ToJSON TelegramSendLocation where
 
 data TelegramSendVenue =
     TelegramSendVenue
-        { telegramSendVenueChatId :: Int
+        { telegramSendVenueChatId :: ChatId
         , telegramSendVenueLatitude :: Double
         , telegramSendVenueLongitude :: Double
         , telegramSendVenueTitle :: String

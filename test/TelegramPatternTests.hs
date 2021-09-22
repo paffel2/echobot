@@ -6,8 +6,13 @@ import Logger (Handle(..), Priority(Debug))
 import Telegram.Echo (echo)
 import Telegram.TelegramHandle (TelegramHandle(..))
 import Telegram.Types
+    ( TelegramToken(TelegramToken),
+      UpdateId(UpdateId),
+      HelpMessage(HelpMessage),
+      StatusResult(StatusResult) )
 import Test.Hspec (describe, hspec, it, shouldBe)
 import UsersLists
+    ( RepeatsNum(RepeatsNum), ChatId(ChatId), Repeats(Repeats) )
 import Telegram.Responses
     ( TelegramUpdate(TelegramUpdate),
       TelegramUser(TelegramUser, telegramUserId),
@@ -48,15 +53,7 @@ telegramHandle =
         , sendVenueMessage = \logHandle token chatId venue -> return Nothing
         }
 
-{-echo ::
-       Monad m
-    => Handle m
-    -> TelegramHandle m
-    -> TelegramToken
-    -> Maybe UpdateId
-    -> HelpMessage
-    -> RepeatsList
-    -> m (Maybe UpdateId,RepeatsList)-}
+
 echoTelegramTests :: IO ()
 echoTelegramTests =
     hspec $ do
@@ -105,13 +102,13 @@ echoTelegramTests =
 
 
 numsUpdate :: TelegramUpdate
-numsUpdate = TelegramUpdate 0 Nothing (Just callback)
+numsUpdate = TelegramUpdate (UpdateId 0) Nothing (Just callback)
 
 callback :: TelegramCallbackQuery
-callback = TelegramCallbackQuery {telegramCallbackQueryId = "", telegramCallbackQueryFrom = someUser,telegramCallbackQueryMessage = Just someMessage ,telegramCallbackQueryChatInstance = "", telegramCallbackQueryData= Just "2"}
+callback = TelegramCallbackQuery {telegramCallbackQueryId = "", telegramCallbackQueryFrom = someUser,telegramCallbackQueryMessage = Just someMessage ,telegramCallbackQueryChatInstance = "", telegramCallbackQueryData= Just $ RepeatsNum 2}
 
 someUser :: TelegramUser
-someUser = TelegramUser {telegramUserId = 1}
+someUser = TelegramUser {telegramUserId = ChatId 1}
 
 someMessage :: TelegramMessage
 someMessage = TelegramMessage {}

@@ -5,6 +5,9 @@ import Logger (Handle, logError, logInfo)
 import Telegram.Echo (echo)
 import Telegram.TelegramHandle (TelegramHandle(getMe))
 import Telegram.Types
+    ( HelpMessage(HelpMessage),
+      TelegramToken(TelegramToken),
+      UpdateId(UpdateId) )
    
 import UsersLists ( RepeatsList )
 

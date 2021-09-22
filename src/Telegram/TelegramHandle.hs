@@ -22,7 +22,7 @@ import Telegram.Responses
     , TelegramVideoNote
     , TelegramVoice
     )
-import UsersLists
+import UsersLists ( ChatId )
 
 
 data TelegramHandle m =

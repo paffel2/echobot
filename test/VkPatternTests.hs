@@ -12,7 +12,9 @@ import Vk.Responses
     )
 import Vk.VkHandle (VKHandle(..))
 import Vk.Types
+    ( VkToken(VkToken), HelpMessage(HelpMessage), Ts(Ts), Pts(Pts) )
 import UsersLists
+    ( RepeatsNum(RepeatsNum), ChatId(ChatId), Repeats(Repeats) )
 
 logHandle :: Handle Identity
 logHandle = Handle {priority = Debug, Logger.log = \prior message -> return ()}
@@ -94,7 +96,7 @@ echoVkTests =
                     return (Just ((Ts 1, Pts 2), [Repeats (ChatId 1) (RepeatsNum 2)]))
 
 vkResponse :: VkResponseType
-vkResponse = Server (Just "") (Just "") (Just 1) (Just 2) (Just 2) (Just vkMess)
+vkResponse = Server (Just "") (Just "") (Just $ Ts 1) (Just $ Pts 2) (Just 2) (Just vkMess)
 
 vkMess :: VkMessages
 vkMess =
@@ -102,12 +104,12 @@ vkMess =
         1
         [ VkItem
               { vkItemId = Nothing
-              , vkItemFromId = 1
+              , vkItemFromId = ChatId 1
               , vkItemText = ""
               , vkItemAttachments = []
               , vkItemImportant = Nothing
               , vkItemGeo = Nothing
               , vkItemFwdMessages = Nothing
-              , vkItemPayload = Just "2"
+              , vkItemPayload = Just $ RepeatsNum 2
               }
         ]

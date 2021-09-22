@@ -5,7 +5,8 @@ import Control.Concurrent (threadDelay)
 import Logger (Handle, logError, logInfo)
 import UsersLists (RepeatsList)
 import Vk.Echo (echo)
-import Vk.Types 
+import Vk.Types
+    ( HelpMessage(HelpMessage), Pts, Ts, VkToken(VkToken) ) 
 import Vk.VkHandle (VKHandle(getTsAndPts))
 
 loopBot ::

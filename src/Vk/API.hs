@@ -28,10 +28,14 @@ import Vk.Responses
     , VkVideo(VkVideo)
     , VkWall(VkWall)
     )
-
 import UsersLists
-
-import Vk.Types 
+    ( findRepeatNumber,
+      ChatId(chat_id'),
+      Repeats(Repeats),
+      RepeatsList,
+      RepeatsNum(RepeatsNum, repeats_num') )
+import Vk.Types
+    ( HelpMessage(help_mess), Pts(pts'), Ts(ts'), VkToken ) 
 
 getLongPollServer :: Handle IO -> VkToken -> IO (Maybe VkResponseType)
 getLongPollServer hLogger vktoken =
@@ -54,27 +58,27 @@ getTsAndPts :: Handle IO -> VkToken -> IO (Maybe (Ts, Pts))
 getTsAndPts hLogger vktoken = do
     serverInf <- getLongPollServer hLogger vktoken
     case serverInf of
-        Just (Server _ _ (Just ts) (Just pts) _ _) -> return $ Just (Ts ts, Pts pts)
+        Just (Server _ _ (Just ts) (Just pts) _ _) -> return $ Just (ts, pts)
         _ -> do
             logError hLogger "Error of getting ts and pts parameters"
             return Nothing
 
 createParams :: VkItem -> [(T.Text, Maybe T.Text)]
 createParams vkMessage =
-    [ ("user_id", Just $ T.pack $ show $ vkItemFromId vkMessage)
+    [ ("user_id", Just . T.pack . show . chat_id' . vkItemFromId $ vkMessage)
     , ("message", Just $ T.pack $ vkItemText vkMessage)
     ]
 
 sendMessageText :: Handle IO -> VkToken -> VkItem -> IO ()
 sendMessageText hLogger vktoken (VkItem _ fromId (x:xs) _ _ _ _ Nothing) =
-    when ((fromId > 0) && ((x : xs) /= "/repeat") && ((x : xs) /= "/help")) $ do
+    when ((chat_id' fromId > 0) && ((x : xs) /= "/repeat") && ((x : xs) /= "/help")) $ do
         status <- buildVkPostRequest hLogger vktoken "messages.send" params'
         case status of
             Nothing -> logError hLogger "Message not sended"
             Just _ -> logDebug hLogger "Message sended"
   where
     params' =
-        [ ("user_id", Just $ T.pack $ show fromId)
+        [ ("user_id", Just . T.pack . show . chat_id' $ fromId)
         , ("message", Just $ T.pack (x : xs))
         ]
 sendMessageText hLogger _ (VkItem _ _ "" _ _ _ _ Nothing) =
@@ -129,12 +133,12 @@ createParamsAttachment _ = []
 
 sendMessageAttachment :: Handle IO -> VkToken -> VkItem -> IO ()
 sendMessageAttachment hLogger vktoken (VkItem _ fromId _ (x:xs) _ _ _ _) =
-    when (fromId > 0) $ do
+    when (chat_id' fromId > 0) $ do
         let parameters = createParamsAttachment <$> (x : xs)
         status <-
             mapM
                 (buildVkPostRequest hLogger vktoken "messages.send")
-                (fmap (++ [("user_id", Just $ T.pack $ show fromId)]) parameters)
+                (fmap (++ [("user_id", Just . T.pack . show . chat_id' $ fromId)]) parameters)
         if all isJust status
             then logDebug hLogger "All attachments sended"
             else logError hLogger "One or all attachments not sended"
@@ -142,28 +146,28 @@ sendMessageAttachment _ _ (VkItem _ _ _ [] _ _ _ _) = return ()
 
 sendKeyboardVk :: Handle IO -> VkToken -> VkItem -> IO ()
 sendKeyboardVk hLogger vktoken (VkItem _ fromId text _ _ _ _ _) =
-    when ((fromId > 0) && (text == "/repeat")) $ do
+    when ((chat_id' fromId > 0) && (text == "/repeat")) $ do
         status <- buildVkPostRequest hLogger vktoken "messages.send" params'
         case status of
             Nothing -> logError hLogger "Keyboard  not sended"
             Just _ -> logDebug hLogger "Keyboard sended"
   where
     params' =
-        [ ("user_id", Just $ T.pack $ show fromId)
+        [ ("user_id", Just . T.pack . show . chat_id' $ fromId)
         , ("message", Just $ T.pack "Choose number of repetitions")
         , ("keyboard", Just encKeyboard)
         ]
 
 sendGeoVK :: Handle IO -> VkToken -> VkItem -> IO ()
 sendGeoVK hLogger vktoken (VkItem _ fromId _ _ _ (Just geo) _ _) =
-    when (fromId > 0) $ do
+    when (chat_id' fromId > 0) $ do
         status <- buildVkPostRequest hLogger vktoken "messages.send" params'
         case status of
             Nothing -> logError hLogger "Geo  not sended"
             Just _ -> logDebug hLogger "Geo sended"
   where
     params' =
-        [ ("user_id", Just $ T.pack $ show fromId)
+        [ ("user_id", Just . T.pack . show . chat_id' $ fromId)
         , ("lat", Just $ T.pack $ show lat)
         , ("long", Just $ T.pack $ show long)
         ]
@@ -178,7 +182,7 @@ sendMessageRepeatText ::
     -> VkItem
     -> IO (Maybe Repeats)
 sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)) =
-    if fromId > 0
+    if chat_id' fromId > 0
         then do
             status <- buildVkPostRequest hLogger vktoken "messages.send" params'
             case status of
@@ -189,23 +193,23 @@ sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)
                     logDebug hLogger $
                         T.concat
                             [ "user "
-                            , T.pack $ show fromId
+                            , T.pack . show . chat_id' $ fromId
                             , " change the number of repetitions to "
-                            , T.pack button
+                            , T.pack . show . repeats_num' $ button
                             ]
-                    return $ Just $ Repeats (ChatId fromId) (RepeatsNum (read button :: Int))
+                    return $ Just $ Repeats fromId button
         else return Nothing
   where
     params' =
-        [ ("user_id", Just $ T.pack $ show fromId)
-        , ("message", Just $ T.pack ("the number of repetitions is " ++ button))
+        [ ("user_id", Just . T.pack . show . chat_id' $ fromId)
+        , ("message", Just $ T.pack ("the number of repetitions is " ++ (show . repeats_num' $ button)))
         ]
 sendMessageRepeatText _ _ _ (VkItem _ _ _ _ _ _ _ Nothing) = return Nothing
 
 repeatMessage :: Handle IO -> VkToken -> RepeatsList -> VkItem -> IO ()
 repeatMessage hLogger vktoken list item@(VkItem _ fromId _ _ _ _ _ _) =
-    when (fromId > 0) $ do
-        repeatMessage' (findRepeatNumber list $ ChatId fromId) vktoken item
+    when (chat_id' fromId > 0) $ do
+        repeatMessage' (findRepeatNumber list fromId) vktoken item
   where
     repeatMessage' (RepeatsNum 0) _ _ = logDebug hLogger "All sended"
     repeatMessage' (RepeatsNum x) token' item' = do
@@ -216,13 +220,13 @@ repeatMessage hLogger vktoken list item@(VkItem _ fromId _ _ _ _ _ _) =
 
 sendMessageHelp :: Handle IO -> VkToken -> HelpMessage -> VkItem -> IO ()
 sendMessageHelp hLogger vktoken help_message (VkItem _ fromId text _ _ _ _ _) =
-    when ((fromId > 0) && (text == "/help")) $ do
+    when ((chat_id' fromId > 0) && (text == "/help")) $ do
         status <- buildVkPostRequest hLogger vktoken "messages.send" params'
         case status of
             Nothing -> logError hLogger "Help message not sended"
             Just _ -> logDebug hLogger "Help message sended"
   where
     params' =
-        [ ("user_id", Just $ T.pack $ show fromId)
+        [ ("user_id", Just . T.pack . show . chat_id' $ fromId)
         , ("message", Just $ T.pack $ help_mess help_message)
         ]

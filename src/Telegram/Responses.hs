@@ -16,6 +16,9 @@ import Data.Aeson
     , object
     )
 import GHC.Generics (Generic)
+import Telegram.Types ( Caption, UpdateId )
+import UsersLists ( ChatId, RepeatsNum )
+
 
 data TelegramResponse a =
     TelegramResponse
@@ -32,7 +35,7 @@ instance FromJSON a => FromJSON (TelegramResponse a) where
 
 data TelegramUpdate =
     TelegramUpdate
-        { telegramUpdateId :: Int
+        { telegramUpdateId :: UpdateId
         , telegramUpdateMessage :: Maybe TelegramMessage
         , telegramUpdateCallbackQuery :: Maybe TelegramCallbackQuery
         }
@@ -46,7 +49,7 @@ instance FromJSON TelegramUpdate where
 
 data TelegramUser =
     TelegramUser
-        { telegramUserId :: Int
+        { telegramUserId :: ChatId
         , telegramUserIsBot :: Bool
         , telegramUserFirstName :: String
         , telegramUserLastName :: Maybe String
@@ -71,7 +74,7 @@ instance FromJSON TelegramUser where
 
 data TelegramChat =
     TelegramChat
-        { telegramChatId :: Int
+        { telegramChatId :: ChatId
         , telegramChatType :: String
         , telegramChatTitle :: Maybe String
         , telegramChatUsername :: Maybe String
@@ -102,7 +105,7 @@ data TelegramMessage =
         , telegramMessageText :: Maybe String
         , telegramMessageEntities :: Maybe [TelegramMessageEntity]
         , telegramMessageAnimation :: Maybe TelegramAnimation
-        , telegramMessageCaption :: Maybe String
+        , telegramMessageCaption :: Maybe Caption
         , telegramMessageDocument :: Maybe TelegramDocument
         , telegramMessageAudio :: Maybe TelegramAudio
         , telegramMessagePhoto :: Maybe [TelegramPhotoSize]
@@ -411,7 +414,7 @@ data TelegramCallbackQuery =
         , telegramCallbackQueryFrom :: TelegramUser
         , telegramCallbackQueryMessage :: Maybe TelegramMessage
         , telegramCallbackQueryChatInstance :: String
-        , telegramCallbackQueryData :: Maybe String
+        , telegramCallbackQueryData :: Maybe RepeatsNum
         }
     deriving (Show, Generic)
 
