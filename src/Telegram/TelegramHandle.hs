@@ -3,24 +3,32 @@ module Telegram.TelegramHandle where
 import Logger (Handle)
 import qualified Telegram.API as API
 import Telegram.Types
+    ( RepeatsList,
+      Repeats,
+      StatusResult,
+      Caption,
+      RepeatsNum,
+      ChatId,
+      UpdateId,
+      TelegramToken )
 import Telegram.Requests ()
 import Telegram.Responses
-    ( TelegramAnimation
-    , TelegramAudio
-    , TelegramContact
-    , TelegramDocument
-    , TelegramLocation
-    , TelegramMessageEntity
-    , TelegramPhotoSize
-    , TelegramSticker
-    , TelegramText
-    , TelegramUpdate
-    , TelegramUser
-    , TelegramVenue
-    , TelegramVideo
-    , TelegramVideoNote
-    , TelegramVoice
-    )
+    ( TelegramVenue,
+      TelegramLocation,
+      TelegramContact,
+      TelegramVoice,
+      TelegramVideoNote,
+      TelegramSticker,
+      TelegramVideo,
+      TelegramAudio,
+      TelegramDocument,
+      TelegramPhotoSize,
+      TelegramAnimation,
+      TelegramMessageEntity,
+      TelegramText,
+      TelegramUser,
+      TelegramUpdate )
+
 
 data TelegramHandle =
     TelegramHandle
@@ -67,3 +75,4 @@ telegramHandler =
         API.sendContactMessage
         API.sendLocationMessage
         API.sendVenueMessage
+

@@ -1,18 +1,18 @@
 module Telegram.Echo where
 
 import Logger (Handle, logDebug, logError)
-import Telegram.Impl (telegramMessageToTgMessage)
+import Telegram.Impl ( telegramMessageToTgMessage ) 
 import Telegram.Responses
-    ( TelegramCallbackQuery(TelegramCallbackQuery)
-    , TelegramChat(telegramChatId)
-    , TelegramCommand(..)
-    , TelegramMessage(telegramMessageCaption, telegramMessageChat,
-                telegramMessageEntities)
-    , TelegramMessageEntity
-    , TelegramUpdate(TelegramUpdate)
-    , TelegramUser(telegramUserId)
-    , TgMessage(..)
-    )
+    ( TelegramCallbackQuery(TelegramCallbackQuery),
+      TelegramMessageEntity,
+      TgMessage(..),
+      TelegramCommand(..),
+      TelegramMessage(telegramMessageChat, telegramMessageEntities,
+                      telegramMessageCaption),
+      TelegramChat(telegramChatId),
+      TelegramUser(telegramUserId),
+      TelegramUpdate(TelegramUpdate) )
+
 import Telegram.TelegramHandle
     ( TelegramHandle(findRepeatNumber, getLastUpdateId, getUpdates,
                sendAnimationMessage, sendAudioMessage, sendContactMessage,
@@ -22,6 +22,15 @@ import Telegram.TelegramHandle
                sendVoiceMessage, updateListUsers)
     )
 import Telegram.Types
+    ( RepeatsList,
+      Repeats(Repeats),
+      StatusResult(StatusResult),
+      Caption(Caption),
+      RepeatsNum(..),
+      ChatId(ChatId),
+      UpdateId,
+      HelpMessage(help_mess),
+      TelegramToken )
 
     
 
@@ -65,7 +74,7 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
                         help_message
                 return Nothing
       where
-        chatId = ChatId $ telegramChatId $ telegramMessageChat message
+        chatId = telegramChatId $ telegramMessageChat message
         entities = telegramMessageEntities message
         cap = telegramMessageCaption message
     answer hLogger hTelegram _ tgtoken _ (TelegramUpdate _ _ (Just (TelegramCallbackQuery _ user (Just _) _ (Just dat)))) = do
@@ -76,11 +85,10 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
                 return Nothing
             Just _ -> do
                 logDebug hLogger "Keyboard sended"
-                --return $ Just (chatId, read dat :: Int)
-                return $ Just $ Repeats chatId (RepeatsNum (read dat :: Int))
+                return $ Just $ Repeats chatId dat
       where
         chatId = ChatId $ telegramUserId user
-        text = "Number of reapeting " ++ dat
+        text = "Number of reapeting " ++ (show . repeats_num' $ dat)
     answer _ _ _ _ _ _ = return Nothing
 
 sendAnswer ::
