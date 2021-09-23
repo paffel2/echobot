@@ -11,7 +11,8 @@ data Modules
     | LG
 
 type VKBot = String
-
+type HelpMessage = String
+type Token = String
 type TelegramBot = String
 
 data BotType
@@ -22,8 +23,8 @@ data BotType
 data ConfigModules
     = Bot
           { bot_type :: BotType
-          , token :: String
-          , help :: String
+          , token :: Token
+          , help :: HelpMessage
           }
     | Log
           { log_priority :: Priority
@@ -44,7 +45,7 @@ newConfigHandle = return $ ConfigHandle {getConfig = getconfig}
 
 getconfig :: Modules -> IO ConfigModules
 getconfig module' = do
-    conf <- C.load [C.Optional "bot.conf"]
+    conf <- C.load [C.Optional "config/bot.conf"]
     case module' of
         BT -> do
             bot_type_param <-

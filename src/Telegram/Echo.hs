@@ -1,19 +1,18 @@
 module Telegram.Echo where
 
 import Logger (Handle, logDebug, logError)
-import Telegram.BuildRequest (TelegramToken)
-import Telegram.Impl (telegramMessageToTgMessage)
+import Telegram.Impl ( telegramMessageToTgMessage ) 
 import Telegram.Responses
-    ( TelegramCallbackQuery(TelegramCallbackQuery)
-    , TelegramChat(telegramChatId)
-    , TelegramCommand(..)
-    , TelegramMessage(telegramMessageCaption, telegramMessageChat,
-                telegramMessageEntities)
-    , TelegramMessageEntity
-    , TelegramUpdate(TelegramUpdate)
-    , TelegramUser(telegramUserId)
-    , TgMessage(..)
-    )
+    ( TelegramCallbackQuery(TelegramCallbackQuery),
+      TelegramMessageEntity,
+      TgMessage(..),
+      TelegramCommand(..),
+      TelegramMessage(telegramMessageChat, telegramMessageEntities,
+                      telegramMessageCaption),
+      TelegramChat(telegramChatId),
+      TelegramUser(telegramUserId),
+      TelegramUpdate(TelegramUpdate) )
+
 import Telegram.TelegramHandle
     ( TelegramHandle(findRepeatNumber, getLastUpdateId, getUpdates,
                sendAnimationMessage, sendAudioMessage, sendContactMessage,
@@ -22,14 +21,27 @@ import Telegram.TelegramHandle
                sendVenueMessage, sendVideoMessage, sendVideoNoteMessage,
                sendVoiceMessage, updateListUsers)
     )
+
+import Telegram.Types
+    ( RepeatsList,
+      Repeats(Repeats),
+      StatusResult(StatusResult),
+      Caption(Caption),
+      RepeatsNum(..),
+      ChatId(ChatId),
+      UpdateId,
+      HelpMessage(help_mess),
+      TelegramToken )
+
 import Data.Maybe ( catMaybes )
+
 echo ::
        Handle
     -> TelegramHandle
     -> TelegramToken
-    -> Maybe Int
-    -> String
-    -> [(Int, Int)]
+    -> Maybe UpdateId
+    -> HelpMessage
+    -> RepeatsList
     -> IO ()
 echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
     updates <- getUpdates hTelegram' hLogger' tgtoken' updateId
@@ -43,7 +55,7 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
         mapM (answer hLogger hTelegram help_message tgtoken list) upd
     answers hLogger _ _ _ _ _ = do
         logError hLogger "Something wrong"
-        return [Nothing]
+        return []
     answer hLogger hTelegram help_message tgtoken list (TelegramUpdate _ (Just message) _) = do
         let tg_message = telegramMessageToTgMessage message
         case tg_message of
@@ -59,7 +71,7 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
                         chatId
                         tm
                         entities
-                        cap
+                        (Caption <$> cap)
                         help_message
                 return Nothing
       where
@@ -74,21 +86,21 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
                 return Nothing
             Just _ -> do
                 logDebug hLogger "Keyboard sended"
-                return $ Just (chatId, read dat :: Int)
+                return $ Just $ Repeats chatId dat
       where
-        chatId = telegramUserId user
-        text = "Number of reapeting " ++ dat
+        chatId = ChatId $ telegramUserId user
+        text = "Number of reapeting " ++ (show . repeats_num' $ dat)
     answer _ _ _ _ _ _ = return Nothing
 
 sendAnswer ::
        Handle
     -> TelegramHandle
-    -> String
-    -> Int
+    -> TelegramToken
+    -> ChatId
     -> TgMessage
     -> Maybe [TelegramMessageEntity]
-    -> Maybe String
-    -> IO (Maybe Int)
+    -> Maybe Caption
+    -> IO (Maybe StatusResult)
 sendAnswer hLogger hTelegram tgtoken chatId tg_message ent cap =
     case tg_message of
         TextMessage telegram_text ->
@@ -148,14 +160,14 @@ sendAnswer hLogger hTelegram tgtoken chatId tg_message ent cap =
 repeatSendMessage ::
        Handle
     -> TelegramHandle
-    -> Int
-    -> String
-    -> Int
+    -> RepeatsNum
+    -> TelegramToken
+    -> ChatId
     -> TgMessage
     -> Maybe [TelegramMessageEntity]
-    -> Maybe String
-    -> String
-    -> IO ()
+    -> Maybe Caption
+    -> HelpMessage
+    -> IO (Maybe StatusResult)
 repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap help_message = do
     case tg_message of
         CommandMessage telegram_command ->
@@ -168,7 +180,7 @@ repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap hel
                 help_message
         _ -> repeatedMessages n
   where
-    repeatedMessages n'
+    repeatedMessages (RepeatsNum n')
         | n' > 0 = do
             status <-
                 sendAnswer
@@ -182,23 +194,23 @@ repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap hel
             case status of
                 Nothing -> do
                     logError hLogger "Message not send"
-                    return ()
-                Just _ -> repeatedMessages (n' - 1)
+                    return Nothing
+                Just _ -> repeatedMessages $ RepeatsNum (n' - 1)
         | otherwise = do
             logDebug hLogger "All messages sended"
-            return ()
+            return $ Just $ StatusResult 200
+
 
 sendServiceMessage ::
        Handle
     -> TelegramHandle
-    -> String
-    -> Int
+    -> TelegramToken
+    -> ChatId
     -> TelegramCommand
-    -> String
-    -> IO ()
-sendServiceMessage hLogger hTelegram tgtoken chatId Repeat _ = do
+    -> HelpMessage
+    -> IO (Maybe StatusResult)
+sendServiceMessage hLogger hTelegram tgtoken chatId Repeat _ =
     sendKeyboard hTelegram hLogger tgtoken chatId
-    return ()
-sendServiceMessage hLogger hTelegram tgtoken chatId Help help_message = do
-    sendMessage hTelegram hLogger tgtoken chatId help_message Nothing
-    return ()
+sendServiceMessage hLogger hTelegram tgtoken chatId Help help_message =
+    sendMessage hTelegram hLogger tgtoken chatId (help_mess help_message) Nothing
+

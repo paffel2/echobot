@@ -2,15 +2,15 @@ module Telegram.Impl where
 
 import Data.Maybe (isJust)
 import Telegram.Responses
-    ( TelegramCommand(Help, Repeat)
-    , TelegramMessage(telegramMessageAnimation, telegramMessageAudio,
-                telegramMessageContact, telegramMessageDocument,
-                telegramMessageLocation, telegramMessagePhoto,
-                telegramMessageSticker, telegramMessageText, telegramMessageVenue,
-                telegramMessageVideo, telegramMessageVideoNote,
-                telegramMessageVoice)
-    , TgMessage(..)
-    )
+    ( TgMessage(..),
+      TelegramCommand(Help, Repeat),
+      TelegramMessage(telegramMessageText, telegramMessageAnimation,
+                      telegramMessageAudio, telegramMessageDocument,
+                      telegramMessagePhoto, telegramMessageVideo, telegramMessageSticker,
+                      telegramMessageVideoNote, telegramMessageVoice,
+                      telegramMessageContact, telegramMessageLocation,
+                      telegramMessageVenue) )
+
 
 telegramMessageToTgMessage :: TelegramMessage -> Maybe TgMessage
 telegramMessageToTgMessage telegram_message

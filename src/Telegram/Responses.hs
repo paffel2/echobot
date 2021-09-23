@@ -2,20 +2,21 @@ module Telegram.Responses where
 
 import Control.Monad (MonadPlus(mzero))
 import Data.Aeson
-    ( FromJSON(parseJSON)
-    , KeyValue((.=))
-    , Options(fieldLabelModifier)
-    , ToJSON(toJSON)
-    , Value(Object)
-    , (.:)
-    , (.:?)
-    , camelTo2
-    , defaultOptions
-    , genericParseJSON
-    , genericToJSON
-    , object
-    )
+    ( ToJSON(toJSON),
+      FromJSON(parseJSON),
+      Value(Object),
+      (.:),
+      (.:?),
+      genericParseJSON,
+      camelTo2,
+      defaultOptions,
+      object,
+      genericToJSON,
+      Options(fieldLabelModifier),
+      KeyValue((.=)) )
+
 import GHC.Generics (Generic)
+import Telegram.Types ( RepeatsNum, ChatId, UpdateId )
 
 data TelegramResponse a =
     TelegramResponse
@@ -32,7 +33,7 @@ instance FromJSON a => FromJSON (TelegramResponse a) where
 
 data TelegramUpdate =
     TelegramUpdate
-        { telegramUpdateId :: Int
+        { telegramUpdateId :: UpdateId
         , telegramUpdateMessage :: Maybe TelegramMessage
         , telegramUpdateCallbackQuery :: Maybe TelegramCallbackQuery
         }
@@ -71,7 +72,7 @@ instance FromJSON TelegramUser where
 
 data TelegramChat =
     TelegramChat
-        { telegramChatId :: Int
+        { telegramChatId :: ChatId
         , telegramChatType :: String
         , telegramChatTitle :: Maybe String
         , telegramChatUsername :: Maybe String
@@ -411,7 +412,7 @@ data TelegramCallbackQuery =
         , telegramCallbackQueryFrom :: TelegramUser
         , telegramCallbackQueryMessage :: Maybe TelegramMessage
         , telegramCallbackQueryChatInstance :: String
-        , telegramCallbackQueryData :: Maybe String
+        , telegramCallbackQueryData :: Maybe RepeatsNum
         }
     deriving (Show, Generic)
 
@@ -420,25 +421,3 @@ instance FromJSON TelegramCallbackQuery where
         genericParseJSON
             defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 21}
 
-data TelegramUserBaseUser =
-    TelegramUserBaseUser
-        { telegramUserBaseUserId :: Int
-        , telegramUserBaseUserRepeat :: Int
-        }
-    deriving (Show, Generic)
-
-instance FromJSON TelegramUserBaseUser where
-    parseJSON =
-        genericParseJSON
-            defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 20}
-
-newtype TelegramUserBase =
-    TelegramUserBase
-        { telegramUserBaseUsers :: [TelegramUserBaseUser]
-        }
-    deriving (Show, Generic)
-
-instance FromJSON TelegramUserBase where
-    parseJSON =
-        genericParseJSON
-            defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 16}
