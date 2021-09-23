@@ -38,7 +38,7 @@ data TelegramHandle =
         , findRepeatNumber :: RepeatsList -> ChatId -> IO RepeatsNum
         , getUpdates :: Handle -> TelegramToken -> Maybe UpdateId -> IO (Maybe [TelegramUpdate])
         , getLastUpdateId :: Handle -> Maybe [TelegramUpdate] -> IO (Maybe UpdateId)
-        , updateListUsers :: RepeatsList -> [Maybe Repeats] -> RepeatsList
+        , updateListUsers :: RepeatsList -> RepeatsList -> RepeatsList
         , sendTextMessage :: Handle -> TelegramToken -> ChatId -> TelegramText -> Maybe [TelegramMessageEntity] -> IO (Maybe StatusResult)
         , sendAnimationMessage :: Handle -> TelegramToken -> ChatId -> TelegramAnimation -> Maybe Caption -> IO (Maybe StatusResult)
         , sendAudioMessage :: Handle -> TelegramToken -> ChatId -> TelegramAudio -> Maybe Caption -> IO (Maybe StatusResult)
