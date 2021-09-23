@@ -90,15 +90,11 @@ getLastUpdateId hLogger updates =
             where nextUpd (UpdateId a) = UpdateId (a+1)
 
 
-updateListUsers :: RepeatsList -> [Maybe Repeats] -> RepeatsList
-updateListUsers xs (u:us) = updateListUsers newList us
-  where
-    newList =
-        case u of
-            Nothing -> xs
-            Just (Repeats cid n) -> newList' ++ [Repeats cid n]
-                where 
-                    newList' = filter ((/= cid) . chat_id) xs
+updateListUsers :: RepeatsList -> RepeatsList -> RepeatsList
+updateListUsers xs ((Repeats cid n):us) = updateListUsers newList us
+    where
+        newList = filter ((/= cid) . chat_id) xs ++ [Repeats cid n]
+updateListUsers xs [] = xs
 
 updateListUsers xs [] = xs
 
