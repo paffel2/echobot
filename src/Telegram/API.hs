@@ -89,6 +89,7 @@ getLastUpdateId hLogger updates =
         Just xs -> return $ Just $ nextUpd $ telegramUpdateId $ last xs
             where nextUpd (UpdateId a) = UpdateId (a+1)
 
+
 updateListUsers :: RepeatsList -> [Maybe Repeats] -> RepeatsList
 updateListUsers xs (u:us) = updateListUsers newList us
   where
@@ -98,6 +99,7 @@ updateListUsers xs (u:us) = updateListUsers newList us
             Just (Repeats cid n) -> newList' ++ [Repeats cid n]
                 where 
                     newList' = filter ((/= cid) . chat_id) xs
+
 updateListUsers xs [] = xs
 
 findRepeatNumber :: RepeatsList -> ChatId -> IO RepeatsNum

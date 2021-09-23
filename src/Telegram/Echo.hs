@@ -21,6 +21,7 @@ import Telegram.TelegramHandle
                sendVenueMessage, sendVideoMessage, sendVideoNoteMessage,
                sendVoiceMessage, updateListUsers)
     )
+
 import Telegram.Types
     ( RepeatsList,
       Repeats(Repeats),
@@ -32,7 +33,7 @@ import Telegram.Types
       HelpMessage(help_mess),
       TelegramToken )
 
-    
+import Data.Maybe ( catMaybes )
 
 echo ::
        Handle
@@ -45,7 +46,7 @@ echo ::
 echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
     updates <- getUpdates hTelegram' hLogger' tgtoken' updateId
     listOfUsersUpd <-
-        answers hLogger' hTelegram' help_message' tgtoken' updates listOfUsers
+        catMaybes <$> answers hLogger' hTelegram' help_message' tgtoken' updates listOfUsers
     let newListOfUsers = updateListUsers hTelegram' listOfUsers listOfUsersUpd
     nextUpdateID <- getLastUpdateId hTelegram' hLogger' updates
     echo hLogger' hTelegram' tgtoken' nextUpdateID help_message' newListOfUsers
@@ -199,6 +200,7 @@ repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap hel
             logDebug hLogger "All messages sended"
             return $ Just $ StatusResult 200
 
+
 sendServiceMessage ::
        Handle
     -> TelegramHandle
@@ -211,3 +213,4 @@ sendServiceMessage hLogger hTelegram tgtoken chatId Repeat _ =
     sendKeyboard hTelegram hLogger tgtoken chatId
 sendServiceMessage hLogger hTelegram tgtoken chatId Help help_message =
     sendMessage hTelegram hLogger tgtoken chatId (help_mess help_message) Nothing
+
