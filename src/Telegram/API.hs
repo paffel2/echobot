@@ -96,8 +96,6 @@ updateListUsers xs ((Repeats cid n):us) = updateListUsers newList us
         newList = filter ((/= cid) . chat_id) xs ++ [Repeats cid n]
 updateListUsers xs [] = xs
 
-updateListUsers xs [] = xs
-
 findRepeatNumber :: RepeatsList -> ChatId -> IO RepeatsNum
 findRepeatNumber listOfUsers chatId = do
     let rep = find (\x -> chatId == chat_id x ) listOfUsers
