@@ -5,11 +5,13 @@ import Logger (Handle, logError, logInfo)
 import Telegram.Echo (echo)
 import Telegram.TelegramHandle (TelegramHandle(getMe))
 import Telegram.Types
-    ( UpdateId(UpdateId),
-      HelpMessage(HelpMessage),
-      TelegramToken(TelegramToken) )
+    ( HelpMessage(HelpMessage),
+      TelegramToken(TelegramToken),
+      UpdateId(UpdateId) )
    
-startTelegramBot :: Handle -> TelegramHandle -> ConfigModules -> IO ()
+import UsersLists ( RepeatsList )
+
+startTelegramBot :: Handle IO -> TelegramHandle IO -> ConfigModules -> IO ()
 startTelegramBot hLogger hTelegram botConf = do
     logInfo hLogger "New Bot Start"
     logInfo hLogger "Check token"
@@ -18,10 +20,15 @@ startTelegramBot hLogger hTelegram botConf = do
         Nothing -> logError hLogger "Bad token"
         Just _ -> do
             logInfo hLogger "Good token"
-            echo
-                hLogger
-                hTelegram
-                (TelegramToken (Config.token botConf))
-                (Just $ UpdateId 0)
-                (HelpMessage $ Config.help botConf)
-                []
+            loopBot hLogger hTelegram (TelegramToken (Config.token botConf)) (HelpMessage (Config.help botConf)) (Just $ UpdateId 0) []
+
+loopBot :: Monad m => Handle m
+    -> TelegramHandle m
+    -> TelegramToken
+    -> HelpMessage
+    -> Maybe UpdateId
+    -> RepeatsList
+    -> m ()
+loopBot hLogger hTelegram tgtoken help_message updId listOfRepeats = do
+    (newUpdId, newListOfRepeat) <- echo hLogger hTelegram tgtoken updId help_message listOfRepeats
+    loopBot hLogger hTelegram tgtoken help_message newUpdId newListOfRepeat

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c3287761c3371917dc53105d764d690bdc6349edfa5e3bf96eeb96bae72e4e77
+-- hash: 3960b9c41b66b18839ef1aa67acd2f18a49eae1d609ded782deb942e323d6fe7
 
 name:           echobot
 version:        0.1.0.0
@@ -39,6 +39,7 @@ library
       Telegram.Responses
       Telegram.TelegramHandle
       Telegram.Types
+      UsersLists
       Vk.API
       Vk.Bot
       Vk.BuildRequests
@@ -46,6 +47,7 @@ library
       Vk.Keyboard
       Vk.KeyboardJSON
       Vk.Responses
+      Vk.Types
       Vk.VkHandle
   other-modules:
       Paths_echobot
@@ -60,6 +62,7 @@ library
     , hspec
     , http-client
     , http-conduit
+    , mtl
     , req
     , req-conduit
     , text
@@ -81,6 +84,7 @@ executable echobot-exe
     , hspec
     , http-client
     , http-conduit
+    , mtl
     , req
     , req-conduit
     , text
@@ -90,7 +94,9 @@ test-suite echobot-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      APITests
+      TelegramPatternTests
+      UsersListsTests
+      VkPatternTests
       Paths_echobot
   hs-source-dirs:
       test
@@ -104,6 +110,7 @@ test-suite echobot-test
     , hspec
     , http-client
     , http-conduit
+    , mtl
     , req
     , req-conduit
     , text

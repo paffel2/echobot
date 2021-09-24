@@ -12,7 +12,8 @@ import Data.Aeson
     , genericParseJSON
     )
 import GHC.Generics (Generic)
-
+import Vk.Types ( Pts, Ts )
+import UsersLists ( ChatId, RepeatsNum )
 newtype VkResponse =
     VkResponse
         { someResponse :: VkResponseType
@@ -28,8 +29,8 @@ data VkResponseType =
     Server
         { serverServer :: Maybe String
         , serverKey :: Maybe String
-        , serverTS :: Maybe Int
-        , serverPTS :: Maybe Int
+        , serverTS :: Maybe Ts
+        , serverPTS :: Maybe Pts
         , serverNewPTS :: Maybe Int
         , serverMessages :: Maybe VkMessages
         }
@@ -55,13 +56,13 @@ instance FromJSON VkMessages where
 data VkItem =
     VkItem
         { vkItemId :: Maybe Int
-        , vkItemFromId :: Int
+        , vkItemFromId :: ChatId
         , vkItemText :: String
         , vkItemAttachments :: [VkAttachment]
         , vkItemImportant :: Maybe Bool
         , vkItemGeo :: Maybe VkGeo
         , vkItemFwdMessages :: Maybe [VkItem]
-        , vkItemPayload :: Maybe String
+        , vkItemPayload :: Maybe RepeatsNum
         }
     deriving (Show, Generic)
 

@@ -16,7 +16,8 @@ import Data.Aeson
       KeyValue((.=)) )
 
 import GHC.Generics (Generic)
-import Telegram.Types ( RepeatsNum, ChatId, UpdateId )
+import Telegram.Types ( Caption, UpdateId )
+import UsersLists ( ChatId, RepeatsNum )
 
 data TelegramResponse a =
     TelegramResponse
@@ -47,7 +48,7 @@ instance FromJSON TelegramUpdate where
 
 data TelegramUser =
     TelegramUser
-        { telegramUserId :: Int
+        { telegramUserId :: ChatId
         , telegramUserIsBot :: Bool
         , telegramUserFirstName :: String
         , telegramUserLastName :: Maybe String
@@ -103,7 +104,7 @@ data TelegramMessage =
         , telegramMessageText :: Maybe String
         , telegramMessageEntities :: Maybe [TelegramMessageEntity]
         , telegramMessageAnimation :: Maybe TelegramAnimation
-        , telegramMessageCaption :: Maybe String
+        , telegramMessageCaption :: Maybe Caption
         , telegramMessageDocument :: Maybe TelegramDocument
         , telegramMessageAudio :: Maybe TelegramAudio
         , telegramMessagePhoto :: Maybe [TelegramPhotoSize]

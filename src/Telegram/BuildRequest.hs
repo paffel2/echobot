@@ -25,12 +25,13 @@ import Network.HTTP.Req
     , responseStatusCode
     , runReq
     )
+import Telegram.Responses (TelegramResponse(TelegramResponse))
 import Telegram.Types
     ( StatusResult(StatusResult), TelegramToken(TelegramToken) )
-   
-import Telegram.Responses (TelegramResponse(TelegramResponse))
+
 
 type ParametersList = [(T.Text, T.Text)]
+
 type TelegramMethod = String
 
 buildParams :: (QueryParam p, Monoid p) => ParametersList -> p
@@ -39,7 +40,7 @@ buildParams params = mconcat $ fmap (uncurry (=:)) params
 
 buildTelegramGetRequest ::
        FromJSON a
-    => Handle
+    => Handle IO
     -> TelegramToken
     -> TelegramMethod
     -> ParametersList
@@ -75,7 +76,7 @@ buildTelegramGetRequest hLogger (TelegramToken tgtoken) url params =
 
 buildTelegramPostRequest ::
        ToJSON b
-    => Handle
+    => Handle IO
     -> TelegramToken
     -> TelegramMethod
     -> b

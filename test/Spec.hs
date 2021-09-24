@@ -1,6 +1,9 @@
-import APITests (apiTests)
+import TelegramPatternTests ( echoTelegramTests )
+import UsersListsTests (usersListsTests)
+import VkPatternTests (echoVkTests)
 
 main :: IO ()
---main = putStrLn "Test suite not yet implemented"
-main = do 
-    apiTests
+main = do
+    usersListsTests
+    echoVkTests
+    echoTelegramTests
