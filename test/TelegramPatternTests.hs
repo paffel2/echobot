@@ -57,7 +57,8 @@ echoTelegramTests :: IO ()
 echoTelegramTests =
     hspec $ do
         describe "Testing vk echo function" $ do
-            it "Should return (Nothing,[]), because don't have updates " $ do
+            it
+                "Should not change UpdateId and repeatsList, because don't have updates" $ do
                 echo
                     logHandle
                     telegramHandle
@@ -66,7 +67,8 @@ echoTelegramTests =
                     (HelpMessage "help_message")
                     [] `shouldBe`
                     return (Nothing, [])
-            it "Should return (Just 1, []) because server has new update" $ do
+            it
+                "Should return new UpdateId and empty list of the users, because server has new update without changing the list of users " $ do
                 echo
                     logHandle
                     (telegramHandle
@@ -79,7 +81,8 @@ echoTelegramTests =
                     [] `shouldBe`
                     return (Just $ UpdateId 1, [])
             it
-                "Should return (Nothing, [Repeats 1 2]), because user changed the number of repetitions for the first time" $ do
+                ("Should return new UpdateId and not empty list of the users, " ++
+                 "because server has new update where user changed the number of repetitions for the first time") $ do
                 echo
                     logHandle
                     (telegramHandle
@@ -89,14 +92,18 @@ echoTelegramTests =
                          , sendTextMessage =
                                \logHandle token chatId text entities ->
                                    return $ Just $ StatusResult 200
+                         , getLastUpdateId =
+                               \logHandle updates -> return (Just $ UpdateId 1)
                          })
                     (TelegramToken "token")
                     (Just $ UpdateId 0)
                     (HelpMessage "help_message")
                     [] `shouldBe`
-                    return (Nothing, [Repeats (ChatId 1) (RepeatsNum 2)])
+                    return
+                        (Just $ UpdateId 1, [Repeats (ChatId 1) (RepeatsNum 2)])
             it
-                "Should return (Nothing, [Repeats 1 2]), because user change num of repeats" $ do
+                ("Should return new UpdateId and not empty list of the users, " ++
+                 "because server has new update where user changed the number") $ do
                 echo
                     logHandle
                     (telegramHandle
@@ -106,14 +113,17 @@ echoTelegramTests =
                          , sendTextMessage =
                                \logHandle token chatId text entities ->
                                    return $ Just $ StatusResult 200
+                         , getLastUpdateId =
+                               \logHandle updates -> return (Just $ UpdateId 1)
                          })
                     (TelegramToken "token")
                     (Just $ UpdateId 0)
                     (HelpMessage "help_message")
                     [Repeats (ChatId 1) (RepeatsNum 5)] `shouldBe`
-                    return (Nothing, [Repeats (ChatId 1) (RepeatsNum 2)])
+                    return
+                        (Just $ UpdateId 1, [Repeats (ChatId 1) (RepeatsNum 2)])
             it
-                "Should return (Nothing,[]), because echo function did not receive an update ID and getUpdates returns Nothing" $ do
+                "Should not change UpdateId and repeatsList, because don't have updates and UpdateId is Nothing" $ do
                 echo
                     logHandle
                     telegramHandle
@@ -123,8 +133,8 @@ echoTelegramTests =
                     [] `shouldBe`
                     return (Nothing, [])
             it
-                ("Should return (Just $ UpdateId 1, [Repeats (ChatId 1) (RepeatsNum 2)]), because echo function did not receive an update ID" ++
-                 "and getLastUpdateId returns UpdateId 1, and getUpdates returns list of updates, because can working without UpdateId.") $ do
+                ("Should return new UpdateId and new list of users, because echo function did not receive an update ID, " ++
+                 "but get new update, where get new list of users and new UpdateId.") $ do
                 echo
                     logHandle
                     (telegramHandle
