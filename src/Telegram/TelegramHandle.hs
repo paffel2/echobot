@@ -2,8 +2,6 @@ module Telegram.TelegramHandle where
 
 import Logger (Handle)
 import qualified Telegram.API as API
-import Telegram.Types
-    ( Caption, StatusResult, UpdateId, TelegramToken )
 import Telegram.Requests ()
 import Telegram.Responses
     ( TelegramAnimation
@@ -22,13 +20,13 @@ import Telegram.Responses
     , TelegramVideoNote
     , TelegramVoice
     )
-import UsersLists ( ChatId )
-
+import Telegram.Types (Caption, StatusResult, TelegramToken, UpdateId)
+import UsersLists (ChatId)
 
 data TelegramHandle m =
-    TelegramHandle 
+    TelegramHandle
         { getMe :: Handle m -> TelegramToken -> m (Maybe TelegramUser)
-        , sendKeyboard :: Handle m -> TelegramToken -> ChatId  -> m (Maybe StatusResult )
+        , sendKeyboard :: Handle m -> TelegramToken -> ChatId -> m (Maybe StatusResult)
         , getUpdates :: Handle m -> TelegramToken -> Maybe UpdateId -> m (Maybe [TelegramUpdate])
         , getLastUpdateId :: Handle m -> Maybe [TelegramUpdate] -> m (Maybe UpdateId)
         , sendTextMessage :: Handle m -> TelegramToken -> ChatId -> TelegramText -> Maybe [TelegramMessageEntity] -> m (Maybe StatusResult)
@@ -64,4 +62,3 @@ telegramHandler =
         API.sendContactMessage
         API.sendLocationMessage
         API.sendVenueMessage
-

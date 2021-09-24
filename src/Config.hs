@@ -11,8 +11,11 @@ data Modules
     | LG
 
 type VKBot = String
+
 type HelpMessage = String
+
 type Token = String
+
 type TelegramBot = String
 
 data BotType

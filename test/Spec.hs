@@ -1,4 +1,4 @@
-import TelegramPatternTests ( echoTelegramTests )
+import TelegramPatternTests (echoTelegramTests)
 import UsersListsTests (usersListsTests)
 import VkPatternTests (echoVkTests)
 

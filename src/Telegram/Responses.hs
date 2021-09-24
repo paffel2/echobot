@@ -2,22 +2,23 @@ module Telegram.Responses where
 
 import Control.Monad (MonadPlus(mzero))
 import Data.Aeson
-    ( ToJSON(toJSON),
-      FromJSON(parseJSON),
-      Value(Object),
-      (.:),
-      (.:?),
-      genericParseJSON,
-      camelTo2,
-      defaultOptions,
-      object,
-      genericToJSON,
-      Options(fieldLabelModifier),
-      KeyValue((.=)) )
+    ( FromJSON(parseJSON)
+    , KeyValue((.=))
+    , Options(fieldLabelModifier)
+    , ToJSON(toJSON)
+    , Value(Object)
+    , (.:)
+    , (.:?)
+    , camelTo2
+    , defaultOptions
+    , genericParseJSON
+    , genericToJSON
+    , object
+    )
 
 import GHC.Generics (Generic)
-import Telegram.Types ( Caption, UpdateId )
-import UsersLists ( ChatId, RepeatsNum )
+import Telegram.Types (Caption, UpdateId)
+import UsersLists (ChatId, RepeatsNum)
 
 data TelegramResponse a =
     TelegramResponse
@@ -421,4 +422,3 @@ instance FromJSON TelegramCallbackQuery where
     parseJSON =
         genericParseJSON
             defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 21}
-

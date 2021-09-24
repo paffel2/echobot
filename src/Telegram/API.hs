@@ -5,11 +5,7 @@ module Telegram.API where
 import Data.Aeson (FromJSON)
 import qualified Data.Text as T
 import Logger (Handle, logInfo)
-import Telegram.BuildRequest
-    ( 
-     buildTelegramGetRequest
-    , buildTelegramPostRequest
-    )
+import Telegram.BuildRequest (buildTelegramGetRequest, buildTelegramPostRequest)
 import Telegram.Keyboard (keyboard)
 import Telegram.Requests
     ( TelegramSendAnimation(TelegramSendAnimation)
@@ -52,10 +48,15 @@ import Telegram.Responses
 import Telegram.Types
 import UsersLists
 
-getMe :: Handle IO-> TelegramToken -> IO (Maybe TelegramUser)
+getMe :: Handle IO -> TelegramToken -> IO (Maybe TelegramUser)
 getMe hLogger tgtoken = buildTelegramGetRequest hLogger tgtoken "getMe" []
 
-getUpdates :: FromJSON a => Handle IO-> TelegramToken -> Maybe UpdateId -> IO (Maybe a)
+getUpdates ::
+       FromJSON a
+    => Handle IO
+    -> TelegramToken
+    -> Maybe UpdateId
+    -> IO (Maybe a)
 getUpdates hLogger tgtoken (Just updId) =
     buildTelegramGetRequest
         hLogger
@@ -69,7 +70,7 @@ getUpdates hLogger tgtoken Nothing =
         "getUpdates"
         [("offset", "0"), ("timeout", "10")]
 
-getLastUpdateId :: Handle IO-> Maybe [TelegramUpdate] -> IO (Maybe UpdateId)
+getLastUpdateId :: Handle IO -> Maybe [TelegramUpdate] -> IO (Maybe UpdateId)
 getLastUpdateId hLogger updates =
     case updates of
         Nothing -> do
@@ -78,7 +79,8 @@ getLastUpdateId hLogger updates =
             logInfo hLogger "No updates"
             return Nothing
         Just xs -> return $ Just $ nextUpd $ telegramUpdateId $ last xs
-        where nextUpd (UpdateId x) = UpdateId (x + 1)
+  where
+    nextUpd (UpdateId x) = UpdateId (x + 1)
 
 sendTextMessage ::
        Handle IO
@@ -94,7 +96,6 @@ sendTextMessage hLogger tgtoken chatId text ent =
         "sendMessage"
         (TelegramSendMessage chatId text ent Nothing)
         []
-
 
 sendAnimationMessage ::
        Handle IO
@@ -183,7 +184,11 @@ sendVideoMessage hLogger tgtoken chatId video cap =
     videoId = telegramVideoFileId video
 
 sendStickerMessage ::
-       Handle IO-> TelegramToken -> ChatId -> TelegramSticker -> IO (Maybe StatusResult)
+       Handle IO
+    -> TelegramToken
+    -> ChatId
+    -> TelegramSticker
+    -> IO (Maybe StatusResult)
 sendStickerMessage hLogger tgtoken chatId sticker =
     buildTelegramPostRequest
         hLogger
@@ -195,7 +200,11 @@ sendStickerMessage hLogger tgtoken chatId sticker =
     stickerId = telegramStickerFileId sticker
 
 sendVideoNoteMessage ::
-       Handle IO-> TelegramToken -> ChatId -> TelegramVideoNote -> IO (Maybe StatusResult)
+       Handle IO
+    -> TelegramToken
+    -> ChatId
+    -> TelegramVideoNote
+    -> IO (Maybe StatusResult)
 sendVideoNoteMessage hLogger tgtoken chatId videoNote =
     buildTelegramPostRequest
         hLogger
@@ -224,7 +233,11 @@ sendVoiceMessage hLogger tgtoken chatId voice cap =
     voiceId = telegramVoiceFileId voice
 
 sendContactMessage ::
-       Handle IO-> TelegramToken -> ChatId -> TelegramContact -> IO (Maybe StatusResult)
+       Handle IO
+    -> TelegramToken
+    -> ChatId
+    -> TelegramContact
+    -> IO (Maybe StatusResult)
 sendContactMessage hLogger tgtoken chatId contact =
     buildTelegramPostRequest
         hLogger
@@ -239,7 +252,11 @@ sendContactMessage hLogger tgtoken chatId contact =
     vcard = telegramContactVcard contact
 
 sendLocationMessage ::
-       Handle IO-> TelegramToken -> ChatId -> TelegramLocation -> IO (Maybe StatusResult)
+       Handle IO
+    -> TelegramToken
+    -> ChatId
+    -> TelegramLocation
+    -> IO (Maybe StatusResult)
 sendLocationMessage hLogger tgtoken chatId location =
     buildTelegramPostRequest
         hLogger
@@ -255,7 +272,12 @@ sendLocationMessage hLogger tgtoken chatId location =
     hea = telegramLocationHeading location
     par = telegramLocationProximityAlertRadius location
 
-sendVenueMessage :: Handle IO -> TelegramToken -> ChatId -> TelegramVenue -> IO (Maybe StatusResult)
+sendVenueMessage ::
+       Handle IO
+    -> TelegramToken
+    -> ChatId
+    -> TelegramVenue
+    -> IO (Maybe StatusResult)
 sendVenueMessage hLogger tgtoken chatId venue =
     buildTelegramPostRequest
         hLogger
@@ -285,7 +307,6 @@ sendKeyboard hLogger tgtoken chatId =
              Nothing
              (Just keyboard))
         []
-
 
 sendMessage ::
        Handle IO
