@@ -27,11 +27,14 @@ import Network.HTTP.Req
     , runReq
     )
 import Vk.Responses (VkResponse(VkResponse), VkResponseType)
-import Vk.Types ( VkToken(VkToken) ) 
+import Vk.Types (VkToken(VkToken))
 
 type PostParams = [(T.Text, Maybe T.Text)]
+
 type GetParams = [(T.Text, T.Text)]
+
 type GetMethod = T.Text
+
 type PostMethod = String
 
 params :: PostParams -> FormUrlEncodedParam

@@ -1,10 +1,10 @@
 module Vk.VkHandle where
 
 import Logger (Handle)
-import UsersLists ( RepeatsList, Repeats ) 
+import UsersLists (Repeats, RepeatsList)
 import qualified Vk.API as API
 import Vk.Responses (VkItem, VkResponseType)
-import Vk.Types ( Pts, HelpMessage, Ts, VkToken ) 
+import Vk.Types (HelpMessage, Pts, Ts, VkToken)
 
 data VKHandle m =
     VKHandle

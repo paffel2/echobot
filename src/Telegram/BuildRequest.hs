@@ -27,9 +27,7 @@ import Network.HTTP.Req
     )
 
 import Telegram.Responses (TelegramResponse(TelegramResponse))
-import Telegram.Types
-    ( StatusResult(StatusResult), TelegramToken(TelegramToken) )
-
+import Telegram.Types (StatusResult(StatusResult), TelegramToken(TelegramToken))
 
 type ParametersList = [(T.Text, T.Text)]
 

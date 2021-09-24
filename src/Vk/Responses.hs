@@ -12,8 +12,9 @@ import Data.Aeson
     , genericParseJSON
     )
 import GHC.Generics (Generic)
-import Vk.Types ( Pts, Ts )
-import UsersLists ( ChatId, RepeatsNum )
+import UsersLists (ChatId, RepeatsNum)
+import Vk.Types (Pts, Ts)
+
 newtype VkResponse =
     VkResponse
         { someResponse :: VkResponseType

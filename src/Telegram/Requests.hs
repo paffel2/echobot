@@ -11,8 +11,8 @@ import Data.Aeson
     )
 import GHC.Generics (Generic)
 import Telegram.Responses (TelegramInlineKeyboardMarkup, TelegramMessageEntity)
-import UsersLists ( ChatId )
-import Telegram.Types ( Caption )
+import Telegram.Types (Caption)
+import UsersLists (ChatId)
 
 data TelegramSendMessage =
     TelegramSendMessage

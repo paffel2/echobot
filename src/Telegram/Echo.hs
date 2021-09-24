@@ -1,5 +1,6 @@
 module Telegram.Echo where
 
+import Data.Maybe (catMaybes)
 import Logger (Handle, logDebug, logError)
 import Telegram.Impl (telegramMessageToTgMessage)
 import Telegram.Responses
@@ -21,20 +22,20 @@ import Telegram.TelegramHandle
                sendVideoMessage, sendVideoNoteMessage, sendVoiceMessage)
     )
 import Telegram.Types
-    ( Caption,
-      HelpMessage(help_mess),
-      StatusResult,
-      TelegramToken,
-      UpdateId )
-import Data.Maybe (catMaybes)
+    ( Caption
+    , HelpMessage(help_mess)
+    , StatusResult
+    , TelegramToken
+    , UpdateId
+    )
 import UsersLists
-    ( findRepeatNumber,
-      updateListUsers,
-      ChatId,
-      Repeats(Repeats),
-      RepeatsList,
-      RepeatsNum(..) )
-
+    ( ChatId
+    , Repeats(Repeats)
+    , RepeatsList
+    , RepeatsNum(..)
+    , findRepeatNumber
+    , updateListUsers
+    )
 
 echo ::
        Monad m
@@ -44,14 +45,14 @@ echo ::
     -> Maybe UpdateId
     -> HelpMessage
     -> RepeatsList
-    -> m (Maybe UpdateId,RepeatsList)
+    -> m (Maybe UpdateId, RepeatsList)
 echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
     updates <- getUpdates hTelegram' hLogger' tgtoken' updateId
     listOfUsersUpd <-
         answers hLogger' hTelegram' help_message' tgtoken' updates listOfUsers
     let newListOfUsers = updateListUsers listOfUsers listOfUsersUpd
     nextUpdateID <- getLastUpdateId hTelegram' hLogger' updates
-    return (nextUpdateID,newListOfUsers)
+    return (nextUpdateID, newListOfUsers)
   where
     answers hLogger hTelegram help_message tgtoken (Just upd) list =
         catMaybes <$>
@@ -218,4 +219,10 @@ sendServiceMessage ::
 sendServiceMessage hLogger hTelegram tgtoken chatId Repeat _ =
     sendKeyboard hTelegram hLogger tgtoken chatId
 sendServiceMessage hLogger hTelegram tgtoken chatId Help help_message =
-    sendTextMessage hTelegram hLogger tgtoken chatId (help_mess help_message) Nothing
+    sendTextMessage
+        hTelegram
+        hLogger
+        tgtoken
+        chatId
+        (help_mess help_message)
+        Nothing

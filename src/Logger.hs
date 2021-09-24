@@ -10,10 +10,10 @@ data Priority
     = Debug
     | Info
     | Warning
-    | Error 
+    | Error
     deriving (Eq, Ord, Show)
 
-data Handle m = 
+data Handle m =
     Handle
         { priority :: Priority
         , log :: Priority -> T.Text -> m ()

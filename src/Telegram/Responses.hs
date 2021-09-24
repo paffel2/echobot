@@ -16,9 +16,8 @@ import Data.Aeson
     , object
     )
 import GHC.Generics (Generic)
-import Telegram.Types ( Caption, UpdateId )
-import UsersLists ( ChatId, RepeatsNum )
-
+import Telegram.Types (Caption, UpdateId)
+import UsersLists (ChatId, RepeatsNum)
 
 data TelegramResponse a =
     TelegramResponse
