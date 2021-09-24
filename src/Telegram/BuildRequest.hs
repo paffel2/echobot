@@ -25,7 +25,6 @@ import Network.HTTP.Req
     , responseStatusCode
     , runReq
     )
-
 import Telegram.Responses (TelegramResponse(TelegramResponse))
 import Telegram.Types
     ( StatusResult(StatusResult), TelegramToken(TelegramToken) )
@@ -104,3 +103,5 @@ buildTelegramPostRequest hLogger (TelegramToken tgtoken) url body params =
         return Nothing
   where
     param = buildParams params
+
+

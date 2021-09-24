@@ -11,7 +11,6 @@ import Telegram.Types
    
 import UsersLists ( RepeatsList )
 
-
 startTelegramBot :: Handle IO -> TelegramHandle IO -> ConfigModules -> IO ()
 startTelegramBot hLogger hTelegram botConf = do
     logInfo hLogger "New Bot Start"

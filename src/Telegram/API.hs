@@ -51,8 +51,6 @@ import Telegram.Responses
     )
 import Telegram.Types
 import UsersLists
-    
-
 
 getMe :: Handle IO-> TelegramToken -> IO (Maybe TelegramUser)
 getMe hLogger tgtoken = buildTelegramGetRequest hLogger tgtoken "getMe" []
@@ -96,6 +94,7 @@ sendTextMessage hLogger tgtoken chatId text ent =
         "sendMessage"
         (TelegramSendMessage chatId text ent Nothing)
         []
+
 
 sendAnimationMessage ::
        Handle IO
@@ -286,6 +285,7 @@ sendKeyboard hLogger tgtoken chatId =
              Nothing
              (Just keyboard))
         []
+
 
 sendMessage ::
        Handle IO

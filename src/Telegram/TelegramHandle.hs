@@ -64,3 +64,4 @@ telegramHandler =
         API.sendContactMessage
         API.sendLocationMessage
         API.sendVenueMessage
+

@@ -1,18 +1,18 @@
 module Telegram.Echo where
 
 import Logger (Handle, logDebug, logError)
-import Telegram.Impl (telegramMessageToTgMessage)
+import Telegram.Impl ( telegramMessageToTgMessage ) 
 import Telegram.Responses
-    ( TelegramCallbackQuery(TelegramCallbackQuery)
-    , TelegramChat(telegramChatId)
-    , TelegramCommand(..)
-    , TelegramMessage(telegramMessageCaption, telegramMessageChat,
-                telegramMessageEntities)
-    , TelegramMessageEntity
-    , TelegramUpdate(TelegramUpdate)
-    , TelegramUser(telegramUserId)
-    , TgMessage(..)
-    )
+    ( TelegramCallbackQuery(TelegramCallbackQuery),
+      TelegramMessageEntity,
+      TgMessage(..),
+      TelegramCommand(..),
+      TelegramMessage(telegramMessageChat, telegramMessageEntities,
+                      telegramMessageCaption),
+      TelegramChat(telegramChatId),
+      TelegramUser(telegramUserId),
+      TelegramUpdate(TelegramUpdate) )
+
 import Telegram.TelegramHandle
     ( TelegramHandle(getLastUpdateId, getUpdates, sendAnimationMessage,
                sendAudioMessage, sendContactMessage, sendDocumentMessage,
@@ -20,6 +20,7 @@ import Telegram.TelegramHandle
                sendStickerMessage, sendTextMessage, sendVenueMessage,
                sendVideoMessage, sendVideoNoteMessage, sendVoiceMessage)
     )
+
 import Telegram.Types
     ( Caption,
       HelpMessage(help_mess),
@@ -34,6 +35,7 @@ import UsersLists
       Repeats(Repeats),
       RepeatsList,
       RepeatsNum(..) )
+
 
 
 echo ::
@@ -206,6 +208,7 @@ repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap hel
             logDebug hLogger "All messages sended"
             return ()
 
+
 sendServiceMessage ::
        Monad m
     => Handle m
@@ -219,3 +222,4 @@ sendServiceMessage hLogger hTelegram tgtoken chatId Repeat _ =
     sendKeyboard hTelegram hLogger tgtoken chatId
 sendServiceMessage hLogger hTelegram tgtoken chatId Help help_message =
     sendTextMessage hTelegram hLogger tgtoken chatId (help_mess help_message) Nothing
+

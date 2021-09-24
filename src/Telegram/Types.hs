@@ -20,4 +20,3 @@ instance ToJSON Caption where
     toJSON = toJSON . caption
     
 newtype StatusResult = StatusResult {status_result ::Int} deriving (Eq,Show)
-
