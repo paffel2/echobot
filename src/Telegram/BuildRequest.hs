@@ -25,11 +25,15 @@ import Network.HTTP.Req
     , responseStatusCode
     , runReq
     )
+import Telegram.Types
+    ( StatusResult(StatusResult), TelegramToken(TelegramToken) )
+   
 import Telegram.Responses (TelegramResponse(TelegramResponse))
 
-type TelegramToken = String
+type ParametersList = [(T.Text, T.Text)]
+type TelegramMethod = String
 
-buildParams :: (QueryParam p, Monoid p) => [(T.Text, T.Text)] -> p
+buildParams :: (QueryParam p, Monoid p) => ParametersList -> p
 buildParams [] = mempty
 buildParams params = mconcat $ fmap (uncurry (=:)) params
 
@@ -37,10 +41,10 @@ buildTelegramGetRequest ::
        FromJSON a
     => Handle
     -> TelegramToken
-    -> String
-    -> [(T.Text, T.Text)]
+    -> TelegramMethod
+    -> ParametersList
     -> IO (Maybe a)
-buildTelegramGetRequest hLogger tgtoken url params =
+buildTelegramGetRequest hLogger (TelegramToken tgtoken) url params =
     catch
         (runReq defaultHttpConfig $ do
              request <-
@@ -72,12 +76,12 @@ buildTelegramGetRequest hLogger tgtoken url params =
 buildTelegramPostRequest ::
        ToJSON b
     => Handle
-    -> String
-    -> String
+    -> TelegramToken
+    -> TelegramMethod
     -> b
-    -> [(T.Text, T.Text)]
-    -> IO (Maybe Int)
-buildTelegramPostRequest hLogger tgtoken url body params =
+    -> ParametersList
+    -> IO (Maybe StatusResult)
+buildTelegramPostRequest hLogger (TelegramToken tgtoken) url body params =
     catch
         (runReq defaultHttpConfig $ do
              request <-
@@ -89,7 +93,7 @@ buildTelegramPostRequest hLogger tgtoken url body params =
                      jsonResponse
                      param :: Req (JsonResponse Value)
              if responseStatusCode request == 200
-                 then liftIO $ return $ Just 200
+                 then liftIO $ return $ Just $ StatusResult 200
                  else do
                      liftIO $ logError hLogger "No response"
                      liftIO $ return Nothing) $ \e -> do
@@ -98,3 +102,5 @@ buildTelegramPostRequest hLogger tgtoken url body params =
         return Nothing
   where
     param = buildParams params
+
+

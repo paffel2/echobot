@@ -2,47 +2,55 @@ module Telegram.TelegramHandle where
 
 import Logger (Handle)
 import qualified Telegram.API as API
-import Telegram.BuildRequest (TelegramToken)
+import Telegram.Types
+    ( RepeatsList,
+      Repeats,
+      StatusResult,
+      Caption,
+      RepeatsNum,
+      ChatId,
+      UpdateId,
+      TelegramToken )
 import Telegram.Requests ()
 import Telegram.Responses
-    ( TelegramAnimation
-    , TelegramAudio
-    , TelegramContact
-    , TelegramDocument
-    , TelegramLocation
-    , TelegramMessageEntity
-    , TelegramPhotoSize
-    , TelegramSticker
-    , TelegramText
-    , TelegramUpdate
-    , TelegramUser
-    , TelegramVenue
-    , TelegramVideo
-    , TelegramVideoNote
-    , TelegramVoice
-    )
+    ( TelegramVenue,
+      TelegramLocation,
+      TelegramContact,
+      TelegramVoice,
+      TelegramVideoNote,
+      TelegramSticker,
+      TelegramVideo,
+      TelegramAudio,
+      TelegramDocument,
+      TelegramPhotoSize,
+      TelegramAnimation,
+      TelegramMessageEntity,
+      TelegramText,
+      TelegramUser,
+      TelegramUpdate )
+
 
 data TelegramHandle =
     TelegramHandle
         { getMe :: Handle -> TelegramToken -> IO (Maybe TelegramUser)
-        , sendKeyboard :: Handle -> String -> Int -> IO (Maybe Int)
-        , sendMessage :: Handle -> String -> Int -> String -> Maybe [TelegramMessageEntity] -> IO (Maybe Int)
-        , findRepeatNumber :: [(Int, Int)] -> Int -> IO Int
-        , getUpdates :: Handle -> TelegramToken -> Maybe Int -> IO (Maybe [TelegramUpdate])
-        , getLastUpdateId :: Handle -> Maybe [TelegramUpdate] -> IO (Maybe Int)
-        , updateListUsers :: [(Int, Int)] -> [Maybe (Int, Int)] -> [(Int, Int)]
-        , sendTextMessage :: Handle -> String -> Int -> TelegramText -> Maybe [TelegramMessageEntity] -> IO (Maybe Int)
-        , sendAnimationMessage :: Handle -> String -> Int -> TelegramAnimation -> Maybe String -> IO (Maybe Int)
-        , sendAudioMessage :: Handle -> String -> Int -> TelegramAudio -> Maybe String -> IO (Maybe Int)
-        , sendDocumentMessage :: Handle -> String -> Int -> TelegramDocument -> Maybe String -> IO (Maybe Int)
-        , sendPhotoMessage :: Handle -> String -> Int -> [TelegramPhotoSize] -> Maybe String -> IO (Maybe Int)
-        , sendVideoMessage :: Handle -> String -> Int -> TelegramVideo -> Maybe String -> IO (Maybe Int)
-        , sendStickerMessage :: Handle -> String -> Int -> TelegramSticker -> IO (Maybe Int)
-        , sendVideoNoteMessage :: Handle -> String -> Int -> TelegramVideoNote -> IO (Maybe Int)
-        , sendVoiceMessage :: Handle -> String -> Int -> TelegramVoice -> Maybe String -> IO (Maybe Int)
-        , sendContactMessage :: Handle -> String -> Int -> TelegramContact -> IO (Maybe Int)
-        , sendLocationMessage :: Handle -> String -> Int -> TelegramLocation -> IO (Maybe Int)
-        , sendVenueMessage :: Handle -> String -> Int -> TelegramVenue -> IO (Maybe Int)
+        , sendKeyboard :: Handle -> TelegramToken -> ChatId -> IO (Maybe StatusResult)
+        , sendMessage :: Handle -> TelegramToken -> ChatId -> String -> Maybe [TelegramMessageEntity] -> IO (Maybe StatusResult)
+        , findRepeatNumber :: RepeatsList -> ChatId -> IO RepeatsNum
+        , getUpdates :: Handle -> TelegramToken -> Maybe UpdateId -> IO (Maybe [TelegramUpdate])
+        , getLastUpdateId :: Handle -> Maybe [TelegramUpdate] -> IO (Maybe UpdateId)
+        , updateListUsers :: RepeatsList -> RepeatsList -> RepeatsList
+        , sendTextMessage :: Handle -> TelegramToken -> ChatId -> TelegramText -> Maybe [TelegramMessageEntity] -> IO (Maybe StatusResult)
+        , sendAnimationMessage :: Handle -> TelegramToken -> ChatId -> TelegramAnimation -> Maybe Caption -> IO (Maybe StatusResult)
+        , sendAudioMessage :: Handle -> TelegramToken -> ChatId -> TelegramAudio -> Maybe Caption -> IO (Maybe StatusResult)
+        , sendDocumentMessage :: Handle -> TelegramToken -> ChatId -> TelegramDocument -> Maybe Caption -> IO (Maybe StatusResult)
+        , sendPhotoMessage :: Handle -> TelegramToken -> ChatId -> [TelegramPhotoSize] -> Maybe Caption -> IO (Maybe StatusResult)
+        , sendVideoMessage :: Handle -> TelegramToken -> ChatId -> TelegramVideo -> Maybe Caption -> IO (Maybe StatusResult)
+        , sendStickerMessage :: Handle -> TelegramToken -> ChatId -> TelegramSticker -> IO (Maybe StatusResult)
+        , sendVideoNoteMessage :: Handle -> TelegramToken -> ChatId -> TelegramVideoNote -> IO (Maybe StatusResult)
+        , sendVoiceMessage :: Handle -> TelegramToken -> ChatId -> TelegramVoice -> Maybe Caption -> IO (Maybe StatusResult)
+        , sendContactMessage :: Handle -> TelegramToken -> ChatId -> TelegramContact -> IO (Maybe StatusResult)
+        , sendLocationMessage :: Handle -> TelegramToken -> ChatId -> TelegramLocation -> IO (Maybe StatusResult)
+        , sendVenueMessage :: Handle -> TelegramToken -> ChatId -> TelegramVenue -> IO (Maybe StatusResult)
         }
 
 telegramHandler :: TelegramHandle
@@ -67,3 +75,4 @@ telegramHandler =
         API.sendContactMessage
         API.sendLocationMessage
         API.sendVenueMessage
+

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c1504df1e0823e2f95d93c949ad279c71464a7aa9922deedca5e6bf876e88daa
+-- hash: c3287761c3371917dc53105d764d690bdc6349edfa5e3bf96eeb96bae72e4e77
 
 name:           echobot
 version:        0.1.0.0
@@ -38,6 +38,7 @@ library
       Telegram.Requests
       Telegram.Responses
       Telegram.TelegramHandle
+      Telegram.Types
       Vk.API
       Vk.Bot
       Vk.BuildRequests
