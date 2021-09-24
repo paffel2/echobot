@@ -4,10 +4,12 @@ import Data.List ( find )
 import Data.Aeson ( FromJSON(parseJSON), ToJSON(toJSON) )
 import Data.Aeson.Types ( Parser )
 import GHC.Generics ( Generic )
+import Text.Read ( readMaybe )
+import Data.Maybe ( fromMaybe )
 
 newtype RepeatsNum = RepeatsNum { repeats_num' :: Int} deriving (Show,Eq,Generic)
 instance FromJSON RepeatsNum where
-    parseJSON v = RepeatsNum . read <$> (parseJSON v :: Parser String) 
+    parseJSON v = RepeatsNum . fromMaybe 1 . readMaybe <$> (parseJSON v :: Parser String) 
 
 type RepeatsList = [Repeats]
 
