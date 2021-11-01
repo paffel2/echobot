@@ -35,8 +35,9 @@ import           Telegram.Responses    (TelegramAnimation (telegramAnimationFile
                                         TelegramVideo (telegramVideoFileId),
                                         TelegramVideoNote (telegramVideoNoteFileId),
                                         TelegramVoice (telegramVoiceFileId))
-import           Telegram.Types
-import           UsersLists
+import           Telegram.Types        (Caption, StatusResult, TelegramToken,
+                                        UpdateId (..))
+import           UsersLists            (ChatId)
 
 getMe :: LogHandle IO -> TelegramToken -> IO (Maybe TelegramUser)
 getMe hLogger tgtoken = buildTelegramGetRequest hLogger tgtoken "getMe" []

@@ -26,6 +26,9 @@ type GetMethod = T.Text
 
 type PostMethod = String
 
+versionParam :: (T.Text, T.Text)
+versionParam = ("v", "5.130")
+
 params :: PostParams -> FormUrlEncodedParam
 params []          = mempty
 params ((a, b):xs) = queryParam a b <> params xs
@@ -84,7 +87,4 @@ buildVkPostRequest hLogger (VkToken vktoken) method param =
   where
     tokenParam =
         buildParams
-            [ ("access_token", T.pack vktoken)
-            , ("v", "5.130")
-            , ("random_id", "0")
-            ]
+            [("access_token", T.pack vktoken), versionParam, ("random_id", "0")]

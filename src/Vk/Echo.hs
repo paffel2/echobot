@@ -1,10 +1,12 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Vk.Echo where
 
 import           Data.Maybe   (catMaybes)
 import           Logger       (LogHandle, logError)
 import           UsersLists   (RepeatsList, updateListUsers)
 import           Vk.Responses (VkMessages (vkMessagesItems),
-                               VkResponseType (Server))
+                               VkResponseType (Server, serverMessages))
 import           Vk.Types     (HelpMessage, Pts, Ts, VkToken)
 import           Vk.VkHandle  (VKHandle (getLongPollHistory, getTsAndPts, repeatMessage, sendKeyboardVk, sendMessageHelp, sendMessageRepeatText))
 
@@ -30,7 +32,7 @@ echo hLogger' hVK' vktoken' help_message' listOfUsers' ts' pts' = do
             logError hLogger' "No pts and ts parameter"
             return Nothing
   where
-    answer hLogger hVK vktoken help_message (Just (Server _ _ _ _ _ (Just messages))) xs =
+    answer hLogger hVK vktoken help_message (Just Server {serverMessages = (Just messages)}) xs =
         answers hLogger hVK vktoken help_message xs $ vkMessagesItems messages
     answer hLogger _ _ _ (Just _) xs = do
         logError hLogger "Unexcepted error"
