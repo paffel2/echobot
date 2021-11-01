@@ -1,27 +1,27 @@
+{-# OPTIONS_GHC -Wno-missing-fields #-}
+
 module TelegramPatternTests where
 
-import Data.Functor.Identity (Identity)
-import qualified Data.Text.IO as TIO
-import Logger (Handle(..), Priority(Debug))
-import Telegram.Echo (echo)
-import Telegram.Responses
-    ( TelegramCallbackQuery(..)
-    , TelegramMessage(TelegramMessage)
-    , TelegramUpdate(TelegramUpdate)
-    , TelegramUser(TelegramUser, telegramUserId)
-    )
-import Telegram.TelegramHandle (TelegramHandle(..))
-import Telegram.Types
-    ( HelpMessage(HelpMessage)
-    , StatusResult(StatusResult)
-    , TelegramToken(TelegramToken)
-    , UpdateId(UpdateId)
-    )
-import Test.Hspec (describe, hspec, it, shouldBe)
-import UsersLists (ChatId(ChatId), Repeats(Repeats), RepeatsNum(RepeatsNum))
+import           Data.Functor.Identity   (Identity)
+import qualified Data.Text.IO            as TIO
+import           Logger                  (LogHandle (..), Priority (Debug))
+import           Telegram.Echo           (echo)
+import           Telegram.Responses      (TelegramCallbackQuery (..),
+                                          TelegramMessage (TelegramMessage),
+                                          TelegramUpdate (TelegramUpdate),
+                                          TelegramUser (TelegramUser, telegramUserId))
+import           Telegram.TelegramHandle (TelegramHandle (..))
+import           Telegram.Types          (HelpMessage (HelpMessage),
+                                          StatusResult (StatusResult),
+                                          TelegramToken (TelegramToken),
+                                          UpdateId (UpdateId))
+import           Test.Hspec              (describe, hspec, it, shouldBe)
+import           UsersLists              (ChatId (ChatId), Repeats (Repeats),
+                                          RepeatsNum (RepeatsNum))
 
-logHandle :: Handle Identity
-logHandle = Handle {priority = Debug, Logger.log = \prior message -> return ()}
+logHandle :: LogHandle Identity
+logHandle =
+    LogHandle {priority = Debug, Logger.log = \prior message -> return ()}
 
 telegramHandle :: TelegramHandle Identity
 telegramHandle =
@@ -81,8 +81,8 @@ echoTelegramTests =
                     [] `shouldBe`
                     return (Just $ UpdateId 1, [])
             it
-                ("Should return new UpdateId and not empty list of the users, " ++
-                 "because server has new update where user changed the number of repetitions for the first time") $ do
+                "Should return new UpdateId and not empty list of the users, \
+                 \because server has new update where user changed the number of repetitions for the first time" $ do
                 echo
                     logHandle
                     (telegramHandle
@@ -102,8 +102,8 @@ echoTelegramTests =
                     return
                         (Just $ UpdateId 1, [Repeats (ChatId 1) (RepeatsNum 2)])
             it
-                ("Should return new UpdateId and not empty list of the users, " ++
-                 "because server has new update where user changed the number") $ do
+                "Should return new UpdateId and not empty list of the users, \
+                 \because server has new update where user changed the number" $ do
                 echo
                     logHandle
                     (telegramHandle
@@ -133,8 +133,8 @@ echoTelegramTests =
                     [] `shouldBe`
                     return (Nothing, [])
             it
-                ("Should return new UpdateId and new list of users, because echo function did not receive an update ID, " ++
-                 "but get new update, where get new list of users and new UpdateId.") $ do
+                "Should return new UpdateId and new list of users, because echo function did not receive an update ID, \
+                 \but get new update, where get new list of users and new UpdateId." $ do
                 echo
                     logHandle
                     (telegramHandle

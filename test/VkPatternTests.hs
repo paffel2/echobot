@@ -1,21 +1,21 @@
 module VkPatternTests where
 
-import Data.Functor.Identity (Identity)
-import Logger (Handle(..), Priority(Debug))
-import Test.Hspec (describe, hspec, it, shouldBe)
-import UsersLists (ChatId(ChatId), Repeats(Repeats), RepeatsNum(RepeatsNum))
-import Vk.Echo (echo)
-import Vk.Responses
-    ( VkItem(VkItem, vkItemAttachments, vkItemFromId, vkItemFwdMessages,
-       vkItemGeo, vkItemId, vkItemImportant, vkItemPayload, vkItemText)
-    , VkMessages(VkMessages)
-    , VkResponseType(Server)
-    )
-import Vk.Types (HelpMessage(HelpMessage), Pts(Pts), Ts(Ts), VkToken(VkToken))
-import Vk.VkHandle (VKHandle(..))
+import           Data.Functor.Identity (Identity)
+import           Logger                (LogHandle (..), Priority (Debug))
+import           Test.Hspec            (describe, hspec, it, shouldBe)
+import           UsersLists            (ChatId (ChatId), Repeats (Repeats),
+                                        RepeatsNum (RepeatsNum))
+import           Vk.Echo               (echo)
+import           Vk.Responses          (VkItem (VkItem, vkItemAttachments, vkItemFromId, vkItemFwdMessages, vkItemGeo, vkItemId, vkItemImportant, vkItemPayload, vkItemText),
+                                        VkMessages (VkMessages),
+                                        VkResponseType (Server))
+import           Vk.Types              (HelpMessage (HelpMessage), Pts (Pts),
+                                        Ts (Ts), VkToken (VkToken))
+import           Vk.VkHandle           (VKHandle (..))
 
-logHandle :: Handle Identity
-logHandle = Handle {priority = Debug, Logger.log = \prior message -> return ()}
+logHandle :: LogHandle Identity
+logHandle =
+    LogHandle {priority = Debug, Logger.log = \prior message -> return ()}
 
 vkHandle :: VKHandle Identity
 vkHandle =

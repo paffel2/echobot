@@ -37,11 +37,6 @@ instance FromJSON TelegramUpdate where
         TelegramUpdate <$> v .: "update_id" <*> v .:? "message" <*>
         v .:? "callback_query"
     parseJSON _ = mzero
-    {-instance FromJSON TelegramCallbackQuery where
-    parseJSON =
-        genericParseJSON
-            defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 21}
--}
 
 data TelegramUser =
     TelegramUser
