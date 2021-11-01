@@ -1,4 +1,4 @@
-module Telegram.Echo where
+module Telegram.Answers where
 
 import           Logger                  (LogHandle, logDebug, logError)
 import           Telegram.Impl           (telegramMessageToTgMessage)
@@ -11,72 +11,13 @@ import           Telegram.Responses      (TelegramCallbackQuery (TelegramCallbac
                                           TelegramUser (telegramUserId),
                                           TgMessage (..))
 
-import           Telegram.TelegramHandle (TelegramHandle (getLastUpdateId, getUpdates, sendAnimationMessage, sendAudioMessage, sendContactMessage, sendDocumentMessage, sendKeyboard, sendLocationMessage, sendPhotoMessage, sendStickerMessage, sendTextMessage, sendVenueMessage, sendVideoMessage, sendVideoNoteMessage, sendVoiceMessage))
+import           Telegram.TelegramHandle (TelegramHandle (sendAnimationMessage, sendAudioMessage, sendContactMessage, sendDocumentMessage, sendKeyboard, sendLocationMessage, sendPhotoMessage, sendStickerMessage, sendTextMessage, sendVenueMessage, sendVideoMessage, sendVideoNoteMessage, sendVoiceMessage))
 
 import           Data.Maybe              (catMaybes)
-import           Telegram.Types          (Caption, HelpMessage (help_mess),
-                                          StatusResult, TelegramToken, UpdateId)
-import           UsersLists              (ChatId, Repeats (Repeats),
-                                          RepeatsList, RepeatsNum (..),
-                                          findRepeatNumber, updateListUsers)
-
-echo ::
-       Monad m
-    => LogHandle m
-    -> TelegramHandle m
-    -> TelegramToken
-    -> Maybe UpdateId
-    -> HelpMessage
-    -> RepeatsList
-    -> m (Maybe UpdateId, RepeatsList)
-echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
-    updates <- getUpdates hTelegram' hLogger' tgtoken' updateId
-    listOfUsersUpd <-
-        answers hLogger' hTelegram' help_message' tgtoken' updates listOfUsers
-    let newListOfUsers = updateListUsers listOfUsers listOfUsersUpd
-    nextUpdateID <- getLastUpdateId hTelegram' hLogger' updates
-    return (nextUpdateID, newListOfUsers)
-  where
-    answers hLogger hTelegram help_message tgtoken (Just upd) list =
-        catMaybes <$>
-        mapM (answer hLogger hTelegram help_message tgtoken list) upd
-    answers hLogger _ _ _ _ _ = do
-        logError hLogger "Something wrong"
-        return []
-    answer hLogger hTelegram help_message tgtoken list (TelegramUpdate _ (Just message) _) = do
-        let tg_message = telegramMessageToTgMessage message
-        case tg_message of
-            Nothing -> return Nothing
-            Just tm -> do
-                _ <-
-                    repeatSendMessage
-                        hLogger
-                        hTelegram
-                        (findRepeatNumber list chatId)
-                        tgtoken
-                        chatId
-                        tm
-                        entities
-                        cap
-                        help_message
-                return Nothing
-      where
-        chatId = telegramChatId $ telegramMessageChat message
-        entities = telegramMessageEntities message
-        cap = telegramMessageCaption message
-    answer hLogger hTelegram _ tgtoken _ (TelegramUpdate _ _ (Just (TelegramCallbackQuery _ user (Just _) _ (Just dat)))) = do
-        status <- sendTextMessage hTelegram hLogger tgtoken chatId text Nothing
-        case status of
-            Nothing -> do
-                logError hLogger "New repeats num not updated"
-                return Nothing
-            Just _ -> do
-                logDebug hLogger "New repeats num updated"
-                return $ Just $ Repeats chatId dat
-      where
-        chatId = telegramUserId user
-        text = "Number of reapeting " ++ (show . getRepeatsNum $ dat)
-    answer _ _ _ _ _ _ = return Nothing
+import           Telegram.Types          (Caption, StatusResult, TelegramToken)
+import           UsersLists              (ChatId, HelpMessage (help_mess),
+                                          Repeats (Repeats), RepeatsList,
+                                          RepeatsNum (..), findRepeatNumber)
 
 sendAnswer ::
        Monad m
@@ -209,3 +150,62 @@ sendServiceMessage hLogger hTelegram tgtoken chatId Help help_message =
         chatId
         (help_mess help_message)
         Nothing
+
+answers ::
+       Monad m
+    => TelegramHandle m
+    -> TelegramToken
+    -> LogHandle m
+    -> HelpMessage
+    -> Maybe [TelegramUpdate]
+    -> RepeatsList
+    -> m RepeatsList
+answers hTelegram tgtoken hLogger help_message (Just upd) list =
+    catMaybes <$> mapM (answer hLogger help_message hTelegram tgtoken list) upd
+answers _ _ hLogger _ _ _ = do
+    logError hLogger "Something wrong"
+    return []
+
+answer ::
+       Monad m
+    => LogHandle m
+    -> HelpMessage
+    -> TelegramHandle m
+    -> TelegramToken
+    -> RepeatsList
+    -> TelegramUpdate
+    -> m (Maybe Repeats)
+answer hLogger help_message hTelegram tgtoken list (TelegramUpdate _ (Just message) _) = do
+    let tg_message = telegramMessageToTgMessage message
+    case tg_message of
+        Nothing -> return Nothing
+        Just tm -> do
+            _ <-
+                repeatSendMessage
+                    hLogger
+                    hTelegram
+                    (findRepeatNumber list chatId)
+                    tgtoken
+                    chatId
+                    tm
+                    entities
+                    cap
+                    help_message
+            return Nothing
+  where
+    chatId = telegramChatId $ telegramMessageChat message
+    entities = telegramMessageEntities message
+    cap = telegramMessageCaption message
+answer hLogger _ hTelegram tgtoken _ (TelegramUpdate _ _ (Just (TelegramCallbackQuery _ user (Just _) _ (Just dat)))) = do
+    status <- sendTextMessage hTelegram hLogger tgtoken chatId text Nothing
+    case status of
+        Nothing -> do
+            logError hLogger "New repeats num not updated"
+            return Nothing
+        Just _ -> do
+            logDebug hLogger "New repeats num updated"
+            return $ Just $ Repeats chatId dat
+  where
+    chatId = telegramUserId user
+    text = "Number of reapeting " ++ (show . getRepeatsNum $ dat)
+answer _ _ _ _ _ _ = return Nothing

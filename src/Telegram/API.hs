@@ -39,30 +39,35 @@ import           Telegram.Types        (Caption, StatusResult, TelegramToken,
                                         UpdateId (..))
 import           UsersLists            (ChatId)
 
-getMe :: LogHandle IO -> TelegramToken -> IO (Maybe TelegramUser)
-getMe hLogger tgtoken = buildTelegramGetRequest hLogger tgtoken "getMe" []
+getMe :: TelegramToken -> LogHandle IO -> IO (Maybe UpdateId)
+getMe tgtoken hLogger = do
+    ch <-
+        buildTelegramGetRequest hLogger tgtoken "getMe" [] :: IO (Maybe TelegramUser)
+    case ch of
+        Nothing -> return Nothing
+        Just _  -> return (Just $ UpdateId 0)
 
 getUpdates ::
        FromJSON a
-    => LogHandle IO
-    -> TelegramToken
+    => TelegramToken
+    -> LogHandle IO
     -> Maybe UpdateId
     -> IO (Maybe a)
-getUpdates hLogger tgtoken (Just updId) =
+getUpdates tgtoken hLogger (Just updId) =
     buildTelegramGetRequest
         hLogger
         tgtoken
         "getUpdates"
         [("offset", T.pack $ show $ upd_id updId), ("timeout", "10")]
-getUpdates hLogger tgtoken Nothing =
+getUpdates tgtoken hLogger Nothing =
     buildTelegramGetRequest
         hLogger
         tgtoken
         "getUpdates"
         [("offset", "0"), ("timeout", "10")]
 
-getLastUpdateId :: LogHandle IO -> Maybe [TelegramUpdate] -> IO (Maybe UpdateId)
-getLastUpdateId hLogger updates =
+getLastUpdateId :: Maybe [TelegramUpdate] -> LogHandle IO -> IO (Maybe UpdateId)
+getLastUpdateId updates hLogger =
     case updates of
         Nothing -> do
             return Nothing

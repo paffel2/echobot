@@ -7,7 +7,7 @@ import           Telegram.Responses (TelegramAnimation, TelegramAudio,
                                      TelegramContact, TelegramDocument,
                                      TelegramLocation, TelegramMessageEntity,
                                      TelegramPhotoSize, TelegramSticker,
-                                     TelegramText, TelegramUpdate, TelegramUser,
+                                     TelegramText, TelegramUpdate,
                                      TelegramVenue, TelegramVideo,
                                      TelegramVideoNote, TelegramVoice)
 import           Telegram.Types     (Caption, StatusResult, TelegramToken,
@@ -16,10 +16,10 @@ import           UsersLists         (ChatId)
 
 data TelegramHandle m =
     TelegramHandle
-        { getMe :: LogHandle m -> TelegramToken -> m (Maybe TelegramUser)
+        { getMe :: TelegramToken -> LogHandle m -> m (Maybe UpdateId)
         , sendKeyboard :: LogHandle m -> TelegramToken -> ChatId -> m (Maybe StatusResult)
-        , getUpdates :: LogHandle m -> TelegramToken -> Maybe UpdateId -> m (Maybe [TelegramUpdate])
-        , getLastUpdateId :: LogHandle m -> Maybe [TelegramUpdate] -> m (Maybe UpdateId)
+        , getUpdates :: TelegramToken -> LogHandle m -> Maybe UpdateId -> m (Maybe [TelegramUpdate])
+        , getLastUpdateId :: Maybe [TelegramUpdate] -> LogHandle m -> m (Maybe UpdateId)
         , sendTextMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramText -> Maybe [TelegramMessageEntity] -> m (Maybe StatusResult)
         , sendAnimationMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramAnimation -> Maybe Caption -> m (Maybe StatusResult)
         , sendAudioMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramAudio -> Maybe Caption -> m (Maybe StatusResult)

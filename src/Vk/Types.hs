@@ -9,11 +9,10 @@ newtype VkToken =
         { vk_token :: String
         }
 
-newtype HelpMessage =
+{-newtype HelpMessage =
     HelpMessage
         { help_mess :: String
-        }
-
+        } -}
 --https://vk.com/dev/messages.getLongPollHistory - about TS and PTS parameters
 newtype Ts =
     Ts

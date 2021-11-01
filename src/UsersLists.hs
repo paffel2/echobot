@@ -50,3 +50,8 @@ updateListUsers xs ((Repeats cid n):us) = updateListUsers newList us
   where
     newList = filter ((/= cid) . chat_id) xs ++ [Repeats cid n]
 updateListUsers xs [] = xs
+
+newtype HelpMessage =
+    HelpMessage
+        { help_mess :: String
+        }

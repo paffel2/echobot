@@ -1,19 +1,18 @@
 module Telegram.Types where
 
-import Data.Aeson (FromJSON(parseJSON), ToJSON(toJSON))
-import Data.Aeson.Types (Parser)
-import GHC.Generics (Generic)
+import           Data.Aeson       (FromJSON (parseJSON), ToJSON (toJSON))
+import           Data.Aeson.Types (Parser)
+import           GHC.Generics     (Generic)
 
 newtype TelegramToken =
     TelegramToken
         { tg_token :: String
         }
 
-newtype HelpMessage =
+{-newtype HelpMessage =
     HelpMessage
         { help_mess :: String
-        }
-
+        } -}
 newtype UpdateId =
     UpdateId
         { upd_id :: Int

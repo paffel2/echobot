@@ -7,8 +7,8 @@ import           Control.Monad    (when)
 import           Data.Maybe       (isJust)
 import qualified Data.Text        as T
 import           Logger           (LogHandle, logDebug, logError)
-import           UsersLists       (ChatId (chat_id'), Repeats (Repeats),
-                                   RepeatsList,
+import           UsersLists       (ChatId (chat_id'), HelpMessage (help_mess),
+                                   Repeats (Repeats), RepeatsList,
                                    RepeatsNum (RepeatsNum, getRepeatsNum),
                                    findRepeatNumber)
 import           Vk.BuildRequests (buildVkGetRequest, buildVkPostRequest)
@@ -24,8 +24,7 @@ import           Vk.Responses     (VkAttachment (VkAttachmentAudio, VkAttachment
                                    VkResponseType (Server, serverPTS, serverTS),
                                    VkSticker (VkSticker), VkStory (VkStory),
                                    VkVideo (VkVideo), VkWall (VkWall))
-import           Vk.Types         (HelpMessage (help_mess), Pts (getPts),
-                                   Ts (getTs), VkToken)
+import           Vk.Types         (Pts (getPts), Ts (getTs), VkToken)
 
 versionParam :: (T.Text, T.Text)
 versionParam = ("v", "5.130")
@@ -38,7 +37,7 @@ getLongPollServer hLogger vktoken =
         "messages.getLongPollServer"
         [("lp_version", "3"), ("need_pts", "1"), versionParam]
 
-getLongPollHistory ::
+{-getLongPollHistory ::
        LogHandle IO -> VkToken -> Ts -> Pts -> IO (Maybe VkResponseType)
 getLongPollHistory hLogger vktoken ts pts =
     buildVkGetRequest
@@ -48,10 +47,24 @@ getLongPollHistory hLogger vktoken ts pts =
         [ ("ts", T.pack $ show $ getTs ts)
         , ("pts", T.pack $ show $ getPts pts)
         , versionParam
+        ] -}
+getLongPollHistory ::
+       VkToken -> LogHandle IO -> Maybe (Ts, Pts) -> IO (Maybe VkResponseType)
+getLongPollHistory vktoken hLogger (Just (ts, pts)) =
+    buildVkGetRequest
+        hLogger
+        vktoken
+        "messages.getLongPollHistory"
+        [ ("ts", T.pack $ show $ getTs ts)
+        , ("pts", T.pack $ show $ getPts pts)
+        , versionParam
         ]
+getLongPollHistory _ hLogger Nothing = do
+    logError hLogger "No TS and PTS parameters"
+    return Nothing
 
-getTsAndPts :: LogHandle IO -> VkToken -> IO (Maybe (Ts, Pts))
-getTsAndPts hLogger vktoken = do
+getTsAndPts :: VkToken -> LogHandle IO -> IO (Maybe (Ts, Pts))
+getTsAndPts vktoken hLogger = do
     serverInf <- getLongPollServer hLogger vktoken
     case serverInf of
         Just Server {serverTS = (Just ts), serverPTS = (Just pts)} ->
