@@ -2,42 +2,30 @@
 
 module Vk.API where
 
-import Control.Monad (when)
-import Data.Maybe (isJust)
-import qualified Data.Text as T
-import Logger (Handle, logDebug, logError)
-import UsersLists
-    ( ChatId(chat_id')
-    , Repeats(Repeats)
-    , RepeatsList
-    , RepeatsNum(RepeatsNum, repeats_num')
-    , findRepeatNumber
-    )
-import Vk.BuildRequests (buildVkGetRequest, buildVkPostRequest)
-import Vk.Keyboard (encKeyboard)
-import Vk.Responses
-    ( VkAttachment(VkAttachmentAudio, VkAttachmentAudioMessage,
-             VkAttachmentDoc, VkAttachmentMarket, VkAttachmentPhoto,
-             VkAttachmentPoll, VkAttachmentSticker, VkAttachmentStory,
-             VkAttachmentVideo, VkAttachmentWall)
-    , VkAudio(VkAudio)
-    , VkAudioMessage(VkAudioMessage)
-    , VkCoordinates(vkCoordinatesLatitude, vkCoordinatesLongitude)
-    , VkDoc(VkDoc)
-    , VkGeo(vkGeoCoordinates)
-    , VkItem(VkItem, vkItemFromId, vkItemText)
-    , VkMarket(VkMarket)
-    , VkPhoto(VkPhoto)
-    , VkPoll(VkPoll)
-    , VkResponseType(Server)
-    , VkSticker(VkSticker)
-    , VkStory(VkStory)
-    , VkVideo(VkVideo)
-    , VkWall(VkWall)
-    )
-import Vk.Types (HelpMessage(help_mess), Pts(pts'), Ts(ts'), VkToken)
+import           Control.Monad    (when)
+import           Data.Maybe       (isJust)
+import qualified Data.Text        as T
+import           Logger           (LogHandle, logDebug, logError)
+import           UsersLists       (ChatId (chat_id'), Repeats (Repeats),
+                                   RepeatsList,
+                                   RepeatsNum (RepeatsNum, repeats_num'),
+                                   findRepeatNumber)
+import           Vk.BuildRequests (buildVkGetRequest, buildVkPostRequest)
+import           Vk.Keyboard      (encKeyboard)
+import           Vk.Responses     (VkAttachment (VkAttachmentAudio, VkAttachmentAudioMessage, VkAttachmentDoc, VkAttachmentMarket, VkAttachmentPhoto, VkAttachmentPoll, VkAttachmentSticker, VkAttachmentStory, VkAttachmentVideo, VkAttachmentWall),
+                                   VkAudio (VkAudio),
+                                   VkAudioMessage (VkAudioMessage),
+                                   VkCoordinates (vkCoordinatesLatitude, vkCoordinatesLongitude),
+                                   VkDoc (VkDoc), VkGeo (vkGeoCoordinates),
+                                   VkItem (VkItem, vkItemFromId, vkItemText),
+                                   VkMarket (VkMarket), VkPhoto (VkPhoto),
+                                   VkPoll (VkPoll), VkResponseType (Server),
+                                   VkSticker (VkSticker), VkStory (VkStory),
+                                   VkVideo (VkVideo), VkWall (VkWall))
+import           Vk.Types         (HelpMessage (help_mess), Pts (pts'),
+                                   Ts (ts'), VkToken)
 
-getLongPollServer :: Handle IO -> VkToken -> IO (Maybe VkResponseType)
+getLongPollServer :: LogHandle IO -> VkToken -> IO (Maybe VkResponseType)
 getLongPollServer hLogger vktoken =
     buildVkGetRequest
         hLogger
@@ -46,7 +34,7 @@ getLongPollServer hLogger vktoken =
         [("lp_version", "3"), ("need_pts", "1"), ("v", "5.130")]
 
 getLongPollHistory ::
-       Handle IO -> VkToken -> Ts -> Pts -> IO (Maybe VkResponseType)
+       LogHandle IO -> VkToken -> Ts -> Pts -> IO (Maybe VkResponseType)
 getLongPollHistory hLogger vktoken ts pts =
     buildVkGetRequest
         hLogger
@@ -57,7 +45,7 @@ getLongPollHistory hLogger vktoken ts pts =
         , ("v", "5.130")
         ]
 
-getTsAndPts :: Handle IO -> VkToken -> IO (Maybe (Ts, Pts))
+getTsAndPts :: LogHandle IO -> VkToken -> IO (Maybe (Ts, Pts))
 getTsAndPts hLogger vktoken = do
     serverInf <- getLongPollServer hLogger vktoken
     case serverInf of
@@ -72,7 +60,7 @@ createParams vkMessage =
     , ("message", Just $ T.pack $ vkItemText vkMessage)
     ]
 
-sendMessageText :: Handle IO -> VkToken -> VkItem -> IO ()
+sendMessageText :: LogHandle IO -> VkToken -> VkItem -> IO ()
 sendMessageText hLogger vktoken (VkItem _ fromId (x:xs) _ _ _ _ Nothing) =
     when
         ((chat_id' fromId > 0) &&
@@ -80,7 +68,7 @@ sendMessageText hLogger vktoken (VkItem _ fromId (x:xs) _ _ _ _ Nothing) =
         status <- buildVkPostRequest hLogger vktoken "messages.send" params'
         case status of
             Nothing -> logError hLogger "Message not sended"
-            Just _ -> logDebug hLogger "Message sended"
+            Just _  -> logDebug hLogger "Message sended"
   where
     params' =
         [ ("user_id", Just . T.pack . show . chat_id' $ fromId)
@@ -136,7 +124,7 @@ createParamsAttachment (VkAttachmentAudioMessage "audio_message" (VkAudioMessage
         show ownerId ++ "_" ++ show audioId ++ "_" ++ accessKey
 createParamsAttachment _ = []
 
-sendMessageAttachment :: Handle IO -> VkToken -> VkItem -> IO ()
+sendMessageAttachment :: LogHandle IO -> VkToken -> VkItem -> IO ()
 sendMessageAttachment hLogger vktoken (VkItem _ fromId _ (x:xs) _ _ _ _) =
     when (chat_id' fromId > 0) $ do
         let parameters = createParamsAttachment <$> (x : xs)
@@ -151,13 +139,13 @@ sendMessageAttachment hLogger vktoken (VkItem _ fromId _ (x:xs) _ _ _ _) =
             else logError hLogger "One or all attachments not sended"
 sendMessageAttachment _ _ (VkItem _ _ _ [] _ _ _ _) = return ()
 
-sendKeyboardVk :: Handle IO -> VkToken -> VkItem -> IO ()
+sendKeyboardVk :: LogHandle IO -> VkToken -> VkItem -> IO ()
 sendKeyboardVk hLogger vktoken (VkItem _ fromId text _ _ _ _ _) =
     when ((chat_id' fromId > 0) && (text == "/repeat")) $ do
         status <- buildVkPostRequest hLogger vktoken "messages.send" params'
         case status of
             Nothing -> logError hLogger "Keyboard  not sended"
-            Just _ -> logDebug hLogger "Keyboard sended"
+            Just _  -> logDebug hLogger "Keyboard sended"
   where
     params' =
         [ ("user_id", Just . T.pack . show . chat_id' $ fromId)
@@ -165,13 +153,13 @@ sendKeyboardVk hLogger vktoken (VkItem _ fromId text _ _ _ _ _) =
         , ("keyboard", Just encKeyboard)
         ]
 
-sendGeoVK :: Handle IO -> VkToken -> VkItem -> IO ()
+sendGeoVK :: LogHandle IO -> VkToken -> VkItem -> IO ()
 sendGeoVK hLogger vktoken (VkItem _ fromId _ _ _ (Just geo) _ _) =
     when (chat_id' fromId > 0) $ do
         status <- buildVkPostRequest hLogger vktoken "messages.send" params'
         case status of
             Nothing -> logError hLogger "Geo  not sended"
-            Just _ -> logDebug hLogger "Geo sended"
+            Just _  -> logDebug hLogger "Geo sended"
   where
     params' =
         [ ("user_id", Just . T.pack . show . chat_id' $ fromId)
@@ -183,7 +171,7 @@ sendGeoVK hLogger vktoken (VkItem _ fromId _ _ _ (Just geo) _ _) =
 sendGeoVK _ _ _ = return ()
 
 sendMessageRepeatText ::
-       Handle IO -> VkToken -> RepeatsList -> VkItem -> IO (Maybe Repeats)
+       LogHandle IO -> VkToken -> RepeatsList -> VkItem -> IO (Maybe Repeats)
 sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)) =
     if chat_id' fromId > 0
         then do
@@ -213,7 +201,7 @@ sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)
         ]
 sendMessageRepeatText _ _ _ (VkItem _ _ _ _ _ _ _ Nothing) = return Nothing
 
-repeatMessage :: Handle IO -> VkToken -> RepeatsList -> VkItem -> IO ()
+repeatMessage :: LogHandle IO -> VkToken -> RepeatsList -> VkItem -> IO ()
 repeatMessage hLogger vktoken list item@(VkItem _ fromId _ _ _ _ _ _) =
     when (chat_id' fromId > 0) $ do
         repeatMessage' (findRepeatNumber list fromId) vktoken item
@@ -225,13 +213,13 @@ repeatMessage hLogger vktoken list item@(VkItem _ fromId _ _ _ _ _ _) =
         sendGeoVK hLogger token' item'
         repeatMessage' (RepeatsNum (x - 1)) token' item'
 
-sendMessageHelp :: Handle IO -> VkToken -> HelpMessage -> VkItem -> IO ()
+sendMessageHelp :: LogHandle IO -> VkToken -> HelpMessage -> VkItem -> IO ()
 sendMessageHelp hLogger vktoken help_message (VkItem _ fromId text _ _ _ _ _) =
     when ((chat_id' fromId > 0) && (text == "/help")) $ do
         status <- buildVkPostRequest hLogger vktoken "messages.send" params'
         case status of
             Nothing -> logError hLogger "Help message not sended"
-            Just _ -> logDebug hLogger "Help message sended"
+            Just _  -> logDebug hLogger "Help message sended"
   where
     params' =
         [ ("user_id", Just . T.pack . show . chat_id' $ fromId)

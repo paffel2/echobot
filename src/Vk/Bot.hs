@@ -1,15 +1,16 @@
 module Vk.Bot where
 
-import Config (ConfigModules(help, token))
-import Control.Concurrent (threadDelay)
-import Logger (Handle, logError, logInfo)
-import UsersLists (RepeatsList)
-import Vk.Echo (echo)
-import Vk.Types (HelpMessage(HelpMessage), Pts, Ts, VkToken(VkToken))
-import Vk.VkHandle (VKHandle(getTsAndPts))
+import           Config             (BotConfig (help, token))
+import           Control.Concurrent (threadDelay)
+import           Logger             (LogHandle, logError, logInfo)
+import           UsersLists         (RepeatsList)
+import           Vk.Echo            (echo)
+import           Vk.Types           (HelpMessage (HelpMessage), Pts, Ts,
+                                     VkToken (VkToken))
+import           Vk.VkHandle        (VKHandle (getTsAndPts))
 
 loopBot ::
-       Handle IO
+       LogHandle IO
     -> VKHandle IO
     -> VkToken
     -> HelpMessage
@@ -34,7 +35,7 @@ loopBot hLogger hVk token' help_message users_list ts pts = do
             threadDelay 3000000
             loopBot hLogger hVk token' help_message newList ts' pts'
 
-startVkBot :: Handle IO -> VKHandle IO -> ConfigModules -> IO ()
+startVkBot :: LogHandle IO -> VKHandle IO -> BotConfig -> IO ()
 startVkBot hLogger hVK botConf = do
     logInfo hLogger "Bot started"
     logInfo hLogger "Checking token"

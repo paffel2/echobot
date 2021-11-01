@@ -1,21 +1,21 @@
 module Vk.VkHandle where
 
-import Logger (Handle)
-import UsersLists (Repeats, RepeatsList)
-import qualified Vk.API as API
-import Vk.Responses (VkItem, VkResponseType)
-import Vk.Types (HelpMessage, Pts, Ts, VkToken)
+import           Logger       (LogHandle)
+import           UsersLists   (Repeats, RepeatsList)
+import qualified Vk.API       as API
+import           Vk.Responses (VkItem, VkResponseType)
+import           Vk.Types     (HelpMessage, Pts, Ts, VkToken)
 
 data VKHandle m =
     VKHandle
-        { getLongPollServer :: Handle m -> VkToken -> m (Maybe VkResponseType)
-        , getLongPollHistory :: Handle m -> VkToken -> Ts -> Pts -> m (Maybe VkResponseType)
-        , getTsAndPts :: Handle m -> VkToken -> m (Maybe (Ts, Pts))
-        , sendMessageText :: Handle m -> VkToken -> VkItem -> m ()
-        , sendKeyboardVk :: Handle m -> VkToken -> VkItem -> m ()
-        , sendMessageRepeatText :: Handle m -> VkToken -> RepeatsList -> VkItem -> m (Maybe Repeats)
-        , repeatMessage :: Handle m -> VkToken -> RepeatsList -> VkItem -> m ()
-        , sendMessageHelp :: Handle m -> VkToken -> HelpMessage -> VkItem -> m ()
+        { getLongPollServer :: LogHandle m -> VkToken -> m (Maybe VkResponseType)
+        , getLongPollHistory :: LogHandle m -> VkToken -> Ts -> Pts -> m (Maybe VkResponseType)
+        , getTsAndPts :: LogHandle m -> VkToken -> m (Maybe (Ts, Pts))
+        , sendMessageText :: LogHandle m -> VkToken -> VkItem -> m ()
+        , sendKeyboardVk :: LogHandle m -> VkToken -> VkItem -> m ()
+        , sendMessageRepeatText :: LogHandle m -> VkToken -> RepeatsList -> VkItem -> m (Maybe Repeats)
+        , repeatMessage :: LogHandle m -> VkToken -> RepeatsList -> VkItem -> m ()
+        , sendMessageHelp :: LogHandle m -> VkToken -> HelpMessage -> VkItem -> m ()
         }
 
 handlerVk :: VKHandle IO

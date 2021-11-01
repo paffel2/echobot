@@ -1,18 +1,16 @@
 module Telegram.Bot where
 
-import Config (ConfigModules(help, token))
-import Logger (Handle, logError, logInfo)
-import Telegram.Echo (echo)
-import Telegram.TelegramHandle (TelegramHandle(getMe))
-import Telegram.Types
-    ( HelpMessage(HelpMessage)
-    , TelegramToken(TelegramToken)
-    , UpdateId(UpdateId)
-    )
+import           Config                  (BotConfig (help, token))
+import           Logger                  (LogHandle, logError, logInfo)
+import           Telegram.Echo           (echo)
+import           Telegram.TelegramHandle (TelegramHandle (getMe))
+import           Telegram.Types          (HelpMessage (HelpMessage),
+                                          TelegramToken (TelegramToken),
+                                          UpdateId (UpdateId))
 
-import UsersLists (RepeatsList)
+import           UsersLists              (RepeatsList)
 
-startTelegramBot :: Handle IO -> TelegramHandle IO -> ConfigModules -> IO ()
+startTelegramBot :: LogHandle IO -> TelegramHandle IO -> BotConfig -> IO ()
 startTelegramBot hLogger hTelegram botConf = do
     logInfo hLogger "New Bot Start"
     logInfo hLogger "Check token"
@@ -31,7 +29,7 @@ startTelegramBot hLogger hTelegram botConf = do
 
 loopBot ::
        Monad m
-    => Handle m
+    => LogHandle m
     -> TelegramHandle m
     -> TelegramToken
     -> HelpMessage

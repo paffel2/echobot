@@ -1,18 +1,16 @@
 module Vk.Echo where
 
-import Data.Maybe (catMaybes)
-import Logger (Handle, logError)
-import UsersLists (RepeatsList, updateListUsers)
-import Vk.Responses (VkMessages(vkMessagesItems), VkResponseType(Server))
-import Vk.Types (HelpMessage, Pts, Ts, VkToken)
-import Vk.VkHandle
-    ( VKHandle(getLongPollHistory, getTsAndPts, repeatMessage,
-         sendKeyboardVk, sendMessageHelp, sendMessageRepeatText)
-    )
+import           Data.Maybe   (catMaybes)
+import           Logger       (LogHandle, logError)
+import           UsersLists   (RepeatsList, updateListUsers)
+import           Vk.Responses (VkMessages (vkMessagesItems),
+                               VkResponseType (Server))
+import           Vk.Types     (HelpMessage, Pts, Ts, VkToken)
+import           Vk.VkHandle  (VKHandle (getLongPollHistory, getTsAndPts, repeatMessage, sendKeyboardVk, sendMessageHelp, sendMessageRepeatText))
 
 echo ::
        Monad m
-    => Handle m
+    => LogHandle m
     -> VKHandle m
     -> VkToken
     -> HelpMessage

@@ -1,47 +1,28 @@
 module Telegram.Echo where
 
-import Logger (Handle, logDebug, logError)
-import Telegram.Impl (telegramMessageToTgMessage)
-import Telegram.Responses
-    ( TelegramCallbackQuery(TelegramCallbackQuery)
-    , TelegramChat(telegramChatId)
-    , TelegramCommand(..)
-    , TelegramMessage(telegramMessageCaption, telegramMessageChat,
-                telegramMessageEntities)
-    , TelegramMessageEntity
-    , TelegramUpdate(TelegramUpdate)
-    , TelegramUser(telegramUserId)
-    , TgMessage(..)
-    )
+import           Logger                  (LogHandle, logDebug, logError)
+import           Telegram.Impl           (telegramMessageToTgMessage)
+import           Telegram.Responses      (TelegramCallbackQuery (TelegramCallbackQuery),
+                                          TelegramChat (telegramChatId),
+                                          TelegramCommand (..),
+                                          TelegramMessage (telegramMessageCaption, telegramMessageChat, telegramMessageEntities),
+                                          TelegramMessageEntity,
+                                          TelegramUpdate (TelegramUpdate),
+                                          TelegramUser (telegramUserId),
+                                          TgMessage (..))
 
-import Telegram.TelegramHandle
-    ( TelegramHandle(getLastUpdateId, getUpdates, sendAnimationMessage,
-               sendAudioMessage, sendContactMessage, sendDocumentMessage,
-               sendKeyboard, sendLocationMessage, sendPhotoMessage,
-               sendStickerMessage, sendTextMessage, sendVenueMessage,
-               sendVideoMessage, sendVideoNoteMessage, sendVoiceMessage)
-    )
+import           Telegram.TelegramHandle (TelegramHandle (getLastUpdateId, getUpdates, sendAnimationMessage, sendAudioMessage, sendContactMessage, sendDocumentMessage, sendKeyboard, sendLocationMessage, sendPhotoMessage, sendStickerMessage, sendTextMessage, sendVenueMessage, sendVideoMessage, sendVideoNoteMessage, sendVoiceMessage))
 
-import Data.Maybe (catMaybes)
-import Telegram.Types
-    ( Caption
-    , HelpMessage(help_mess)
-    , StatusResult
-    , TelegramToken
-    , UpdateId
-    )
-import UsersLists
-    ( ChatId
-    , Repeats(Repeats)
-    , RepeatsList
-    , RepeatsNum(..)
-    , findRepeatNumber
-    , updateListUsers
-    )
+import           Data.Maybe              (catMaybes)
+import           Telegram.Types          (Caption, HelpMessage (help_mess),
+                                          StatusResult, TelegramToken, UpdateId)
+import           UsersLists              (ChatId, Repeats (Repeats),
+                                          RepeatsList, RepeatsNum (..),
+                                          findRepeatNumber, updateListUsers)
 
 echo ::
        Monad m
-    => Handle m
+    => LogHandle m
     -> TelegramHandle m
     -> TelegramToken
     -> Maybe UpdateId
@@ -99,7 +80,7 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
 
 sendAnswer ::
        Monad m
-    => Handle m
+    => LogHandle m
     -> TelegramHandle m
     -> TelegramToken
     -> ChatId
@@ -165,7 +146,7 @@ sendAnswer hLogger hTelegram tgtoken chatId tg_message ent cap =
 
 repeatSendMessage ::
        Monad m
-    => Handle m
+    => LogHandle m
     -> TelegramHandle m
     -> RepeatsNum
     -> TelegramToken
@@ -211,7 +192,7 @@ repeatSendMessage hLogger hTelegram n tgtoken chatId tg_message entities cap hel
 
 sendServiceMessage ::
        Monad m
-    => Handle m
+    => LogHandle m
     -> TelegramHandle m
     -> TelegramToken
     -> ChatId
