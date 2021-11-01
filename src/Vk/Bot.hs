@@ -9,6 +9,9 @@ import           Vk.Types           (HelpMessage (HelpMessage), Pts, Ts,
                                      VkToken (VkToken))
 import           Vk.VkHandle        (VKHandle (getTsAndPts))
 
+delayTime :: Int
+delayTime = 3000000
+
 loopBot ::
        LogHandle IO
     -> VKHandle IO
@@ -23,17 +26,17 @@ loopBot hLogger hVk token' help_message [] ts pts = do
     case newLoopInformation of
         Nothing -> do
             logError hLogger "Bad token or server is not available"
-        Just ((ts', pts'), newList) -> do
-            threadDelay 3000000
-            loopBot hLogger hVk token' help_message newList ts' pts'
+        Just ((newTs, newPts), newList) -> do
+            threadDelay delayTime
+            loopBot hLogger hVk token' help_message newList newTs newPts
 loopBot hLogger hVk token' help_message users_list ts pts = do
     newLoopInformation <- echo hLogger hVk token' help_message users_list ts pts
     case newLoopInformation of
         Nothing -> do
             logError hLogger "Bad token or server is not available"
-        Just ((ts', pts'), newList) -> do
-            threadDelay 3000000
-            loopBot hLogger hVk token' help_message newList ts' pts'
+        Just ((newTs, newPts), newList) -> do
+            threadDelay delayTime
+            loopBot hLogger hVk token' help_message newList newTs newPts
 
 startVkBot :: LogHandle IO -> VKHandle IO -> BotConfig -> IO ()
 startVkBot hLogger hVK botConf = do

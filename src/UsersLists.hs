@@ -1,15 +1,15 @@
 module UsersLists where
 
-import Data.Aeson (FromJSON(parseJSON), ToJSON(toJSON))
-import Data.Aeson.Types (Parser)
-import Data.List (find)
-import Data.Maybe (fromMaybe)
-import GHC.Generics (Generic)
-import Text.Read (readMaybe)
+import           Data.Aeson       (FromJSON (parseJSON), ToJSON (toJSON))
+import           Data.Aeson.Types (Parser)
+import           Data.List        (find)
+import           Data.Maybe       (fromMaybe)
+import           GHC.Generics     (Generic)
+import           Text.Read        (readMaybe)
 
 newtype RepeatsNum =
     RepeatsNum
-        { repeats_num' :: Int
+        { getRepeatsNum :: Int
         }
     deriving (Show, Eq, Generic)
 
@@ -21,7 +21,7 @@ type RepeatsList = [Repeats]
 
 data Repeats =
     Repeats
-        { chat_id :: ChatId
+        { chat_id     :: ChatId
         , repeats_num :: RepeatsNum
         }
     deriving (Show, Eq)

@@ -75,7 +75,7 @@ echo hLogger' hTelegram' tgtoken' updateId help_message' listOfUsers = do
                 return $ Just $ Repeats chatId dat
       where
         chatId = telegramUserId user
-        text = "Number of reapeting " ++ (show . repeats_num' $ dat)
+        text = "Number of reapeting " ++ (show . getRepeatsNum $ dat)
     answer _ _ _ _ _ _ = return Nothing
 
 sendAnswer ::

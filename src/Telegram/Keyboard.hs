@@ -1,12 +1,14 @@
 module Telegram.Keyboard where
 
-import Telegram.Responses
-    ( TelegramInlineKeyboardButton(TelegramInlineKeyboardButton)
-    , TelegramInlineKeyboardMarkup(TelegramInlineKeyboardMarkup)
-    )
-
-buttons :: [[TelegramInlineKeyboardButton]]
-buttons = [[TelegramInlineKeyboardButton x x] | x <- ["1", "2", "3", "4", "5"]]
+import           Telegram.Responses (TelegramInlineKeyboardButton (TelegramInlineKeyboardButton),
+                                     TelegramInlineKeyboardMarkup (TelegramInlineKeyboardMarkup))
 
 keyboard :: TelegramInlineKeyboardMarkup
-keyboard = TelegramInlineKeyboardMarkup buttons
+keyboard =
+    TelegramInlineKeyboardMarkup
+        [ [TelegramInlineKeyboardButton "1" "1"]
+        , [TelegramInlineKeyboardButton "2" "2"]
+        , [TelegramInlineKeyboardButton "3" "3"]
+        , [TelegramInlineKeyboardButton "4" "4"]
+        , [TelegramInlineKeyboardButton "5" "5"]
+        ]

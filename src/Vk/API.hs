@@ -8,10 +8,10 @@ import qualified Data.Text        as T
 import           Logger           (LogHandle, logDebug, logError)
 import           UsersLists       (ChatId (chat_id'), Repeats (Repeats),
                                    RepeatsList,
-                                   RepeatsNum (RepeatsNum, repeats_num'),
+                                   RepeatsNum (RepeatsNum, getRepeatsNum),
                                    findRepeatNumber)
 import           Vk.BuildRequests (buildVkGetRequest, buildVkPostRequest)
-import           Vk.Keyboard      (encKeyboard)
+import           Vk.Keyboard      (keyboard)
 import           Vk.Responses     (VkAttachment (VkAttachmentAudio, VkAttachmentAudioMessage, VkAttachmentDoc, VkAttachmentMarket, VkAttachmentPhoto, VkAttachmentPoll, VkAttachmentSticker, VkAttachmentStory, VkAttachmentVideo, VkAttachmentWall),
                                    VkAudio (VkAudio),
                                    VkAudioMessage (VkAudioMessage),
@@ -22,8 +22,11 @@ import           Vk.Responses     (VkAttachment (VkAttachmentAudio, VkAttachment
                                    VkPoll (VkPoll), VkResponseType (Server),
                                    VkSticker (VkSticker), VkStory (VkStory),
                                    VkVideo (VkVideo), VkWall (VkWall))
-import           Vk.Types         (HelpMessage (help_mess), Pts (pts'),
-                                   Ts (ts'), VkToken)
+import           Vk.Types         (HelpMessage (help_mess), Pts (getPts),
+                                   Ts (getTs), VkToken)
+
+versionParam :: (T.Text, T.Text)
+versionParam = ("v", "5.130")
 
 getLongPollServer :: LogHandle IO -> VkToken -> IO (Maybe VkResponseType)
 getLongPollServer hLogger vktoken =
@@ -31,7 +34,7 @@ getLongPollServer hLogger vktoken =
         hLogger
         vktoken
         "messages.getLongPollServer"
-        [("lp_version", "3"), ("need_pts", "1"), ("v", "5.130")]
+        [("lp_version", "3"), ("need_pts", "1"), versionParam]
 
 getLongPollHistory ::
        LogHandle IO -> VkToken -> Ts -> Pts -> IO (Maybe VkResponseType)
@@ -40,9 +43,9 @@ getLongPollHistory hLogger vktoken ts pts =
         hLogger
         vktoken
         "messages.getLongPollHistory"
-        [ ("ts", T.pack $ show $ ts' ts)
-        , ("pts", T.pack $ show $ pts' pts)
-        , ("v", "5.130")
+        [ ("ts", T.pack $ show $ getTs ts)
+        , ("pts", T.pack $ show $ getPts pts)
+        , versionParam
         ]
 
 getTsAndPts :: LogHandle IO -> VkToken -> IO (Maybe (Ts, Pts))
@@ -150,7 +153,7 @@ sendKeyboardVk hLogger vktoken (VkItem _ fromId text _ _ _ _ _) =
     params' =
         [ ("user_id", Just . T.pack . show . chat_id' $ fromId)
         , ("message", Just $ T.pack "Choose number of repetitions")
-        , ("keyboard", Just encKeyboard)
+        , ("keyboard", Just keyboard)
         ]
 
 sendGeoVK :: LogHandle IO -> VkToken -> VkItem -> IO ()
@@ -186,7 +189,7 @@ sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)
                             [ "user "
                             , T.pack . show . chat_id' $ fromId
                             , " change the number of repetitions to "
-                            , T.pack . show . repeats_num' $ button
+                            , T.pack . show . getRepeatsNum $ button
                             ]
                     return $ Just $ Repeats fromId button
         else return Nothing
@@ -197,7 +200,7 @@ sendMessageRepeatText hLogger vktoken _ (VkItem _ fromId _ _ _ _ _ (Just button)
           , Just $
             T.pack
                 ("the number of repetitions is " ++
-                 (show . repeats_num' $ button)))
+                 (show . getRepeatsNum $ button)))
         ]
 sendMessageRepeatText _ _ _ (VkItem _ _ _ _ _ _ _ Nothing) = return Nothing
 
