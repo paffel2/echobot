@@ -129,6 +129,28 @@ data TgMessage
     | VenueMessage TelegramVenue
     deriving (Show)
 
+data TgMessage'
+    = TextMessage' TelegramText
+    | CommandMessage' TelegramCommand'
+    | AnimationMessage' TelegramAnimation
+    | AudioMessage' TelegramAudio
+    | DocumentMessage' TelegramDocument
+    | PhotoMessage' [TelegramPhotoSize]
+    | VideoMessage' TelegramVideo
+    | StickerMessage' TelegramSticker
+    | VideoNoteMessage' TelegramVideoNote
+    | VoiceMessage' TelegramVoice
+    | ContactMessage' TelegramContact
+    | LocationMessage' TelegramLocation
+    | VenueMessage' TelegramVenue
+    deriving (Show)
+
+data TelegramCommand'
+    = Help'
+    | Repeat'
+    | Confirm'
+    deriving (Show)
+
 data TelegramMessageEntity =
     TelegramMessageEntity
         { telegramMessageEntityType   :: String
