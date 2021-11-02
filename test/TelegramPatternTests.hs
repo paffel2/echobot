@@ -4,19 +4,21 @@ module TelegramPatternTests where
 
 import           Data.Functor.Identity   (Identity)
 import qualified Data.Text.IO            as TIO
+import           Echo                    (EchoBotHandle (EchoBotHandle), echo,
+                                          telegramEchoHandler)
 import           Logger                  (LogHandle (..), Priority (Debug))
-import           Telegram.Echo           (echo)
 import           Telegram.Responses      (TelegramCallbackQuery (..),
                                           TelegramMessage (TelegramMessage),
                                           TelegramUpdate (TelegramUpdate),
                                           TelegramUser (TelegramUser, telegramUserId))
 import           Telegram.TelegramHandle (TelegramHandle (..))
-import           Telegram.Types          (HelpMessage (HelpMessage),
-                                          StatusResult (StatusResult),
+import           Telegram.Types          (StatusResult (StatusResult),
                                           TelegramToken (TelegramToken),
                                           UpdateId (UpdateId))
 import           Test.Hspec              (describe, hspec, it, shouldBe)
-import           UsersLists              (ChatId (ChatId), Repeats (Repeats),
+import           UsersLists              (ChatId (ChatId),
+                                          HelpMessage (HelpMessage),
+                                          Repeats (Repeats),
                                           RepeatsNum (RepeatsNum))
 
 logHandle :: LogHandle Identity
@@ -53,104 +55,112 @@ telegramHandle =
         , sendVenueMessage = \logHandle token chatId venue -> return Nothing
         }
 
+echoHandle :: EchoBotHandle Identity UpdateId [TelegramUpdate]
+echoHandle =
+    telegramEchoHandler (TelegramToken "token") telegramHandle (return ())
+
 echoTelegramTests :: IO ()
 echoTelegramTests =
     hspec $ do
-        describe "Testing vk echo function" $ do
+        describe "Testing telegram echo function" $ do
             it
                 "Should not change UpdateId and repeatsList, because don't have updates" $ do
                 echo
+                    echoHandle
                     logHandle
-                    telegramHandle
-                    (TelegramToken "token")
-                    (Just $ UpdateId 0)
                     (HelpMessage "help_message")
-                    [] `shouldBe`
+                    (Just $ UpdateId 0, []) `shouldBe`
                     return (Nothing, [])
             it
                 "Should return new UpdateId and empty list of the users, because server has new update without changing the list of users " $ do
                 echo
+                    (telegramEchoHandler
+                         (TelegramToken "token")
+                         (telegramHandle
+                              { getLastUpdateId =
+                                    \logHandle updates ->
+                                        return (Just $ UpdateId 1)
+                              })
+                         (return ()))
                     logHandle
-                    (telegramHandle
-                         { getLastUpdateId =
-                               \logHandle updates -> return (Just $ UpdateId 1)
-                         })
-                    (TelegramToken "token")
-                    (Just $ UpdateId 0)
                     (HelpMessage "help_message")
-                    [] `shouldBe`
+                    (Just $ UpdateId 1, []) `shouldBe`
                     return (Just $ UpdateId 1, [])
             it
                 "Should return new UpdateId and not empty list of the users, \
                  \because server has new update where user changed the number of repetitions for the first time" $ do
                 echo
+                    (telegramEchoHandler
+                         (TelegramToken "token")
+                         (telegramHandle
+                              { getUpdates =
+                                    \logHandle token updateId ->
+                                        return $ Just [numsUpdate]
+                              , sendTextMessage =
+                                    \logHandle token chatId text entities ->
+                                        return $ Just $ StatusResult 200
+                              , getLastUpdateId =
+                                    \logHandle updates ->
+                                        return (Just $ UpdateId 1)
+                              })
+                         (return ()))
                     logHandle
-                    (telegramHandle
-                         { getUpdates =
-                               \logHandle token updateId ->
-                                   return $ Just [numsUpdate]
-                         , sendTextMessage =
-                               \logHandle token chatId text entities ->
-                                   return $ Just $ StatusResult 200
-                         , getLastUpdateId =
-                               \logHandle updates -> return (Just $ UpdateId 1)
-                         })
-                    (TelegramToken "token")
-                    (Just $ UpdateId 0)
                     (HelpMessage "help_message")
-                    [] `shouldBe`
+                    (Just $ UpdateId 0, []) `shouldBe`
                     return
                         (Just $ UpdateId 1, [Repeats (ChatId 1) (RepeatsNum 2)])
             it
                 "Should return new UpdateId and not empty list of the users, \
                  \because server has new update where user changed the number" $ do
                 echo
+                    (telegramEchoHandler
+                         (TelegramToken "token")
+                         (telegramHandle
+                              { getUpdates =
+                                    \logHandle token updateId ->
+                                        return $ Just [numsUpdate]
+                              , sendTextMessage =
+                                    \logHandle token chatId text entities ->
+                                        return $ Just $ StatusResult 200
+                              , getLastUpdateId =
+                                    \logHandle updates ->
+                                        return (Just $ UpdateId 1)
+                              })
+                         (return ()))
                     logHandle
-                    (telegramHandle
-                         { getUpdates =
-                               \logHandle token updateId ->
-                                   return $ Just [numsUpdate]
-                         , sendTextMessage =
-                               \logHandle token chatId text entities ->
-                                   return $ Just $ StatusResult 200
-                         , getLastUpdateId =
-                               \logHandle updates -> return (Just $ UpdateId 1)
-                         })
-                    (TelegramToken "token")
-                    (Just $ UpdateId 0)
                     (HelpMessage "help_message")
-                    [Repeats (ChatId 1) (RepeatsNum 5)] `shouldBe`
+                    (Just $ UpdateId 0, [Repeats (ChatId 1) (RepeatsNum 5)]) `shouldBe`
                     return
                         (Just $ UpdateId 1, [Repeats (ChatId 1) (RepeatsNum 2)])
             it
                 "Should not change UpdateId and repeatsList, because don't have updates and UpdateId is Nothing" $ do
                 echo
+                    echoHandle
                     logHandle
-                    telegramHandle
-                    (TelegramToken "token")
-                    Nothing
                     (HelpMessage "help_message")
-                    [] `shouldBe`
+                    (Nothing, []) `shouldBe`
                     return (Nothing, [])
             it
                 "Should return new UpdateId and new list of users, because echo function did not receive an update ID, \
                  \but get new update, where get new list of users and new UpdateId." $ do
                 echo
+                    (telegramEchoHandler
+                         (TelegramToken "token")
+                         (telegramHandle
+                              { getUpdates =
+                                    \logHandle token updateId ->
+                                        return $ Just [numsUpdate]
+                              , sendTextMessage =
+                                    \logHandle token chatId text entities ->
+                                        return $ Just $ StatusResult 200
+                              , getLastUpdateId =
+                                    \logHandle updates ->
+                                        return (Just $ UpdateId 1)
+                              })
+                         (return ()))
                     logHandle
-                    (telegramHandle
-                         { getUpdates =
-                               \logHandle token updateId ->
-                                   return $ Just [numsUpdate]
-                         , sendTextMessage =
-                               \logHandle token chatId text entities ->
-                                   return $ Just $ StatusResult 200
-                         , getLastUpdateId =
-                               \logHandle updates -> return (Just $ UpdateId 1)
-                         })
-                    (TelegramToken "token")
-                    Nothing
                     (HelpMessage "help_message")
-                    [] `shouldBe`
+                    (Nothing, []) `shouldBe`
                     return
                         (Just $ UpdateId 1, [Repeats (ChatId 1) (RepeatsNum 2)])
 
