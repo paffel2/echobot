@@ -15,7 +15,7 @@ import           Telegram.TelegramHandle (TelegramHandle (sendAnimationMessage, 
 
 import           Data.Maybe              (catMaybes)
 import           Telegram.Types          (Caption, StatusResult, TelegramToken)
-import           UsersLists              (ChatId, HelpMessage (help_mess),
+import           UsersLists              (ChatId, HelpMessage (getHelpMessage),
                                           Repeats (Repeats), RepeatsList,
                                           RepeatsNum (..), findRepeatNumber)
 
@@ -148,7 +148,7 @@ sendServiceMessage hLogger hTelegram tgtoken chatId Help help_message =
         hLogger
         tgtoken
         chatId
-        (help_mess help_message)
+        (getHelpMessage help_message)
         Nothing
 
 answers ::

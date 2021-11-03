@@ -63,44 +63,54 @@ fromTgUpdateToUserMessage TelegramUpdate { telegramUpdateCallbackQuery = Nothing
         L.UserMessage
             (telegramUserId user)
             (L.JustMessage $
-             TextMessage' $ fromJust $ telegramMessageText telegramMessage)
+             TextMessage'
+                 (fromJust $ telegramMessageText telegramMessage)
+                 (telegramMessageEntities telegramMessage))
         --TextMessage' <$> telegramMessageText telegramMessage
     | isJust $ telegramMessageAnimation telegramMessage =
         Just $
         L.UserMessage
             (telegramUserId user)
             (L.JustMessage $
-             AnimationMessage' $
-             fromJust $ telegramMessageAnimation telegramMessage)
+             AnimationMessage'
+                 (fromJust $ telegramMessageAnimation telegramMessage)
+                 (telegramMessageCaption telegramMessage))
         --AnimationMessage' <$> telegramMessageAnimation telegramMessage
     | isJust $ telegramMessageAudio telegramMessage =
         Just $
         L.UserMessage
             (telegramUserId user)
             (L.JustMessage $
-             AudioMessage' $ fromJust $ telegramMessageAudio telegramMessage)
+             AudioMessage'
+                 (fromJust $ telegramMessageAudio telegramMessage)
+                 (telegramMessageCaption telegramMessage))
         --AudioMessage' <$> telegramMessageAudio telegramMessage
     | isJust $ telegramMessageDocument telegramMessage =
         Just $
         L.UserMessage
             (telegramUserId user)
             (L.JustMessage $
-             DocumentMessage' $
-             fromJust $ telegramMessageDocument telegramMessage)
+             DocumentMessage'
+                 (fromJust $ telegramMessageDocument telegramMessage)
+                 (telegramMessageCaption telegramMessage))
         --DocumentMessage' <$> telegramMessageDocument telegramMessage
     | isJust $ telegramMessagePhoto telegramMessage =
         Just $
         L.UserMessage
             (telegramUserId user)
             (L.JustMessage $
-             PhotoMessage' $ fromJust $ telegramMessagePhoto telegramMessage)
+             PhotoMessage'
+                 (fromJust $ telegramMessagePhoto telegramMessage)
+                 (telegramMessageCaption telegramMessage))
         --PhotoMessage' <$> telegramMessagePhoto telegramMessage
     | isJust $ telegramMessageVideo telegramMessage =
         Just $
         L.UserMessage
             (telegramUserId user)
             (L.JustMessage $
-             VideoMessage' $ fromJust $ telegramMessageVideo telegramMessage)
+             VideoMessage'
+                 (fromJust $ telegramMessageVideo telegramMessage)
+                 (telegramMessageCaption telegramMessage))
         --VideoMessage' <$> telegramMessageVideo telegramMessage
     | isJust $ telegramMessageSticker telegramMessage =
         Just $
@@ -122,7 +132,9 @@ fromTgUpdateToUserMessage TelegramUpdate { telegramUpdateCallbackQuery = Nothing
         L.UserMessage
             (telegramUserId user)
             (L.JustMessage $
-             VoiceMessage' $ fromJust $ telegramMessageVoice telegramMessage)
+             VoiceMessage'
+                 (fromJust $ telegramMessageVoice telegramMessage)
+                 (telegramMessageCaption telegramMessage))
         --VoiceMessage' <$> telegramMessageVoice telegramMessage
     | isJust $ telegramMessageContact telegramMessage =
         Just $

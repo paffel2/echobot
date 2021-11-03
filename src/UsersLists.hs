@@ -53,5 +53,5 @@ updateListUsers xs [] = xs
 
 newtype HelpMessage =
     HelpMessage
-        { help_mess :: String
+        { getHelpMessage :: String
         }

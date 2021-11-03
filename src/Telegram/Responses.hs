@@ -130,16 +130,16 @@ data TgMessage
     deriving (Show)
 
 data TgMessage'
-    = TextMessage' TelegramText
+    = TextMessage' TelegramText (Maybe [TelegramMessageEntity])
     | CommandMessage' TelegramCommand'
-    | AnimationMessage' TelegramAnimation
-    | AudioMessage' TelegramAudio
-    | DocumentMessage' TelegramDocument
-    | PhotoMessage' [TelegramPhotoSize]
-    | VideoMessage' TelegramVideo
+    | AnimationMessage' TelegramAnimation (Maybe Caption)
+    | AudioMessage' TelegramAudio (Maybe Caption)
+    | DocumentMessage' TelegramDocument (Maybe Caption)
+    | PhotoMessage' [TelegramPhotoSize] (Maybe Caption)
+    | VideoMessage' TelegramVideo (Maybe Caption)
     | StickerMessage' TelegramSticker
     | VideoNoteMessage' TelegramVideoNote
-    | VoiceMessage' TelegramVoice
+    | VoiceMessage' TelegramVoice (Maybe Caption)
     | ContactMessage' TelegramContact
     | LocationMessage' TelegramLocation
     | VenueMessage' TelegramVenue

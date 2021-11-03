@@ -7,7 +7,8 @@ import           Control.Monad    (when)
 import           Data.Maybe       (isJust)
 import qualified Data.Text        as T
 import           Logger           (LogHandle, logDebug, logError)
-import           UsersLists       (ChatId (chat_id'), HelpMessage (help_mess),
+import           UsersLists       (ChatId (chat_id'),
+                                   HelpMessage (getHelpMessage),
                                    Repeats (Repeats), RepeatsList,
                                    RepeatsNum (RepeatsNum, getRepeatsNum),
                                    findRepeatNumber)
@@ -254,5 +255,5 @@ sendMessageHelp hLogger vktoken help_message VkItem { vkItemFromId = fromId
   where
     params' =
         [ ("user_id", Just . T.pack . show . chat_id' $ fromId)
-        , ("message", Just $ T.pack $ help_mess help_message)
+        , ("message", Just $ T.pack $ getHelpMessage help_message)
         ]
