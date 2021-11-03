@@ -106,14 +106,14 @@ instance FromJSON TelegramMessage where
         genericParseJSON
             defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 15}
 
-data TelegramCommand
+{-data TelegramCommand
     = Help
     | Repeat
-    deriving (Show)
+    deriving (Show) -}
 
 type TelegramText = String
 
-data TgMessage
+{-data TgMessage
     = TextMessage TelegramText
     | CommandMessage TelegramCommand
     | AnimationMessage TelegramAnimation
@@ -127,28 +127,28 @@ data TgMessage
     | ContactMessage TelegramContact
     | LocationMessage TelegramLocation
     | VenueMessage TelegramVenue
-    deriving (Show)
+    deriving (Show) -}
 
-data TgMessage'
-    = TextMessage' TelegramText (Maybe [TelegramMessageEntity])
-    | CommandMessage' TelegramCommand'
+data TgMessage
+    = TextMessage TelegramText (Maybe [TelegramMessageEntity])
+    | CommandMessage TelegramCommand
     | AnimationMessage' TelegramAnimation (Maybe Caption)
-    | AudioMessage' TelegramAudio (Maybe Caption)
-    | DocumentMessage' TelegramDocument (Maybe Caption)
-    | PhotoMessage' [TelegramPhotoSize] (Maybe Caption)
-    | VideoMessage' TelegramVideo (Maybe Caption)
-    | StickerMessage' TelegramSticker
-    | VideoNoteMessage' TelegramVideoNote
-    | VoiceMessage' TelegramVoice (Maybe Caption)
-    | ContactMessage' TelegramContact
-    | LocationMessage' TelegramLocation
-    | VenueMessage' TelegramVenue
+    | AudioMessage TelegramAudio (Maybe Caption)
+    | DocumentMessage TelegramDocument (Maybe Caption)
+    | PhotoMessage [TelegramPhotoSize] (Maybe Caption)
+    | VideoMessage TelegramVideo (Maybe Caption)
+    | StickerMessage TelegramSticker
+    | VideoNoteMessage TelegramVideoNote
+    | VoiceMessage TelegramVoice (Maybe Caption)
+    | ContactMessage TelegramContact
+    | LocationMessage TelegramLocation
+    | VenueMessage TelegramVenue
     deriving (Show)
 
-data TelegramCommand'
-    = Help'
-    | Repeat'
-    | Confirm'
+data TelegramCommand
+    = Help
+    | Repeat
+    | Confirm
     deriving (Show)
 
 data TelegramMessageEntity =

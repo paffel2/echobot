@@ -28,7 +28,7 @@ data Repeats =
 
 newtype ChatId =
     ChatId
-        { chat_id' :: Int
+        { getChatId :: Int
         }
     deriving (Eq, Show, Generic)
 
@@ -36,7 +36,7 @@ instance FromJSON ChatId where
     parseJSON v = ChatId <$> (parseJSON v :: Parser Int)
 
 instance ToJSON ChatId where
-    toJSON = toJSON . chat_id'
+    toJSON = toJSON . getChatId
 
 findRepeatNumber :: RepeatsList -> ChatId -> RepeatsNum
 findRepeatNumber listOfUsers chatId =

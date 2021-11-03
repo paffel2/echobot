@@ -1,31 +1,77 @@
 module Vk.VkHandle where
 
-import           Logger       (LogHandle)
-import           UsersLists   (HelpMessage, Repeats, RepeatsList)
-import qualified Vk.API       as API
-import           Vk.Responses (VkItem, VkResponseType)
-import           Vk.Types     (Pts, Ts, VkToken)
+import           Control.Monad.State (MonadIO (liftIO), MonadState (get, put),
+                                      StateT, when)
+import           Echo                (BotMessage (botMessageContent, to),
+                                      BotMessageContent (HelpMessage, Keyboard, PlainText, RepeatMessage),
+                                      DataLoop (..), Handle (..), UserMessage)
+import           Logger              (LogHandle)
+import qualified UsersLists          as UL
+import           Vk.API              (sendGeoVK, sendKeyboardVk,
+                                      sendMessageAttachment, sendMessageHelp,
+                                      sendMessageRepeatText, sendMessageText)
+import           Vk.Responses        (VkMessageTypes (..))
+import           Vk.Types            (Pts, Ts, VkToken)
 
-data VKHandle m =
-    VKHandle
-        { getLongPollServer :: LogHandle m -> VkToken -> m (Maybe VkResponseType)
-        , getLongPollHistory :: VkToken -> LogHandle m -> Maybe (Ts, Pts) -> m (Maybe VkResponseType)
-        , getTsAndPts :: VkToken -> LogHandle m -> m (Maybe (Ts, Pts))
-        , sendMessageText :: LogHandle m -> VkToken -> VkItem -> m ()
-        , sendKeyboardVk :: LogHandle m -> VkToken -> VkItem -> m ()
-        , sendMessageRepeatText :: LogHandle m -> VkToken -> RepeatsList -> VkItem -> m (Maybe Repeats)
-        , repeatMessage :: LogHandle m -> VkToken -> RepeatsList -> VkItem -> m ()
-        , sendMessageHelp :: LogHandle m -> VkToken -> HelpMessage -> VkItem -> m ()
+vkRepeatsByUser ::
+       UL.ChatId -> StateT (DataLoop (Ts, Pts)) IO (Maybe UL.RepeatsNum)
+vkRepeatsByUser chatId = do
+    loopInfo <- get
+    return $ Just $ UL.findRepeatNumber (getRepeatsList loopInfo) chatId
+
+vkUpdateRepeatsForUser ::
+       UL.ChatId -> UL.RepeatsNum -> StateT (DataLoop (Ts, Pts)) IO ()
+vkUpdateRepeatsForUser chatId repeatsNums = do
+    loopInfo <- get
+    let listUpdate =
+            UL.updateListUsers
+                (getRepeatsList loopInfo)
+                [UL.Repeats chatId repeatsNums]
+    put $ DataLoop listUpdate (getUpdateId loopInfo)
+
+vkSendAnswer ::
+       LogHandle IO
+    -> VkToken
+    -> UL.HelpMessage
+    -> BotMessage VkMessageTypes
+    -> StateT (DataLoop (Ts, Pts)) IO ()
+vkSendAnswer hLogger vkToken helpMessage botMessage =
+    case botMessageContent botMessage of
+        PlainText s ->
+            liftIO $ sendMessageRepeatText hLogger vkToken s (to botMessage)
+        Keyboard -> liftIO $ sendKeyboardVk hLogger vkToken (to botMessage)
+        HelpMessage ->
+            liftIO $ sendMessageHelp hLogger vkToken helpMessage (to botMessage)
+        RepeatMessage rn vmt -> repeatAnswer rn vmt
+  where
+    oneAnswer vmt =
+        case vmt of
+            VkTextMessage text ->
+                liftIO $ sendMessageText hLogger vkToken (to botMessage) text
+            VkGeoMessage geo ->
+                liftIO $ sendGeoVK hLogger vkToken (to botMessage) geo
+            VkWithAttachmentsMessage attachments ->
+                liftIO $
+                sendMessageAttachment
+                    hLogger
+                    vkToken
+                    (to botMessage)
+                    attachments
+    repeatAnswer (UL.RepeatsNum n) vmt = do
+        when (n > 0) $ do
+            oneAnswer vmt
+            repeatAnswer (UL.RepeatsNum (n - 1)) vmt
+
+vkHandler ::
+       LogHandle IO
+    -> VkToken
+    -> UL.HelpMessage
+    -> Maybe (UserMessage VkMessageTypes)
+    -> Handle VkMessageTypes (StateT (DataLoop (Ts, Pts)) IO)
+vkHandler hLogger token helpMessage message =
+    Handle
+        { getMessage = return message
+        , repeatsByUser = vkRepeatsByUser
+        , updateRepeatsForUser = vkUpdateRepeatsForUser
+        , sendAnswer = vkSendAnswer hLogger token helpMessage
         }
-
-handlerVk :: VKHandle IO
-handlerVk =
-    VKHandle
-        API.getLongPollServer
-        API.getLongPollHistory
-        API.getTsAndPts
-        API.sendMessageText
-        API.sendKeyboardVk
-        API.sendMessageRepeatText
-        API.repeatMessage
-        API.sendMessageHelp

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d3492d84fe4404e1de6356eba34e12aae784ffcadcf7b8d146b49e7a33401891
+-- hash: b23cc211158de4d241bc34409c359e4ce42617728c4cfbb3b3a56cfef31b9222
 
 name:           echobot
 version:        0.1.0.0
@@ -30,21 +30,20 @@ library
       Config
       Echo
       Logger
-      Logic
-      Telegram.Answers
       Telegram.API
+      Telegram.Bot
       Telegram.BuildRequest
       Telegram.Impl
       Telegram.Keyboard
       Telegram.Requests
       Telegram.Responses
-      Telegram.TelegramBot
       Telegram.TelegramHandle
       Telegram.Types
       UsersLists
-      Vk.Answers
       Vk.API
+      Vk.Bot
       Vk.BuildRequests
+      Vk.Impl
       Vk.Keyboard
       Vk.KeyboardJSON
       Vk.Responses

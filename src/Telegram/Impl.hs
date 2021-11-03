@@ -3,160 +3,114 @@
 module Telegram.Impl where
 
 import           Data.Maybe         (fromJust, isJust)
-import qualified Logic              as L
-import           Telegram.Responses (TelegramCallbackQuery (..),
-                                     TelegramChat (..),
-                                     TelegramCommand (Help, Repeat),
-                                     TelegramCommand' (..),
-                                     TelegramMessage (..), TelegramUpdate (..),
-                                     TelegramUser (..), TgMessage (..),
-                                     TgMessage' (..))
+import qualified Echo               as E
+import           Telegram.Responses (TelegramCallbackQuery (TelegramCallbackQuery, telegramCallbackQueryData, telegramCallbackQueryFrom, telegramCallbackQueryMessage),
+                                     TelegramMessage (TelegramMessage, telegramMessageAnimation, telegramMessageAudio, telegramMessageCaption, telegramMessageContact, telegramMessageDocument, telegramMessageEntities, telegramMessageFrom, telegramMessageLocation, telegramMessagePhoto, telegramMessageSticker, telegramMessageText, telegramMessageVenue, telegramMessageVideo, telegramMessageVideoNote, telegramMessageVoice),
+                                     TelegramUpdate (TelegramUpdate, telegramUpdateCallbackQuery, telegramUpdateMessage),
+                                     TelegramUser (telegramUserId),
+                                     TgMessage (AnimationMessage', AudioMessage, ContactMessage, DocumentMessage, LocationMessage, PhotoMessage, StickerMessage, TextMessage, VenueMessage, VideoMessage, VideoNoteMessage, VoiceMessage))
 
-telegramMessageToTgMessage :: TelegramMessage -> Maybe TgMessage
-telegramMessageToTgMessage telegram_message
-    | telegramMessageText telegram_message == Just "/repeat" =
-        Just $ CommandMessage Repeat
-    | telegramMessageText telegram_message == Just "/help" =
-        Just $ CommandMessage Help
-    | isJust $ telegramMessageText telegram_message =
-        TextMessage <$> telegramMessageText telegram_message
-    | isJust $ telegramMessageAnimation telegram_message =
-        AnimationMessage <$> telegramMessageAnimation telegram_message
-    | isJust $ telegramMessageAudio telegram_message =
-        AudioMessage <$> telegramMessageAudio telegram_message
-    | isJust $ telegramMessageDocument telegram_message =
-        DocumentMessage <$> telegramMessageDocument telegram_message
-    | isJust $ telegramMessagePhoto telegram_message =
-        PhotoMessage <$> telegramMessagePhoto telegram_message
-    | isJust $ telegramMessageVideo telegram_message =
-        VideoMessage <$> telegramMessageVideo telegram_message
-    | isJust $ telegramMessageSticker telegram_message =
-        StickerMessage <$> telegramMessageSticker telegram_message
-    | isJust $ telegramMessageVideoNote telegram_message =
-        VideoNoteMessage <$> telegramMessageVideoNote telegram_message
-    | isJust $ telegramMessageVoice telegram_message =
-        VoiceMessage <$> telegramMessageVoice telegram_message
-    | isJust $ telegramMessageContact telegram_message =
-        ContactMessage <$> telegramMessageContact telegram_message
-    | isJust $ telegramMessageLocation telegram_message =
-        LocationMessage <$> telegramMessageLocation telegram_message
-    | isJust $ telegramMessageVenue telegram_message =
-        VenueMessage <$> telegramMessageVenue telegram_message
-    | otherwise = Nothing
-
-fromTgUpdateToUserMessage :: TelegramUpdate -> Maybe (L.UserMessage TgMessage')
+fromTgUpdateToUserMessage :: TelegramUpdate -> Maybe (E.UserMessage TgMessage)
 fromTgUpdateToUserMessage TelegramUpdate {telegramUpdateCallbackQuery = (Just TelegramCallbackQuery { telegramCallbackQueryData = Just n
                                                                                                     , telegramCallbackQueryMessage = Just _
                                                                                                     , telegramCallbackQueryFrom = user
                                                                                                     })} =
-    Just $ L.UserMessage (telegramUserId user) (L.CommandMessage $ L.Repeat n)
+    Just $ E.UserMessage (telegramUserId user) (E.CommandMessage $ E.Repeat n)
 fromTgUpdateToUserMessage TelegramUpdate { telegramUpdateCallbackQuery = Nothing
                                          , telegramUpdateMessage = (Just telegramMessage@TelegramMessage {telegramMessageFrom = Just user})
                                          }
     | telegramMessageText telegramMessage == Just "/repeat" =
         Just $
-        L.UserMessage (telegramUserId user) (L.CommandMessage L.ChoicesRequest)
+        E.UserMessage (telegramUserId user) (E.CommandMessage E.ChoicesRequest)
     | telegramMessageText telegramMessage == Just "/help" =
-        Just $ L.UserMessage (telegramUserId user) (L.CommandMessage L.Help)
+        Just $ E.UserMessage (telegramUserId user) (E.CommandMessage E.Help)
     | isJust $ telegramMessageText telegramMessage =
         Just $
-        L.UserMessage
+        E.UserMessage
             (telegramUserId user)
-            (L.JustMessage $
-             TextMessage'
+            (E.JustMessage $
+             TextMessage
                  (fromJust $ telegramMessageText telegramMessage)
                  (telegramMessageEntities telegramMessage))
-        --TextMessage' <$> telegramMessageText telegramMessage
     | isJust $ telegramMessageAnimation telegramMessage =
         Just $
-        L.UserMessage
+        E.UserMessage
             (telegramUserId user)
-            (L.JustMessage $
+            (E.JustMessage $
              AnimationMessage'
                  (fromJust $ telegramMessageAnimation telegramMessage)
                  (telegramMessageCaption telegramMessage))
-        --AnimationMessage' <$> telegramMessageAnimation telegramMessage
     | isJust $ telegramMessageAudio telegramMessage =
         Just $
-        L.UserMessage
+        E.UserMessage
             (telegramUserId user)
-            (L.JustMessage $
-             AudioMessage'
+            (E.JustMessage $
+             AudioMessage
                  (fromJust $ telegramMessageAudio telegramMessage)
                  (telegramMessageCaption telegramMessage))
-        --AudioMessage' <$> telegramMessageAudio telegramMessage
     | isJust $ telegramMessageDocument telegramMessage =
         Just $
-        L.UserMessage
+        E.UserMessage
             (telegramUserId user)
-            (L.JustMessage $
-             DocumentMessage'
+            (E.JustMessage $
+             DocumentMessage
                  (fromJust $ telegramMessageDocument telegramMessage)
                  (telegramMessageCaption telegramMessage))
-        --DocumentMessage' <$> telegramMessageDocument telegramMessage
     | isJust $ telegramMessagePhoto telegramMessage =
         Just $
-        L.UserMessage
+        E.UserMessage
             (telegramUserId user)
-            (L.JustMessage $
-             PhotoMessage'
+            (E.JustMessage $
+             PhotoMessage
                  (fromJust $ telegramMessagePhoto telegramMessage)
                  (telegramMessageCaption telegramMessage))
-        --PhotoMessage' <$> telegramMessagePhoto telegramMessage
     | isJust $ telegramMessageVideo telegramMessage =
         Just $
-        L.UserMessage
+        E.UserMessage
             (telegramUserId user)
-            (L.JustMessage $
-             VideoMessage'
+            (E.JustMessage $
+             VideoMessage
                  (fromJust $ telegramMessageVideo telegramMessage)
                  (telegramMessageCaption telegramMessage))
-        --VideoMessage' <$> telegramMessageVideo telegramMessage
     | isJust $ telegramMessageSticker telegramMessage =
         Just $
-        L.UserMessage
+        E.UserMessage
             (telegramUserId user)
-            (L.JustMessage $
-             StickerMessage' $ fromJust $ telegramMessageSticker telegramMessage)
-        --StickerMessage' <$> telegramMessageSticker telegramMessage
+            (E.JustMessage $
+             StickerMessage $ fromJust $ telegramMessageSticker telegramMessage)
     | isJust $ telegramMessageVideoNote telegramMessage =
         Just $
-        L.UserMessage
+        E.UserMessage
             (telegramUserId user)
-            (L.JustMessage $
-             VideoNoteMessage' $
+            (E.JustMessage $
+             VideoNoteMessage $
              fromJust $ telegramMessageVideoNote telegramMessage)
-        --VideoNoteMessage' <$> telegramMessageVideoNote telegramMessage
     | isJust $ telegramMessageVoice telegramMessage =
         Just $
-        L.UserMessage
+        E.UserMessage
             (telegramUserId user)
-            (L.JustMessage $
-             VoiceMessage'
+            (E.JustMessage $
+             VoiceMessage
                  (fromJust $ telegramMessageVoice telegramMessage)
                  (telegramMessageCaption telegramMessage))
-        --VoiceMessage' <$> telegramMessageVoice telegramMessage
     | isJust $ telegramMessageContact telegramMessage =
         Just $
-        L.UserMessage
+        E.UserMessage
             (telegramUserId user)
-            (L.JustMessage $
-             ContactMessage' $ fromJust $ telegramMessageContact telegramMessage)
-        --ContactMessage' <$> telegramMessageContact telegramMessage
+            (E.JustMessage $
+             ContactMessage $ fromJust $ telegramMessageContact telegramMessage)
     | isJust $ telegramMessageLocation telegramMessage =
         Just $
-        L.UserMessage
+        E.UserMessage
             (telegramUserId user)
-            (L.JustMessage $
-             LocationMessage' $
+            (E.JustMessage $
+             LocationMessage $
              fromJust $ telegramMessageLocation telegramMessage)
-        --LocationMessage' <$> telegramMessageLocation telegramMessage
     | isJust $ telegramMessageVenue telegramMessage =
         Just $
-        L.UserMessage
+        E.UserMessage
             (telegramUserId user)
-            (L.JustMessage $
-             VenueMessage' $ fromJust $ telegramMessageVenue telegramMessage)
-        --VenueMessage' <$> telegramMessageVenue telegramMessage
+            (E.JustMessage $
+             VenueMessage $ fromJust $ telegramMessageVenue telegramMessage)
     | otherwise = Nothing
 fromTgUpdateToUserMessage _ = Nothing

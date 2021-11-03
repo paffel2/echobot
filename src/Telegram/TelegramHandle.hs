@@ -1,55 +1,153 @@
 module Telegram.TelegramHandle where
 
-import           Logger             (LogHandle)
-import qualified Telegram.API       as API
-import           Telegram.Requests  ()
-import           Telegram.Responses (TelegramAnimation, TelegramAudio,
-                                     TelegramContact, TelegramDocument,
-                                     TelegramLocation, TelegramMessageEntity,
-                                     TelegramPhotoSize, TelegramSticker,
-                                     TelegramText, TelegramUpdate,
-                                     TelegramVenue, TelegramVideo,
-                                     TelegramVideoNote, TelegramVoice)
-import           Telegram.Types     (Caption, StatusResult, TelegramToken,
-                                     UpdateId)
-import           UsersLists         (ChatId)
+import           Control.Monad.State (MonadIO (liftIO), MonadState (get, put),
+                                      StateT, when)
+import           Echo                (BotMessage (botMessageContent, to),
+                                      BotMessageContent (HelpMessage, Keyboard, PlainText, RepeatMessage),
+                                      DataLoop (..), Handle (..), UserMessage)
+import           Logger              (LogHandle, logInfo)
+import           Telegram.API        (sendAnimationMessage, sendAudioMessage,
+                                      sendContactMessage, sendDocumentMessage,
+                                      sendKeyboard, sendLocationMessage,
+                                      sendPhotoMessage, sendStickerMessage,
+                                      sendTextMessage, sendVenueMessage,
+                                      sendVideoMessage, sendVideoNoteMessage,
+                                      sendVoiceMessage)
+import           Telegram.Responses  (TgMessage (AnimationMessage', AudioMessage, ContactMessage, DocumentMessage, LocationMessage, PhotoMessage, StickerMessage, TextMessage, VenueMessage, VideoMessage, VideoNoteMessage, VoiceMessage))
+import           Telegram.Types      (TelegramToken, UpdateId)
+import qualified UsersLists          as UL
 
-data TelegramHandle m =
-    TelegramHandle
-        { getMe :: TelegramToken -> LogHandle m -> m (Maybe UpdateId)
-        , sendKeyboard :: LogHandle m -> TelegramToken -> ChatId -> m (Maybe StatusResult)
-        , getUpdates :: TelegramToken -> LogHandle m -> Maybe UpdateId -> m (Maybe [TelegramUpdate])
-        , getLastUpdateId :: Maybe [TelegramUpdate] -> LogHandle m -> m (Maybe UpdateId)
-        , sendTextMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramText -> Maybe [TelegramMessageEntity] -> m (Maybe StatusResult)
-        , sendAnimationMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramAnimation -> Maybe Caption -> m (Maybe StatusResult)
-        , sendAudioMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramAudio -> Maybe Caption -> m (Maybe StatusResult)
-        , sendDocumentMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramDocument -> Maybe Caption -> m (Maybe StatusResult)
-        , sendPhotoMessage :: LogHandle m -> TelegramToken -> ChatId -> [TelegramPhotoSize] -> Maybe Caption -> m (Maybe StatusResult)
-        , sendVideoMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramVideo -> Maybe Caption -> m (Maybe StatusResult)
-        , sendStickerMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramSticker -> m (Maybe StatusResult)
-        , sendVideoNoteMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramVideoNote -> m (Maybe StatusResult)
-        , sendVoiceMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramVoice -> Maybe Caption -> m (Maybe StatusResult)
-        , sendContactMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramContact -> m (Maybe StatusResult)
-        , sendLocationMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramLocation -> m (Maybe StatusResult)
-        , sendVenueMessage :: LogHandle m -> TelegramToken -> ChatId -> TelegramVenue -> m (Maybe StatusResult)
+tgRepeatsByUser ::
+       UL.ChatId -> StateT (DataLoop UpdateId) IO (Maybe UL.RepeatsNum)
+tgRepeatsByUser chatId = do
+    loopInfo <- get
+    return $ Just $ UL.findRepeatNumber (getRepeatsList loopInfo) chatId
+
+tgUpdateRepeatsForUser ::
+       UL.ChatId -> UL.RepeatsNum -> StateT (DataLoop UpdateId) IO ()
+tgUpdateRepeatsForUser chatId repeatsNums = do
+    loopInfo <- get
+    let listUpdate =
+            UL.updateListUsers
+                (getRepeatsList loopInfo)
+                [UL.Repeats chatId repeatsNums]
+    put $ DataLoop listUpdate (getUpdateId loopInfo)
+
+tgSendAnswer ::
+       LogHandle IO
+    -> TelegramToken
+    -> UL.HelpMessage
+    -> BotMessage TgMessage
+    -> StateT (DataLoop UpdateId) IO ()
+tgSendAnswer hLogger tgToken helpMessage botMessage =
+    case botMessageContent botMessage of
+        PlainText s -> do
+            _ <-
+                liftIO $
+                sendTextMessage hLogger tgToken (to botMessage) s Nothing
+            return ()
+        HelpMessage -> do
+            _ <-
+                liftIO $
+                sendTextMessage
+                    hLogger
+                    tgToken
+                    (to botMessage)
+                    (UL.getHelpMessage helpMessage)
+                    Nothing
+            return ()
+        Keyboard -> do
+            _ <- liftIO $ sendKeyboard hLogger tgToken (to botMessage)
+            return ()
+        RepeatMessage rn tm -> repeatAnswer rn tm
+  where
+    repeatAnswer rn tm =
+        when (UL.getRepeatsNum rn > 0) $ do
+            oneAnswer tm
+            repeatAnswer (UL.RepeatsNum (UL.getRepeatsNum rn - 1)) tm
+    oneAnswer tm =
+        case tm of
+            TextMessage text entity -> do
+                _ <-
+                    liftIO $
+                    sendTextMessage hLogger tgToken (to botMessage) text entity
+                liftIO $ logInfo hLogger "TextMessage sended."
+            AnimationMessage' anim cap -> do
+                _ <-
+                    liftIO $
+                    sendAnimationMessage
+                        hLogger
+                        tgToken
+                        (to botMessage)
+                        anim
+                        cap
+                liftIO $ logInfo hLogger "Animation sended."
+            AudioMessage audio сap -> do
+                _ <-
+                    liftIO $
+                    sendAudioMessage hLogger tgToken (to botMessage) audio сap
+                liftIO $ logInfo hLogger "Audio sended."
+            DocumentMessage doc cap -> do
+                _ <-
+                    liftIO $
+                    sendDocumentMessage hLogger tgToken (to botMessage) doc cap
+                liftIO $ logInfo hLogger "Document sended."
+            PhotoMessage photo cap -> do
+                _ <-
+                    liftIO $
+                    sendPhotoMessage hLogger tgToken (to botMessage) photo cap
+                liftIO $ logInfo hLogger "Photo sended."
+            VideoMessage video cap -> do
+                _ <-
+                    liftIO $
+                    sendVideoMessage hLogger tgToken (to botMessage) video cap
+                liftIO $ logInfo hLogger "Video sended."
+            StickerMessage sticker -> do
+                _ <-
+                    liftIO $
+                    sendStickerMessage hLogger tgToken (to botMessage) sticker
+                liftIO $ logInfo hLogger "Sticker sended."
+            VideoNoteMessage videoNote -> do
+                _ <-
+                    liftIO $
+                    sendVideoNoteMessage
+                        hLogger
+                        tgToken
+                        (to botMessage)
+                        videoNote
+                liftIO $ logInfo hLogger "VideoNote sended."
+            VoiceMessage voice cap -> do
+                _ <-
+                    liftIO $
+                    sendVoiceMessage hLogger tgToken (to botMessage) voice cap
+                liftIO $ logInfo hLogger "VoiceMessage sended."
+            ContactMessage contact -> do
+                _ <-
+                    liftIO $
+                    sendContactMessage hLogger tgToken (to botMessage) contact
+                liftIO $ logInfo hLogger "Contact sended."
+            LocationMessage loc -> do
+                _ <-
+                    liftIO $
+                    sendLocationMessage hLogger tgToken (to botMessage) loc
+                liftIO $ logInfo hLogger "Location sended."
+            VenueMessage venue -> do
+                _ <-
+                    liftIO $
+                    sendVenueMessage hLogger tgToken (to botMessage) venue
+                liftIO $ logInfo hLogger "Venue sended."
+            _ -> return ()
+
+tgHandler ::
+       LogHandle IO
+    -> TelegramToken
+    -> UL.HelpMessage
+    -> Maybe (UserMessage TgMessage)
+    -> Handle TgMessage (StateT (DataLoop UpdateId) IO)
+tgHandler hLogger token helpMessage message =
+    Handle
+        { getMessage = return message
+        , repeatsByUser = tgRepeatsByUser
+        , updateRepeatsForUser = tgUpdateRepeatsForUser
+        , sendAnswer = tgSendAnswer hLogger token helpMessage
         }
-
-telegramHandler :: TelegramHandle IO
-telegramHandler =
-    TelegramHandle
-        API.getMe
-        API.sendKeyboard
-        API.getUpdates
-        API.getLastUpdateId
-        API.sendTextMessage
-        API.sendAnimationMessage
-        API.sendAudioMessage
-        API.sendDocumentMessage
-        API.sendPhotoMessage
-        API.sendVideoMessage
-        API.sendStickerMessage
-        API.sendVideoNoteMessage
-        API.sendVoiceMessage
-        API.sendContactMessage
-        API.sendLocationMessage
-        API.sendVenueMessage
