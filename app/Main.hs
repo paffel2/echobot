@@ -3,7 +3,7 @@ module Main where
 import           Config       (BotConfig (..), BotType (TelegramBot, VKBot),
                                getConfig)
 
-import           Logger
+import           Logger       (LogHandle (LogHandle), printLog)
 import qualified Telegram.Bot as Telegram
 import qualified Vk.Bot       as VK
 
