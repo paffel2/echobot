@@ -4,8 +4,9 @@ module Telegram.Bot where
 
 import qualified Config                  as C
 
-import           Control.Monad.State     (MonadIO (liftIO),
-                                          MonadState (get, put), StateT,
+import           Control.Monad.Reader    (MonadIO (liftIO),
+                                          ReaderT (runReaderT))
+import           Control.Monad.State     (MonadState (get, put), StateT,
                                           evalStateT)
 import           Echo                    (DataLoop (DataLoop), UserMessage,
                                           echo)
@@ -50,9 +51,8 @@ loopBot hLogger token helpMessage = do
             case updates of
                 Nothing   -> []
                 Just m_um -> fromTgUpdateToUserMessage <$> m_um
-    let handlers = tgHandler hLogger token helpMessage
-    let messages = handlers <$> usersMessages
-    mapM_ echo messages
+    let handler = tgHandler hLogger token helpMessage
+    mapM_ (runReaderT (echo handler)) usersMessages
     updateUpdateId updates hLogger
     loopBot hLogger token helpMessage
 

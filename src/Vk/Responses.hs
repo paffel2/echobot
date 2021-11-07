@@ -117,8 +117,8 @@ data VkCommand
 
 data VkMessageTypes
     = VkTextMessage String
-    | VkGeoMessage VkGeo
-    | VkWithAttachmentsMessage [VkAttachment]
+    | VkGeoMessage VkGeo (Maybe String)
+    | VkWithAttachmentsMessage [VkAttachment] (Maybe String)
 
 instance FromJSON VkAttachment where
     parseJSON (Object v) =

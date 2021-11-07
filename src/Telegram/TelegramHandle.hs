@@ -1,30 +1,34 @@
 module Telegram.TelegramHandle where
 
-import           Control.Monad.State (MonadIO (liftIO), MonadState (get, put),
-                                      StateT, when)
-import           Echo                (BotMessage (botMessageContent, to),
-                                      BotMessageContent (HelpMessage, Keyboard, PlainText, RepeatMessage),
-                                      DataLoop (..), Handle (..), UserMessage)
-import           Logger              (LogHandle, logInfo)
-import           Telegram.API        (sendAnimationMessage, sendAudioMessage,
-                                      sendContactMessage, sendDocumentMessage,
-                                      sendKeyboard, sendLocationMessage,
-                                      sendPhotoMessage, sendStickerMessage,
-                                      sendTextMessage, sendVenueMessage,
-                                      sendVideoMessage, sendVideoNoteMessage,
-                                      sendVoiceMessage)
-import           Telegram.Responses  (TgMessage (AnimationMessage', AudioMessage, ContactMessage, DocumentMessage, LocationMessage, PhotoMessage, StickerMessage, TextMessage, VenueMessage, VideoMessage, VideoNoteMessage, VoiceMessage))
-import           Telegram.Types      (TelegramToken, UpdateId)
-import qualified UsersLists          as UL
+import           Control.Monad.Reader (MonadIO (liftIO), MonadReader (ask),
+                                       ReaderT, when)
+import           Control.Monad.State  (MonadState (get, put), StateT)
+import           Echo                 (BotMessage (botMessageContent, to),
+                                       BotMessageContent (HelpMessage, Keyboard, PlainText, RepeatMessage),
+                                       DataLoop (..), Handle (..), UserMessage)
+import           Logger               (LogHandle, logInfo)
+import           Telegram.API         (sendAnimationMessage, sendAudioMessage,
+                                       sendContactMessage, sendDocumentMessage,
+                                       sendKeyboard, sendLocationMessage,
+                                       sendPhotoMessage, sendStickerMessage,
+                                       sendTextMessage, sendVenueMessage,
+                                       sendVideoMessage, sendVideoNoteMessage,
+                                       sendVoiceMessage)
+import           Telegram.Responses   (TgMessage (AnimationMessage', AudioMessage, ContactMessage, DocumentMessage, LocationMessage, PhotoMessage, StickerMessage, TextMessage, VenueMessage, VideoMessage, VideoNoteMessage, VoiceMessage))
+import           Telegram.Types       (TelegramToken (..), UpdateId)
+import qualified UsersLists           as UL
 
 tgRepeatsByUser ::
-       UL.ChatId -> StateT (DataLoop UpdateId) IO (Maybe UL.RepeatsNum)
+       UL.ChatId
+    -> ReaderT (Maybe (UserMessage TgMessage)) (StateT (DataLoop UpdateId) IO) (Maybe UL.RepeatsNum)
 tgRepeatsByUser chatId = do
     loopInfo <- get
     return $ Just $ UL.findRepeatNumber (getRepeatsList loopInfo) chatId
 
 tgUpdateRepeatsForUser ::
-       UL.ChatId -> UL.RepeatsNum -> StateT (DataLoop UpdateId) IO ()
+       UL.ChatId
+    -> UL.RepeatsNum
+    -> ReaderT (Maybe (UserMessage TgMessage)) (StateT (DataLoop UpdateId) IO) ()
 tgUpdateRepeatsForUser chatId repeatsNums = do
     loopInfo <- get
     let listUpdate =
@@ -38,7 +42,7 @@ tgSendAnswer ::
     -> TelegramToken
     -> UL.HelpMessage
     -> BotMessage TgMessage
-    -> StateT (DataLoop UpdateId) IO ()
+    -> ReaderT (Maybe (UserMessage TgMessage)) (StateT (DataLoop UpdateId) IO) ()
 tgSendAnswer hLogger tgToken helpMessage botMessage =
     case botMessageContent botMessage of
         PlainText s -> do
@@ -142,11 +146,10 @@ tgHandler ::
        LogHandle IO
     -> TelegramToken
     -> UL.HelpMessage
-    -> Maybe (UserMessage TgMessage)
-    -> Handle TgMessage (StateT (DataLoop UpdateId) IO)
-tgHandler hLogger token helpMessage message =
+    -> Handle TgMessage (ReaderT (Maybe (UserMessage TgMessage)) (StateT (DataLoop UpdateId) IO))
+tgHandler hLogger token helpMessage =
     Handle
-        { getMessage = return message
+        { getMessage = ask
         , repeatsByUser = tgRepeatsByUser
         , updateRepeatsForUser = tgUpdateRepeatsForUser
         , sendAnswer = tgSendAnswer hLogger token helpMessage

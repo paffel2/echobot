@@ -1,18 +1,19 @@
 module Vk.Bot where
 
-import qualified Config              as C
-import           Control.Concurrent  (threadDelay)
-import           Control.Monad.State (MonadIO (liftIO), MonadState (get, put),
-                                      StateT, evalStateT)
-import           Echo                (DataLoop (DataLoop), echo)
-import           Logger              (LogHandle, logError, logInfo)
-import qualified UsersLists          as UL
-import           Vk.API              (getLongPollHistory, getTsAndPts)
-import           Vk.Impl             (fromItemToUsersMessages)
-import           Vk.Responses        (VkItem, VkMessages (vkMessagesItems),
-                                      VkResponseType (serverMessages))
-import           Vk.Types            (Pts, Ts, VkToken (VkToken))
-import           Vk.VkHandle         (vkHandler)
+import qualified Config               as C
+import           Control.Concurrent   (threadDelay)
+import           Control.Monad.Reader (MonadIO (liftIO), ReaderT (runReaderT))
+import           Control.Monad.State  (MonadState (get, put), StateT,
+                                       evalStateT)
+import           Echo                 (DataLoop (DataLoop), echo)
+import           Logger               (LogHandle, logError, logInfo)
+import qualified UsersLists           as UL
+import           Vk.API               (getLongPollHistory, getTsAndPts)
+import           Vk.Impl              (fromItemToUsersMessages)
+import           Vk.Responses         (VkItem, VkMessages (vkMessagesItems),
+                                       VkResponseType (serverMessages))
+import           Vk.Types             (Pts, Ts, VkToken (VkToken))
+import           Vk.VkHandle          (vkHandler)
 
 delayTime :: Int
 delayTime = 3000000
@@ -41,9 +42,9 @@ loopBot hLogger token helpMessage = do
             case updates of
                 Nothing   -> []
                 Just m_um -> fromItemToUsersMessages <$> m_um
-    let handlers = vkHandler hLogger token helpMessage
-    let messages = handlers <$> usersMessages
-    mapM_ echo messages
+    let handler = vkHandler hLogger token helpMessage
+    --let messages = handlers <$> usersMessages
+    mapM_ (runReaderT (echo handler)) usersMessages
     updateUpdateId token hLogger
     liftIO $ threadDelay delayTime
     loopBot hLogger token helpMessage

@@ -5,9 +5,6 @@ module Echo where
 import           Data.Maybe (fromJust)
 import qualified UsersLists as UL
 
-newtype UserId =
-    UserId Int
-
 data UserMessage msg =
     UserMessage
         { from               :: UL.ChatId

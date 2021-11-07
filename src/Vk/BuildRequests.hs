@@ -56,7 +56,7 @@ buildVkGetRequest hLogger (VkToken vktoken) url parameters =
              case parseMaybe parseJSON $ responseBody request of
                  Just (VkResponse result) -> return $ Just result
                  Nothing -> do
-                     liftIO $ logError hLogger "Unexpected error"
+                     liftIO $ logError hLogger "Something wrong at get request"
                      return Nothing) $ \e -> do
         let _ = (e :: HttpException)
         logError hLogger "Bad request"
