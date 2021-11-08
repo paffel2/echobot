@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ef78d7f940fc4f223868673eec718b86e9400bafc5fc455a47c089e33d5b8f36
+-- hash: 8603eb6eb013df5930d6f734300438736ee4aa7afdf923529dafc46ccf17ccf1
 
 name:           echobot
 version:        0.1.0.0
@@ -59,6 +59,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , configurator
+    , containers
     , hspec
     , http-client
     , http-conduit
@@ -80,6 +81,7 @@ executable echobot-exe
     , base >=4.7 && <5
     , bytestring
     , configurator
+    , containers
     , echobot
     , hspec
     , http-client
@@ -105,6 +107,7 @@ test-suite echobot-test
     , base >=4.7 && <5
     , bytestring
     , configurator
+    , containers
     , echobot
     , hspec
     , http-client

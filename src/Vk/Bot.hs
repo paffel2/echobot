@@ -5,6 +5,8 @@ import           Control.Concurrent   (threadDelay)
 import           Control.Monad.Reader (MonadIO (liftIO), ReaderT (runReaderT))
 import           Control.Monad.State  (MonadState (get, put), StateT,
                                        evalStateT)
+import           Data.Map.Strict
+import           Data.Maybe           (catMaybes)
 import           Echo                 (DataLoop (DataLoop), echo)
 import           Logger               (LogHandle, logError, logInfo)
 import qualified UsersLists           as UL
@@ -41,7 +43,7 @@ loopBot hLogger token helpMessage = do
     let usersMessages =
             case updates of
                 Nothing   -> []
-                Just m_um -> fromItemToUsersMessages <$> m_um
+                Just m_um -> catMaybes $ fromItemToUsersMessages <$> m_um
     let handler = vkHandler hLogger token helpMessage
     --let messages = handlers <$> usersMessages
     mapM_ (runReaderT (echo handler)) usersMessages
@@ -63,4 +65,4 @@ startBot hLogger botConf = do
                      hLogger
                      (VkToken (C.token botConf))
                      (UL.HelpMessage $ C.help botConf))
-                (DataLoop [] mark)
+                (DataLoop empty mark)

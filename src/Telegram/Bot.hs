@@ -8,27 +8,17 @@ import           Control.Monad.Reader    (MonadIO (liftIO),
                                           ReaderT (runReaderT))
 import           Control.Monad.State     (MonadState (get, put), StateT,
                                           evalStateT)
-import           Echo                    (DataLoop (DataLoop), UserMessage,
-                                          echo)
+import           Data.Map.Strict         (empty)
+import           Data.Maybe              (catMaybes)
+import           Echo                    (DataLoop (DataLoop), echo)
 import           Logger                  (LogHandle, logError, logInfo)
 import           Telegram.API            (getLastUpdateId, getMe, getUpdates)
 import           Telegram.Impl           (fromTgUpdateToUserMessage)
-import           Telegram.Responses      (TelegramUpdate, TgMessage)
+import           Telegram.Responses      (TelegramUpdate)
 import           Telegram.TelegramHandle (tgHandler)
 import           Telegram.Types          (TelegramToken (TelegramToken),
                                           UpdateId)
 import qualified UsersLists              as UL
-
-tgGetMessage ::
-       LogHandle IO
-    -> TelegramToken
-    -> Maybe UpdateId
-    -> IO [Maybe (UserMessage TgMessage)]
-tgGetMessage hLogger token lastUpdId = do
-    upd <- getUpdates token hLogger lastUpdId
-    case upd of
-        Nothing      -> return []
-        Just updates -> return $ fromTgUpdateToUserMessage <$> updates
 
 updateUpdateId ::
        Maybe [TelegramUpdate]
@@ -50,7 +40,7 @@ loopBot hLogger token helpMessage = do
     let usersMessages =
             case updates of
                 Nothing   -> []
-                Just m_um -> fromTgUpdateToUserMessage <$> m_um
+                Just m_um -> catMaybes $ fromTgUpdateToUserMessage <$> m_um
     let handler = tgHandler hLogger token helpMessage
     mapM_ (runReaderT (echo handler)) usersMessages
     updateUpdateId updates hLogger
@@ -70,4 +60,4 @@ startBot hLogger botConf = do
                      hLogger
                      (TelegramToken (C.token botConf))
                      (UL.HelpMessage $ C.help botConf))
-                (DataLoop [] Nothing)
+                (DataLoop empty Nothing)

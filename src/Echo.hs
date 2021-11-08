@@ -2,7 +2,6 @@
 
 module Echo where
 
-import           Data.Maybe (fromJust)
 import qualified UsersLists as UL
 
 data UserMessage msg =
@@ -30,56 +29,51 @@ data BotMessageContent msg
     = PlainText String
     | Keyboard
     | RepeatMessage UL.RepeatsNum msg
-    | HelpMessage
 
 data Handle msg m =
     Handle
-        { getMessage           :: m (Maybe (UserMessage msg))
+        { getMessage           :: m (UserMessage msg)
         , repeatsByUser        :: UL.ChatId -> m (Maybe UL.RepeatsNum)
         , updateRepeatsForUser :: UL.ChatId -> UL.RepeatsNum -> m ()
         , sendAnswer           :: BotMessage msg -> m ()
+        , helpMessage          :: String
         }
 
 echo :: Monad m => Handle msg m -> m ()
 echo handler = do
     message <- getMessage handler
-    let content = userMessageContent <$> message
+    let content = userMessageContent message
     case content of
-        Just (CommandMessage com) ->
+        CommandMessage com ->
             case com of
                 Help ->
                     sendAnswer
                         handler
-                        (BotMessage (from $ fromJust message) HelpMessage)
+                        (BotMessage
+                             (from message)
+                             (PlainText $ helpMessage handler))
                 Repeat n -> do
-                    updateRepeatsForUser handler (from $ fromJust message) n
+                    updateRepeatsForUser handler (from message) n
                     sendAnswer
                         handler
                         (BotMessage
-                             (from $ fromJust message)
+                             (from message)
                              (PlainText
                                   ("The number of repetitions is " ++
                                    show (UL.getRepeatsNum n))))
                 ChoicesRequest ->
-                    sendAnswer
-                        handler
-                        (BotMessage (from $ fromJust message) Keyboard)
-        Just (JustMessage msg) -> do
-            numOfRepeats <- repeatsByUser handler (from $ fromJust message)
+                    sendAnswer handler (BotMessage (from message) Keyboard)
+        JustMessage msg -> do
+            numOfRepeats <- repeatsByUser handler (from message)
             case numOfRepeats of
                 Nothing ->
                     sendAnswer
                         handler
-                        (BotMessage
-                             (from $ fromJust message)
-                             (RepeatMessage (UL.RepeatsNum 1) msg))
+                        (BotMessage (from message) (RepeatMessage 1 msg))
                 Just n ->
                     sendAnswer
                         handler
-                        (BotMessage
-                             (from $ fromJust message)
-                             (RepeatMessage n msg))
-        Nothing -> return ()
+                        (BotMessage (from message) (RepeatMessage n msg))
 
 data DataLoop a =
     DataLoop

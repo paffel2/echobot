@@ -2,9 +2,11 @@ module Telegram.TelegramHandle where
 
 import           Control.Monad.Reader (MonadIO (liftIO), MonadReader (ask),
                                        ReaderT, when)
-import           Control.Monad.State  (MonadState (get, put), StateT)
+import           Control.Monad.State  (MonadState (get, put), StateT, gets)
+import           Data.Functor         (void)
+import qualified Data.Map.Strict      as MP
 import           Echo                 (BotMessage (botMessageContent, to),
-                                       BotMessageContent (HelpMessage, Keyboard, PlainText, RepeatMessage),
+                                       BotMessageContent (Keyboard, PlainText, RepeatMessage),
                                        DataLoop (..), Handle (..), UserMessage)
 import           Logger               (LogHandle, logInfo)
 import           Telegram.API         (sendAnimationMessage, sendAudioMessage,
@@ -20,49 +22,31 @@ import qualified UsersLists           as UL
 
 tgRepeatsByUser ::
        UL.ChatId
-    -> ReaderT (Maybe (UserMessage TgMessage)) (StateT (DataLoop UpdateId) IO) (Maybe UL.RepeatsNum)
-tgRepeatsByUser chatId = do
-    loopInfo <- get
-    return $ Just $ UL.findRepeatNumber (getRepeatsList loopInfo) chatId
+    -> ReaderT (UserMessage TgMessage) (StateT (DataLoop UpdateId) IO) (Maybe UL.RepeatsNum)
+tgRepeatsByUser chatId = gets (MP.lookup chatId . getRepeatsList)
 
+--gets (MP.lookup chatId . getRepeatsList)
 tgUpdateRepeatsForUser ::
        UL.ChatId
     -> UL.RepeatsNum
-    -> ReaderT (Maybe (UserMessage TgMessage)) (StateT (DataLoop UpdateId) IO) ()
+    -> ReaderT (UserMessage TgMessage) (StateT (DataLoop UpdateId) IO) ()
 tgUpdateRepeatsForUser chatId repeatsNums = do
     loopInfo <- get
-    let listUpdate =
-            UL.updateListUsers
-                (getRepeatsList loopInfo)
-                [UL.Repeats chatId repeatsNums]
+    let listUpdate = MP.insert chatId repeatsNums (getRepeatsList loopInfo)
     put $ DataLoop listUpdate (getUpdateId loopInfo)
 
 tgSendAnswer ::
        LogHandle IO
     -> TelegramToken
-    -> UL.HelpMessage
     -> BotMessage TgMessage
-    -> ReaderT (Maybe (UserMessage TgMessage)) (StateT (DataLoop UpdateId) IO) ()
-tgSendAnswer hLogger tgToken helpMessage botMessage =
+    -> ReaderT (UserMessage TgMessage) (StateT (DataLoop UpdateId) IO) ()
+tgSendAnswer hLogger tgToken botMessage =
+    liftIO $
     case botMessageContent botMessage of
         PlainText s -> do
-            _ <-
-                liftIO $
-                sendTextMessage hLogger tgToken (to botMessage) s Nothing
-            return ()
-        HelpMessage -> do
-            _ <-
-                liftIO $
-                sendTextMessage
-                    hLogger
-                    tgToken
-                    (to botMessage)
-                    (UL.getHelpMessage helpMessage)
-                    Nothing
-            return ()
+            void $ sendTextMessage hLogger tgToken (to botMessage) s Nothing
         Keyboard -> do
-            _ <- liftIO $ sendKeyboard hLogger tgToken (to botMessage)
-            return ()
+            void $ sendKeyboard hLogger tgToken (to botMessage)
         RepeatMessage rn tm -> repeatAnswer rn tm
   where
     repeatAnswer rn tm =
@@ -72,73 +56,59 @@ tgSendAnswer hLogger tgToken helpMessage botMessage =
     oneAnswer tm =
         case tm of
             TextMessage text entity -> do
-                _ <-
-                    liftIO $
+                void $
                     sendTextMessage hLogger tgToken (to botMessage) text entity
-                liftIO $ logInfo hLogger "TextMessage sended."
+                logInfo hLogger "TextMessage sended."
             AnimationMessage' anim cap -> do
-                _ <-
-                    liftIO $
+                void $
                     sendAnimationMessage
                         hLogger
                         tgToken
                         (to botMessage)
                         anim
                         cap
-                liftIO $ logInfo hLogger "Animation sended."
+                logInfo hLogger "Animation sended."
             AudioMessage audio сap -> do
-                _ <-
-                    liftIO $
+                void $
                     sendAudioMessage hLogger tgToken (to botMessage) audio сap
-                liftIO $ logInfo hLogger "Audio sended."
+                logInfo hLogger "Audio sended."
             DocumentMessage doc cap -> do
-                _ <-
-                    liftIO $
+                void $
                     sendDocumentMessage hLogger tgToken (to botMessage) doc cap
-                liftIO $ logInfo hLogger "Document sended."
+                logInfo hLogger "Document sended."
             PhotoMessage photo cap -> do
-                _ <-
-                    liftIO $
+                void $
                     sendPhotoMessage hLogger tgToken (to botMessage) photo cap
-                liftIO $ logInfo hLogger "Photo sended."
+                logInfo hLogger "Photo sended."
             VideoMessage video cap -> do
-                _ <-
-                    liftIO $
+                void $
                     sendVideoMessage hLogger tgToken (to botMessage) video cap
-                liftIO $ logInfo hLogger "Video sended."
+                logInfo hLogger "Video sended."
             StickerMessage sticker -> do
-                _ <-
-                    liftIO $
+                void $
                     sendStickerMessage hLogger tgToken (to botMessage) sticker
-                liftIO $ logInfo hLogger "Sticker sended."
+                logInfo hLogger "Sticker sended."
             VideoNoteMessage videoNote -> do
-                _ <-
-                    liftIO $
+                void $
                     sendVideoNoteMessage
                         hLogger
                         tgToken
                         (to botMessage)
                         videoNote
-                liftIO $ logInfo hLogger "VideoNote sended."
+                logInfo hLogger "VideoNote sended."
             VoiceMessage voice cap -> do
-                _ <-
-                    liftIO $
+                void $
                     sendVoiceMessage hLogger tgToken (to botMessage) voice cap
-                liftIO $ logInfo hLogger "VoiceMessage sended."
+                logInfo hLogger "VoiceMessage sended."
             ContactMessage contact -> do
-                _ <-
-                    liftIO $
+                void $
                     sendContactMessage hLogger tgToken (to botMessage) contact
-                liftIO $ logInfo hLogger "Contact sended."
+                logInfo hLogger "Contact sended."
             LocationMessage loc -> do
-                _ <-
-                    liftIO $
-                    sendLocationMessage hLogger tgToken (to botMessage) loc
-                liftIO $ logInfo hLogger "Location sended."
+                void $ sendLocationMessage hLogger tgToken (to botMessage) loc
+                logInfo hLogger "Location sended."
             VenueMessage venue -> do
-                _ <-
-                    liftIO $
-                    sendVenueMessage hLogger tgToken (to botMessage) venue
+                void $ sendVenueMessage hLogger tgToken (to botMessage) venue
                 liftIO $ logInfo hLogger "Venue sended."
             _ -> return ()
 
@@ -146,11 +116,12 @@ tgHandler ::
        LogHandle IO
     -> TelegramToken
     -> UL.HelpMessage
-    -> Handle TgMessage (ReaderT (Maybe (UserMessage TgMessage)) (StateT (DataLoop UpdateId) IO))
-tgHandler hLogger token helpMessage =
+    -> Handle TgMessage (ReaderT (UserMessage TgMessage) (StateT (DataLoop UpdateId) IO))
+tgHandler hLogger token helpMessageFromConfig =
     Handle
         { getMessage = ask
         , repeatsByUser = tgRepeatsByUser
         , updateRepeatsForUser = tgUpdateRepeatsForUser
-        , sendAnswer = tgSendAnswer hLogger token helpMessage
+        , sendAnswer = tgSendAnswer hLogger token
+        , helpMessage = UL.getHelpMessage helpMessageFromConfig
         }
