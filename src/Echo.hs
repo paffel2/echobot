@@ -43,40 +43,20 @@ echo :: Monad m => Handle msg m -> m ()
 echo handler = do
     message <- getMessage handler
     let content = userMessageContent message
+    let send = sendAnswer handler . BotMessage (from message)
     case content of
         CommandMessage com ->
             case com of
-                Help ->
-                    sendAnswer
-                        handler
-                        (BotMessage
-                             (from message)
-                             (PlainText $ helpMessage handler))
+                Help -> send (PlainText $ helpMessage handler)
                 Repeat n -> do
                     updateRepeatsForUser handler (from message) n
-                    sendAnswer
-                        handler
-                        (BotMessage
-                             (from message)
-                             (PlainText
-                                  ("The number of repetitions is " ++
-                                   show (UL.getRepeatsNum n))))
-                ChoicesRequest ->
-                    sendAnswer handler (BotMessage (from message) Keyboard)
+                    send
+                        (PlainText
+                             ("The number of repetitions is " ++
+                              show (UL.getRepeatsNum n)))
+                ChoicesRequest -> send Keyboard
         JustMessage msg -> do
             numOfRepeats <- repeatsByUser handler (from message)
             case numOfRepeats of
-                Nothing ->
-                    sendAnswer
-                        handler
-                        (BotMessage (from message) (RepeatMessage 1 msg))
-                Just n ->
-                    sendAnswer
-                        handler
-                        (BotMessage (from message) (RepeatMessage n msg))
-
-data DataLoop a =
-    DataLoop
-        { getRepeatsList :: UL.RepeatsList
-        , getUpdateId    :: Maybe a
-        }
+                Nothing -> send (RepeatMessage 1 msg)
+                Just n  -> send (RepeatMessage n msg)

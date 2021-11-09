@@ -7,7 +7,7 @@ import           Control.Monad.State  (MonadState (get, put), StateT,
                                        evalStateT)
 import           Data.Map.Strict
 import           Data.Maybe           (catMaybes)
-import           Echo                 (DataLoop (DataLoop), echo)
+import           Echo                 (echo)
 import           Logger               (LogHandle, logError, logInfo)
 import qualified UsersLists           as UL
 import           Vk.API               (getLongPollHistory, getTsAndPts)
@@ -26,26 +26,26 @@ vkGetUpdates hLogger token lastUpdId = do
     vkResponseType <- getLongPollHistory token hLogger lastUpdId
     return $ vkMessagesItems <$> (serverMessages =<< vkResponseType)
 
-updateUpdateId :: VkToken -> LogHandle IO -> StateT (DataLoop (Ts, Pts)) IO ()
+updateUpdateId ::
+       VkToken -> LogHandle IO -> StateT (UL.DataLoop (Ts, Pts)) IO ()
 updateUpdateId vkToken hLogger = do
-    (DataLoop list _) <- get
+    (UL.DataLoop list _) <- get
     nextUpdateId <- liftIO $ getTsAndPts vkToken hLogger
-    put $ DataLoop list nextUpdateId
+    put $ UL.DataLoop list nextUpdateId
 
 loopBot ::
        LogHandle IO
     -> VkToken
     -> UL.HelpMessage
-    -> StateT (DataLoop (Ts, Pts)) IO ()
+    -> StateT (UL.DataLoop (Ts, Pts)) IO ()
 loopBot hLogger token helpMessage = do
-    (DataLoop _ updateId) <- get
+    (UL.DataLoop _ updateId) <- get
     updates <- liftIO $ vkGetUpdates hLogger token updateId
     let usersMessages =
             case updates of
-                Nothing   -> []
-                Just m_um -> catMaybes $ fromItemToUsersMessages <$> m_um
+                Nothing      -> []
+                Just vkItems -> catMaybes $ fromItemToUsersMessages <$> vkItems
     let handler = vkHandler hLogger token helpMessage
-    --let messages = handlers <$> usersMessages
     mapM_ (runReaderT (echo handler)) usersMessages
     updateUpdateId token hLogger
     liftIO $ threadDelay delayTime
@@ -65,4 +65,4 @@ startBot hLogger botConf = do
                      hLogger
                      (VkToken (C.token botConf))
                      (UL.HelpMessage $ C.help botConf))
-                (DataLoop empty mark)
+                (UL.DataLoop empty mark)

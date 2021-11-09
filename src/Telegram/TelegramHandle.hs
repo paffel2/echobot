@@ -2,12 +2,11 @@ module Telegram.TelegramHandle where
 
 import           Control.Monad.Reader (MonadIO (liftIO), MonadReader (ask),
                                        ReaderT, when)
-import           Control.Monad.State  (MonadState (get, put), StateT, gets)
+import           Control.Monad.State  (StateT)
 import           Data.Functor         (void)
-import qualified Data.Map.Strict      as MP
 import           Echo                 (BotMessage (botMessageContent, to),
                                        BotMessageContent (Keyboard, PlainText, RepeatMessage),
-                                       DataLoop (..), Handle (..), UserMessage)
+                                       Handle (..), UserMessage)
 import           Logger               (LogHandle, logInfo)
 import           Telegram.API         (sendAnimationMessage, sendAudioMessage,
                                        sendContactMessage, sendDocumentMessage,
@@ -20,26 +19,11 @@ import           Telegram.Responses   (TgMessage (AnimationMessage, AudioMessage
 import           Telegram.Types       (TelegramToken (..), UpdateId)
 import qualified UsersLists           as UL
 
-tgRepeatsByUser ::
-       UL.ChatId
-    -> ReaderT (UserMessage TgMessage) (StateT (DataLoop UpdateId) IO) (Maybe UL.RepeatsNum)
-tgRepeatsByUser chatId = gets (MP.lookup chatId . getRepeatsList)
-
---gets (MP.lookup chatId . getRepeatsList)
-tgUpdateRepeatsForUser ::
-       UL.ChatId
-    -> UL.RepeatsNum
-    -> ReaderT (UserMessage TgMessage) (StateT (DataLoop UpdateId) IO) ()
-tgUpdateRepeatsForUser chatId repeatsNums = do
-    loopInfo <- get
-    let listUpdate = MP.insert chatId repeatsNums (getRepeatsList loopInfo)
-    put $ DataLoop listUpdate (getUpdateId loopInfo)
-
 tgSendAnswer ::
        LogHandle IO
     -> TelegramToken
     -> BotMessage TgMessage
-    -> ReaderT (UserMessage TgMessage) (StateT (DataLoop UpdateId) IO) ()
+    -> ReaderT (UserMessage TgMessage) (StateT (UL.DataLoop UpdateId) IO) ()
 tgSendAnswer hLogger tgToken botMessage =
     liftIO $
     case botMessageContent botMessage of
@@ -116,12 +100,12 @@ tgHandler ::
        LogHandle IO
     -> TelegramToken
     -> UL.HelpMessage
-    -> Handle TgMessage (ReaderT (UserMessage TgMessage) (StateT (DataLoop UpdateId) IO))
+    -> Handle TgMessage (ReaderT (UserMessage TgMessage) (StateT (UL.DataLoop UpdateId) IO))
 tgHandler hLogger token helpMessageFromConfig =
     Handle
         { getMessage = ask
-        , repeatsByUser = tgRepeatsByUser
-        , updateRepeatsForUser = tgUpdateRepeatsForUser
+        , repeatsByUser = UL.repeatsByUser
+        , updateRepeatsForUser = UL.updateRepeatsForUser
         , sendAnswer = tgSendAnswer hLogger token
         , helpMessage = UL.getHelpMessage helpMessageFromConfig
         }

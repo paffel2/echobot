@@ -10,7 +10,7 @@ import           Control.Monad.State     (MonadState (get, put), StateT,
                                           evalStateT)
 import           Data.Map.Strict         (empty)
 import           Data.Maybe              (catMaybes)
-import           Echo                    (DataLoop (DataLoop), echo)
+import           Echo                    (echo)
 import           Logger                  (LogHandle, logError, logInfo)
 import           Telegram.API            (getLastUpdateId, getMe, getUpdates)
 import           Telegram.Impl           (fromTgUpdateToUserMessage)
@@ -23,24 +23,25 @@ import qualified UsersLists              as UL
 updateUpdateId ::
        Maybe [TelegramUpdate]
     -> LogHandle IO
-    -> StateT (DataLoop UpdateId) IO ()
+    -> StateT (UL.DataLoop UpdateId) IO ()
 updateUpdateId updates hLogger = do
-    (DataLoop list _) <- get
+    (UL.DataLoop list _) <- get
     nextUpdateId <- liftIO $ getLastUpdateId updates hLogger
-    put $ DataLoop list nextUpdateId
+    put $ UL.DataLoop list nextUpdateId
 
 loopBot ::
        LogHandle IO
     -> TelegramToken
     -> UL.HelpMessage
-    -> StateT (DataLoop UpdateId) IO ()
+    -> StateT (UL.DataLoop UpdateId) IO ()
 loopBot hLogger token helpMessage = do
-    (DataLoop _ updateId) <- get
+    (UL.DataLoop _ updateId) <- get
     updates <- liftIO $ getUpdates token hLogger updateId
     let usersMessages =
             case updates of
-                Nothing   -> []
-                Just m_um -> catMaybes $ fromTgUpdateToUserMessage <$> m_um
+                Nothing -> []
+                Just telegramUpdates ->
+                    catMaybes $ fromTgUpdateToUserMessage <$> telegramUpdates
     let handler = tgHandler hLogger token helpMessage
     mapM_ (runReaderT (echo handler)) usersMessages
     updateUpdateId updates hLogger
@@ -60,4 +61,4 @@ startBot hLogger botConf = do
                      hLogger
                      (TelegramToken (C.token botConf))
                      (UL.HelpMessage $ C.help botConf))
-                (DataLoop empty Nothing)
+                (UL.DataLoop empty Nothing)

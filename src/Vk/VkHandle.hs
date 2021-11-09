@@ -3,11 +3,10 @@ module Vk.VkHandle where
 import           Control.Monad.Reader (MonadIO (liftIO), MonadReader (ask),
                                        ReaderT, when)
 
-import           Control.Monad.State  (MonadState (get, put), StateT, gets)
-import qualified Data.Map.Strict      as MP
+import           Control.Monad.State  (StateT)
 import           Echo                 (BotMessage (botMessageContent, to),
                                        BotMessageContent (Keyboard, PlainText, RepeatMessage),
-                                       DataLoop (..), Handle (..), UserMessage)
+                                       Handle (..), UserMessage)
 import           Logger               (LogHandle)
 import qualified UsersLists           as UL
 import           Vk.API               (sendGeoVK, sendKeyboardVk,
@@ -16,25 +15,11 @@ import           Vk.API               (sendGeoVK, sendKeyboardVk,
 import           Vk.Responses         (VkMessageTypes (..))
 import           Vk.Types             (Pts, Ts, VkToken)
 
-vkRepeatsByUser ::
-       UL.ChatId
-    -> ReaderT (UserMessage VkMessageTypes) (StateT (DataLoop (Ts, Pts)) IO) (Maybe UL.RepeatsNum)
-vkRepeatsByUser chatId = gets (MP.lookup chatId . getRepeatsList)
-
-vkUpdateRepeatsForUser ::
-       UL.ChatId
-    -> UL.RepeatsNum
-    -> ReaderT (UserMessage VkMessageTypes) (StateT (DataLoop (Ts, Pts)) IO) ()
-vkUpdateRepeatsForUser chatId repeatsNums = do
-    loopInfo <- get
-    let listUpdate = MP.insert chatId repeatsNums (getRepeatsList loopInfo)
-    put $ DataLoop listUpdate (getUpdateId loopInfo)
-
 vkSendAnswer ::
        LogHandle IO
     -> VkToken
     -> BotMessage VkMessageTypes
-    -> ReaderT (UserMessage VkMessageTypes) (StateT (DataLoop (Ts, Pts)) IO) ()
+    -> ReaderT (UserMessage VkMessageTypes) (StateT (UL.DataLoop (Ts, Pts)) IO) ()
 vkSendAnswer hLogger vkToken botMessage =
     liftIO $
     case botMessageContent botMessage of
@@ -73,13 +58,13 @@ vkHandler ::
        LogHandle IO
     -> VkToken
     -> UL.HelpMessage
-    -> Handle VkMessageTypes (ReaderT (UserMessage VkMessageTypes) (StateT (DataLoop ( Ts
-                                                                                     , Pts)) IO))
+    -> Handle VkMessageTypes (ReaderT (UserMessage VkMessageTypes) (StateT (UL.DataLoop ( Ts
+                                                                                        , Pts)) IO))
 vkHandler hLogger token helpMessageFromConfig =
     Handle
         { getMessage = ask
-        , repeatsByUser = vkRepeatsByUser
-        , updateRepeatsForUser = vkUpdateRepeatsForUser
+        , repeatsByUser = UL.repeatsByUser
+        , updateRepeatsForUser = UL.updateRepeatsForUser
         , sendAnswer = vkSendAnswer hLogger token
         , helpMessage = UL.getHelpMessage helpMessageFromConfig
         }
