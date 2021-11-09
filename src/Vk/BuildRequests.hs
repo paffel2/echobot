@@ -1,33 +1,22 @@
 module Vk.BuildRequests where
 
-import Control.Exception (catch)
-import Control.Monad.IO.Class (MonadIO(liftIO))
-import Data.Aeson (FromJSON(parseJSON), Value)
-import Data.Aeson.Types (parseMaybe)
-import qualified Data.Text as T
-import Logger (Handle, logError)
-import Network.HTTP.Req
-    ( FormUrlEncodedParam
-    , GET(GET)
-    , HttpException
-    , JsonResponse
-    , NoReqBody(NoReqBody)
-    , POST(POST)
-    , QueryParam(..)
-    , Req
-    , ReqBodyUrlEnc(ReqBodyUrlEnc)
-    , (/:)
-    , (=:)
-    , defaultHttpConfig
-    , https
-    , jsonResponse
-    , req
-    , responseBody
-    , responseStatusCode
-    , runReq
-    )
-import Vk.Responses (VkResponse(VkResponse), VkResponseType)
-import Vk.Types (VkToken(VkToken))
+import           Control.Exception      (catch)
+import           Control.Monad.IO.Class (MonadIO (liftIO))
+import           Data.Aeson             (FromJSON (parseJSON), Value)
+import           Data.Aeson.Types       (parseMaybe)
+import qualified Data.Text              as T
+import           Logger                 (LogHandle, logError)
+import           Network.HTTP.Req       (FormUrlEncodedParam, GET (GET),
+                                         HttpException, JsonResponse,
+                                         NoReqBody (NoReqBody), POST (POST),
+                                         QueryParam (..), Req,
+                                         ReqBodyUrlEnc (ReqBodyUrlEnc),
+                                         defaultHttpConfig, https, jsonResponse,
+                                         req, responseBody, responseStatusCode,
+                                         runReq, (/:), (=:))
+import           Vk.Responses           (VkResponse (VkResponse),
+                                         VkResponseType)
+import           Vk.Types               (VkToken (VkToken))
 
 type PostParams = [(T.Text, Maybe T.Text)]
 
@@ -37,16 +26,19 @@ type GetMethod = T.Text
 
 type PostMethod = String
 
+versionParam :: (T.Text, T.Text)
+versionParam = ("v", "5.130")
+
 params :: PostParams -> FormUrlEncodedParam
-params [] = mempty
+params []          = mempty
 params ((a, b):xs) = queryParam a b <> params xs
 
 buildParams :: (QueryParam p, Monoid p) => GetParams -> p
-buildParams [] = mempty
+buildParams []         = mempty
 buildParams parameters = mconcat $ fmap (uncurry (=:)) parameters
 
 buildVkGetRequest ::
-       Handle IO
+       LogHandle IO
     -> VkToken
     -> GetMethod
     -> GetParams
@@ -64,7 +56,7 @@ buildVkGetRequest hLogger (VkToken vktoken) url parameters =
              case parseMaybe parseJSON $ responseBody request of
                  Just (VkResponse result) -> return $ Just result
                  Nothing -> do
-                     liftIO $ logError hLogger "Unexpected error"
+                     liftIO $ logError hLogger "Something wrong at get request"
                      return Nothing) $ \e -> do
         let _ = (e :: HttpException)
         logError hLogger "Bad request"
@@ -73,7 +65,7 @@ buildVkGetRequest hLogger (VkToken vktoken) url parameters =
     param = buildParams (parameters ++ [("access_token", T.pack vktoken)])
 
 buildVkPostRequest ::
-       Handle IO -> VkToken -> PostMethod -> PostParams -> IO (Maybe Int)
+       LogHandle IO -> VkToken -> PostMethod -> PostParams -> IO (Maybe Int)
 buildVkPostRequest hLogger (VkToken vktoken) method param =
     catch
         (runReq defaultHttpConfig $ do
@@ -95,7 +87,4 @@ buildVkPostRequest hLogger (VkToken vktoken) method param =
   where
     tokenParam =
         buildParams
-            [ ("access_token", T.pack vktoken)
-            , ("v", "5.130")
-            , ("random_id", "0")
-            ]
+            [("access_token", T.pack vktoken), versionParam, ("random_id", "0")]

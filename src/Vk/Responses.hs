@@ -1,19 +1,14 @@
 module Vk.Responses where
 
-import Control.Applicative (Alternative((<|>)))
-import Control.Monad (MonadPlus(mzero))
-import Data.Aeson
-    ( FromJSON(parseJSON)
-    , Options(fieldLabelModifier)
-    , Value(Object)
-    , (.:)
-    , camelTo2
-    , defaultOptions
-    , genericParseJSON
-    )
-import GHC.Generics (Generic)
-import UsersLists (ChatId, RepeatsNum)
-import Vk.Types (Pts, Ts)
+import           Control.Applicative (Alternative ((<|>)))
+import           Control.Monad       (MonadPlus (mzero))
+import           Data.Aeson          (FromJSON (parseJSON),
+                                      Options (fieldLabelModifier),
+                                      Value (Object), camelTo2, defaultOptions,
+                                      genericParseJSON, (.:))
+import           GHC.Generics        (Generic)
+import           UsersLists          (ChatId, RepeatsNum)
+import           Vk.Types            (Pts, Ts)
 
 newtype VkResponse =
     VkResponse
@@ -28,11 +23,11 @@ instance FromJSON VkResponse where
 
 data VkResponseType =
     Server
-        { serverServer :: Maybe String
-        , serverKey :: Maybe String
-        , serverTS :: Maybe Ts
-        , serverPTS :: Maybe Pts
-        , serverNewPTS :: Maybe Int
+        { serverServer   :: Maybe String
+        , serverKey      :: Maybe String
+        , serverTS       :: Maybe Ts
+        , serverPTS      :: Maybe Pts
+        , serverNewPTS   :: Maybe Int
         , serverMessages :: Maybe VkMessages
         }
     deriving (Show, Generic)
@@ -56,14 +51,14 @@ instance FromJSON VkMessages where
 
 data VkItem =
     VkItem
-        { vkItemId :: Maybe Int
-        , vkItemFromId :: ChatId
-        , vkItemText :: String
+        { vkItemId          :: Maybe Int
+        , vkItemFromId      :: ChatId
+        , vkItemText        :: String
         , vkItemAttachments :: [VkAttachment]
-        , vkItemImportant :: Maybe Bool
-        , vkItemGeo :: Maybe VkGeo
+        , vkItemImportant   :: Maybe Bool
+        , vkItemGeo         :: Maybe VkGeo
         , vkItemFwdMessages :: Maybe [VkItem]
-        , vkItemPayload :: Maybe RepeatsNum
+        , vkItemPayload     :: Maybe RepeatsNum
         }
     deriving (Show, Generic)
 
@@ -74,19 +69,19 @@ instance FromJSON VkItem where
 
 data VkAttachment
     = VkAttachmentPhoto
-          { vkAttachmentPhotoType :: String
+          { vkAttachmentPhotoType  :: String
           , vkAttachmentPhotoPhoto :: VkPhoto
           }
     | VkAttachmentDoc
           { vkAttachmentDocType :: String
-          , vkAttachmentDocDoc :: VkDoc
+          , vkAttachmentDocDoc  :: VkDoc
           }
     | VkAttachmentVideo
-          { vkAttachmentVideoType :: String
+          { vkAttachmentVideoType  :: String
           , vkAttachmentVideoVideo :: VkVideo
           }
     | VkAttachmentAudio
-          { vkAttachmentAudioType :: String
+          { vkAttachmentAudioType  :: String
           , vkAttachmentAudioAudio :: VkAudio
           }
     | VkAttachmentWall
@@ -94,11 +89,11 @@ data VkAttachment
           , vkAttachmentWallWall :: VkWall
           }
     | VkAttachmentMarket
-          { vkAttachmentMarketType :: String
+          { vkAttachmentMarketType   :: String
           , vkAttachmentMarketMarket :: VkMarket
           }
     | VkAttachmentStory
-          { vkAttachmentStoryType :: String
+          { vkAttachmentStoryType  :: String
           , vkAttachmentStoryStory :: VkStory
           }
     | VkAttachmentPoll
@@ -106,14 +101,24 @@ data VkAttachment
           , vkAttachmentPollPoll :: VkPoll
           }
     | VkAttachmentSticker
-          { vkAttachmentStickerType :: String
+          { vkAttachmentStickerType    :: String
           , vkAttachmentStickerSticker :: VkSticker
           }
     | VkAttachmentAudioMessage
-          { vkAttachmentAudioMessageType :: String
+          { vkAttachmentAudioMessageType         :: String
           , vkAttachmentAudioMessageAudioMessage :: VkAudioMessage
           }
     deriving (Show, Generic)
+
+data VkCommand
+    = Help
+    | Repeat
+    | Confirm
+
+data VkMessageTypes
+    = VkTextMessage String
+    | VkGeoMessage VkGeo (Maybe String)
+    | VkWithAttachmentsMessage [VkAttachment] (Maybe String)
 
 instance FromJSON VkAttachment where
     parseJSON (Object v) =
@@ -131,10 +136,10 @@ instance FromJSON VkAttachment where
 
 data VkPhoto =
     VkPhoto
-        { vkPhotoId :: Int
-        , vkPhotoOwnerId :: Int
+        { vkPhotoId        :: Int
+        , vkPhotoOwnerId   :: Int
         , vkPhotoAccessKey :: String
-        , vkPhotoText :: String
+        , vkPhotoText      :: String
         }
     deriving (Show, Generic)
 
@@ -145,8 +150,8 @@ instance FromJSON VkPhoto where
 
 data VkDoc =
     VkDoc
-        { vkDocId :: Int
-        , vkDocOwnerId :: Int
+        { vkDocId        :: Int
+        , vkDocOwnerId   :: Int
         , vkDocAccessKey :: String
         }
     deriving (Show, Generic)
@@ -158,8 +163,8 @@ instance FromJSON VkDoc where
 
 data VkVideo =
     VkVideo
-        { vkVideoId :: Int
-        , vkVideoOwnerId :: Int
+        { vkVideoId        :: Int
+        , vkVideoOwnerId   :: Int
         , vkVideoAccessKey :: String
         }
     deriving (Show, Generic)
@@ -171,7 +176,7 @@ instance FromJSON VkVideo where
 
 data VkAudio =
     VkAudio
-        { vkAudioId :: Int
+        { vkAudioId      :: Int
         , vkAudioOwnerId :: Int
         }
     deriving (Show, Generic)
@@ -184,7 +189,7 @@ instance FromJSON VkAudio where
 data VkWall =
     VkWall
         { vkWallFromId :: Int
-        , vkWallId :: Int
+        , vkWallId     :: Int
         }
     deriving (Show, Generic)
 
@@ -195,7 +200,7 @@ instance FromJSON VkWall where
 
 data VkMarket =
     VkMarket
-        { vkMarketId :: Int
+        { vkMarketId      :: Int
         , vkMarketOwnerId :: Int
         }
     deriving (Show, Generic)
@@ -207,7 +212,7 @@ instance FromJSON VkMarket where
 
 data VkStory =
     VkStory
-        { vkStoryId :: Int
+        { vkStoryId      :: Int
         , vkStoryOwnerId :: Int
         }
     deriving (Show, Generic)
@@ -219,7 +224,7 @@ instance FromJSON VkStory where
 
 data VkPoll =
     VkPoll
-        { vkPollId :: Int
+        { vkPollId      :: Int
         , vkPollOwnerId :: Int
         }
     deriving (Show, Generic)
@@ -243,9 +248,9 @@ instance FromJSON VkSticker where
 
 data VkGeo =
     VkGeo
-        { vkGeoType :: String
+        { vkGeoType        :: String
         , vkGeoCoordinates :: VkCoordinates
-        , vkGeoPlace :: VkPlace
+        , vkGeoPlace       :: VkPlace
         }
     deriving (Show, Generic)
 
@@ -256,7 +261,7 @@ instance FromJSON VkGeo where
 
 data VkCoordinates =
     VkCoordinates
-        { vkCoordinatesLatitude :: Double
+        { vkCoordinatesLatitude  :: Double
         , vkCoordinatesLongitude :: Double
         }
     deriving (Show, Generic)
@@ -269,8 +274,8 @@ instance FromJSON VkCoordinates where
 data VkPlace =
     VkPlace
         { vkPlaceCountry :: String
-        , vkPlaceCity :: String
-        , vkPlaceTitle :: String
+        , vkPlaceCity    :: String
+        , vkPlaceTitle   :: String
         }
     deriving (Show, Generic)
 
@@ -281,8 +286,8 @@ instance FromJSON VkPlace where
 
 data VkAudioMessage =
     VkAudioMessage
-        { vkAudioMessageId :: Int
-        , vkAudioMessageOwnerId :: Int
+        { vkAudioMessageId        :: Int
+        , vkAudioMessageOwnerId   :: Int
         , vkAudioMessageAccessKey :: String
         }
     deriving (Show, Generic)

@@ -1,44 +1,33 @@
 module Telegram.BuildRequest where
 
-import Control.Exception (catch)
-import Control.Monad.IO.Class (MonadIO(liftIO))
-import Data.Aeson (FromJSON(parseJSON), ToJSON, Value)
-import Data.Aeson.Types (parseMaybe)
-import qualified Data.Text as T
-import Logger (Handle, logError)
-import Network.HTTP.Req
-    ( GET(GET)
-    , HttpException
-    , JsonResponse
-    , NoReqBody(NoReqBody)
-    , POST(POST)
-    , QueryParam
-    , Req
-    , ReqBodyJson(ReqBodyJson)
-    , (/:)
-    , (=:)
-    , defaultHttpConfig
-    , https
-    , jsonResponse
-    , req
-    , responseBody
-    , responseStatusCode
-    , runReq
-    )
-import Telegram.Responses (TelegramResponse(TelegramResponse))
-import Telegram.Types (StatusResult(StatusResult), TelegramToken(TelegramToken))
+import           Control.Exception      (catch)
+import           Control.Monad.IO.Class (MonadIO (liftIO))
+import           Data.Aeson             (FromJSON (parseJSON), ToJSON, Value)
+import           Data.Aeson.Types       (parseMaybe)
+import qualified Data.Text              as T
+import           Logger                 (LogHandle, logError)
+import           Network.HTTP.Req       (GET (GET), HttpException, JsonResponse,
+                                         NoReqBody (NoReqBody), POST (POST),
+                                         QueryParam, Req,
+                                         ReqBodyJson (ReqBodyJson),
+                                         defaultHttpConfig, https, jsonResponse,
+                                         req, responseBody, responseStatusCode,
+                                         runReq, (/:), (=:))
+import           Telegram.Responses     (TelegramResponse (TelegramResponse))
+import           Telegram.Types         (StatusResult (StatusResult),
+                                         TelegramToken (TelegramToken))
 
 type ParametersList = [(T.Text, T.Text)]
 
 type TelegramMethod = String
 
 buildParams :: (QueryParam p, Monoid p) => ParametersList -> p
-buildParams [] = mempty
+buildParams []     = mempty
 buildParams params = mconcat $ fmap (uncurry (=:)) params
 
 buildTelegramGetRequest ::
        FromJSON a
-    => Handle IO
+    => LogHandle IO
     -> TelegramToken
     -> TelegramMethod
     -> ParametersList
@@ -74,7 +63,7 @@ buildTelegramGetRequest hLogger (TelegramToken tgtoken) url params =
 
 buildTelegramPostRequest ::
        ToJSON b
-    => Handle IO
+    => LogHandle IO
     -> TelegramToken
     -> TelegramMethod
     -> b

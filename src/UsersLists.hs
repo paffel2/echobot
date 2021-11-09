@@ -1,52 +1,55 @@
+{-# LANGUAGE DerivingVia                #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GeneralisedNewtypeDeriving #-}
+
 module UsersLists where
 
-import Data.Aeson (FromJSON(parseJSON), ToJSON(toJSON))
-import Data.Aeson.Types (Parser)
-import Data.List (find)
-import Data.Maybe (fromMaybe)
-import GHC.Generics (Generic)
-import Text.Read (readMaybe)
+import           Control.Monad.State (MonadState, gets, modify)
+import           Data.Aeson          (FromJSON (parseJSON), ToJSON)
+import           Data.Aeson.Types    (Parser)
+import           Data.Map.Strict     (Map, insert, lookup)
+import           Data.Maybe          (fromMaybe)
+import           GHC.Generics        (Generic)
+import           Text.Read           (readMaybe)
 
 newtype RepeatsNum =
     RepeatsNum
-        { repeats_num' :: Int
+        { getRepeatsNum :: Int
         }
-    deriving (Show, Eq, Generic)
+    deriving (Show, Eq, Generic, Num)
 
 instance FromJSON RepeatsNum where
     parseJSON v =
         RepeatsNum . fromMaybe 1 . readMaybe <$> (parseJSON v :: Parser String)
 
-type RepeatsList = [Repeats]
-
-data Repeats =
-    Repeats
-        { chat_id :: ChatId
-        , repeats_num :: RepeatsNum
-        }
-    deriving (Show, Eq)
+type RepeatsList = Map ChatId RepeatsNum
 
 newtype ChatId =
     ChatId
-        { chat_id' :: Int
+        { getChatId :: Int
         }
-    deriving (Eq, Show, Generic)
+    deriving (Eq, Show, Generic, Ord)
+    deriving FromJSON via Int
+    deriving ToJSON via Int
 
-instance FromJSON ChatId where
-    parseJSON v = ChatId <$> (parseJSON v :: Parser Int)
+newtype HelpMessage =
+    HelpMessage
+        { getHelpMessage :: String
+        }
 
-instance ToJSON ChatId where
-    toJSON = toJSON . chat_id'
+data DataLoop a =
+    DataLoop
+        { getRepeatsList :: RepeatsList
+        , getUpdateId    :: Maybe a
+        }
 
-findRepeatNumber :: RepeatsList -> ChatId -> RepeatsNum
-findRepeatNumber listOfUsers chatId =
-    maybe
-        (RepeatsNum 1)
-        repeats_num
-        (find (\x -> chatId == chat_id x) listOfUsers)
+repeatsByUser :: MonadState (DataLoop a) m => ChatId -> m (Maybe RepeatsNum)
+repeatsByUser chatId = gets (Data.Map.Strict.lookup chatId . getRepeatsList)
 
-updateListUsers :: RepeatsList -> RepeatsList -> RepeatsList
-updateListUsers xs ((Repeats cid n):us) = updateListUsers newList us
+updateRepeatsForUser ::
+       MonadState (DataLoop a) m => ChatId -> RepeatsNum -> m ()
+updateRepeatsForUser chatId repeatsNums =
+    modify updateDataLoopList
   where
-    newList = filter ((/= cid) . chat_id) xs ++ [Repeats cid n]
-updateListUsers xs [] = xs
+    updateDataLoopList (DataLoop list updateId) =
+        DataLoop (insert chatId repeatsNums list) updateId

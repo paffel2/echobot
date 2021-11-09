@@ -2,76 +2,72 @@
 
 module Telegram.API where
 
-import Data.Aeson (FromJSON)
-import qualified Data.Text as T
-import Logger (Handle, logInfo)
-import Telegram.BuildRequest (buildTelegramGetRequest, buildTelegramPostRequest)
-import Telegram.Keyboard (keyboard)
-import Telegram.Requests
-    ( TelegramSendAnimation(TelegramSendAnimation)
-    , TelegramSendAudio(TelegramSendAudio)
-    , TelegramSendContact(TelegramSendContact)
-    , TelegramSendDocument(TelegramSendDocument)
-    , TelegramSendLocation(TelegramSendLocation)
-    , TelegramSendMessage(TelegramSendMessage)
-    , TelegramSendPhoto(TelegramSendPhoto)
-    , TelegramSendSticker(TelegramSendSticker)
-    , TelegramSendVenue(TelegramSendVenue)
-    , TelegramSendVideo(TelegramSendVideo)
-    , TelegramSendVideoNote(TelegramSendVideoNote)
-    , TelegramSendVoice(TelegramSendVoice)
-    )
-import Telegram.Responses
-    ( TelegramAnimation(telegramAnimationFileId)
-    , TelegramAudio(telegramAudioFileId)
-    , TelegramContact(telegramContactFirstName, telegramContactLastName,
-                telegramContactPhoneNumber, telegramContactVcard)
-    , TelegramDocument(telegramDocumentFileId)
-    , TelegramLocation(telegramLocationHeading,
-                 telegramLocationHorizontalAccuracy, telegramLocationLatitude,
-                 telegramLocationLivePeriod, telegramLocationLongitude,
-                 telegramLocationProximityAlertRadius)
-    , TelegramMessageEntity
-    , TelegramPhotoSize(telegramPhotoSizeFileId)
-    , TelegramSticker(telegramStickerFileId)
-    , TelegramText
-    , TelegramUpdate(telegramUpdateId)
-    , TelegramUser
-    , TelegramVenue(telegramVenueAddress, telegramVenueFoursquareId,
-              telegramVenueFoursquareType, telegramVenueGooglePlaceId,
-              telegramVenueGooglePlaceType, telegramVenueLocation,
-              telegramVenueTitle)
-    , TelegramVideo(telegramVideoFileId)
-    , TelegramVideoNote(telegramVideoNoteFileId)
-    , TelegramVoice(telegramVoiceFileId)
-    )
-import Telegram.Types
-import UsersLists
+import           Data.Aeson            (FromJSON)
+import qualified Data.Text             as T
+import           Logger                (LogHandle, logInfo)
+import           Telegram.BuildRequest (buildTelegramGetRequest,
+                                        buildTelegramPostRequest)
+import           Telegram.Keyboard     (keyboard)
+import           Telegram.Requests     (TelegramSendAnimation (TelegramSendAnimation),
+                                        TelegramSendAudio (TelegramSendAudio),
+                                        TelegramSendContact (TelegramSendContact),
+                                        TelegramSendDocument (TelegramSendDocument),
+                                        TelegramSendLocation (TelegramSendLocation),
+                                        TelegramSendMessage (TelegramSendMessage),
+                                        TelegramSendPhoto (TelegramSendPhoto),
+                                        TelegramSendSticker (TelegramSendSticker),
+                                        TelegramSendVenue (TelegramSendVenue),
+                                        TelegramSendVideo (TelegramSendVideo),
+                                        TelegramSendVideoNote (TelegramSendVideoNote),
+                                        TelegramSendVoice (TelegramSendVoice))
+import           Telegram.Responses    (TelegramAnimation (telegramAnimationFileId),
+                                        TelegramAudio (telegramAudioFileId),
+                                        TelegramContact (telegramContactFirstName, telegramContactLastName, telegramContactPhoneNumber, telegramContactVcard),
+                                        TelegramDocument (telegramDocumentFileId),
+                                        TelegramLocation (telegramLocationHeading, telegramLocationHorizontalAccuracy, telegramLocationLatitude, telegramLocationLivePeriod, telegramLocationLongitude, telegramLocationProximityAlertRadius),
+                                        TelegramMessageEntity,
+                                        TelegramPhotoSize (telegramPhotoSizeFileId),
+                                        TelegramSticker (telegramStickerFileId),
+                                        TelegramText,
+                                        TelegramUpdate (telegramUpdateId),
+                                        TelegramUser,
+                                        TelegramVenue (telegramVenueAddress, telegramVenueFoursquareId, telegramVenueFoursquareType, telegramVenueGooglePlaceId, telegramVenueGooglePlaceType, telegramVenueLocation, telegramVenueTitle),
+                                        TelegramVideo (telegramVideoFileId),
+                                        TelegramVideoNote (telegramVideoNoteFileId),
+                                        TelegramVoice (telegramVoiceFileId))
+import           Telegram.Types        (Caption, StatusResult, TelegramToken,
+                                        UpdateId (..))
+import           UsersLists            (ChatId)
 
-getMe :: Handle IO -> TelegramToken -> IO (Maybe TelegramUser)
-getMe hLogger tgtoken = buildTelegramGetRequest hLogger tgtoken "getMe" []
+getMe :: TelegramToken -> LogHandle IO -> IO (Maybe UpdateId)
+getMe tgtoken hLogger = do
+    ch <-
+        buildTelegramGetRequest hLogger tgtoken "getMe" [] :: IO (Maybe TelegramUser)
+    case ch of
+        Nothing -> return Nothing
+        Just _  -> return (Just $ UpdateId 0)
 
 getUpdates ::
        FromJSON a
-    => Handle IO
-    -> TelegramToken
+    => TelegramToken
+    -> LogHandle IO
     -> Maybe UpdateId
     -> IO (Maybe a)
-getUpdates hLogger tgtoken (Just updId) =
+getUpdates tgtoken hLogger (Just updId) =
     buildTelegramGetRequest
         hLogger
         tgtoken
         "getUpdates"
         [("offset", T.pack $ show $ upd_id updId), ("timeout", "10")]
-getUpdates hLogger tgtoken Nothing =
+getUpdates tgtoken hLogger Nothing =
     buildTelegramGetRequest
         hLogger
         tgtoken
         "getUpdates"
         [("offset", "0"), ("timeout", "10")]
 
-getLastUpdateId :: Handle IO -> Maybe [TelegramUpdate] -> IO (Maybe UpdateId)
-getLastUpdateId hLogger updates =
+getLastUpdateId :: Maybe [TelegramUpdate] -> LogHandle IO -> IO (Maybe UpdateId)
+getLastUpdateId updates hLogger =
     case updates of
         Nothing -> do
             return Nothing
@@ -83,7 +79,7 @@ getLastUpdateId hLogger updates =
     nextUpd (UpdateId x) = UpdateId (x + 1)
 
 sendTextMessage ::
-       Handle IO
+       LogHandle IO
     -> TelegramToken
     -> ChatId
     -> TelegramText
@@ -98,7 +94,7 @@ sendTextMessage hLogger tgtoken chatId text ent =
         []
 
 sendAnimationMessage ::
-       Handle IO
+       LogHandle IO
     -> TelegramToken
     -> ChatId
     -> TelegramAnimation
@@ -115,7 +111,7 @@ sendAnimationMessage hLogger tgtoken chatId anim cap =
     animId = telegramAnimationFileId anim
 
 sendAudioMessage ::
-       Handle IO
+       LogHandle IO
     -> TelegramToken
     -> ChatId
     -> TelegramAudio
@@ -132,7 +128,7 @@ sendAudioMessage hLogger tgtoken chatId audio cap =
     audioId = telegramAudioFileId audio
 
 sendDocumentMessage ::
-       Handle IO
+       LogHandle IO
     -> TelegramToken
     -> ChatId
     -> TelegramDocument
@@ -149,7 +145,7 @@ sendDocumentMessage hLogger tgtoken chatId doc cap =
     docId = telegramDocumentFileId doc
 
 sendPhotoMessage ::
-       Handle IO
+       LogHandle IO
     -> TelegramToken
     -> ChatId
     -> [TelegramPhotoSize]
@@ -167,7 +163,7 @@ sendPhotoMessage hLogger tgtoken chatId (photo:_) cap =
 sendPhotoMessage _ _ _ _ _ = return Nothing
 
 sendVideoMessage ::
-       Handle IO
+       LogHandle IO
     -> TelegramToken
     -> ChatId
     -> TelegramVideo
@@ -184,7 +180,7 @@ sendVideoMessage hLogger tgtoken chatId video cap =
     videoId = telegramVideoFileId video
 
 sendStickerMessage ::
-       Handle IO
+       LogHandle IO
     -> TelegramToken
     -> ChatId
     -> TelegramSticker
@@ -200,7 +196,7 @@ sendStickerMessage hLogger tgtoken chatId sticker =
     stickerId = telegramStickerFileId sticker
 
 sendVideoNoteMessage ::
-       Handle IO
+       LogHandle IO
     -> TelegramToken
     -> ChatId
     -> TelegramVideoNote
@@ -216,7 +212,7 @@ sendVideoNoteMessage hLogger tgtoken chatId videoNote =
     videoNoteId = telegramVideoNoteFileId videoNote
 
 sendVoiceMessage ::
-       Handle IO
+       LogHandle IO
     -> TelegramToken
     -> ChatId
     -> TelegramVoice
@@ -233,7 +229,7 @@ sendVoiceMessage hLogger tgtoken chatId voice cap =
     voiceId = telegramVoiceFileId voice
 
 sendContactMessage ::
-       Handle IO
+       LogHandle IO
     -> TelegramToken
     -> ChatId
     -> TelegramContact
@@ -252,7 +248,7 @@ sendContactMessage hLogger tgtoken chatId contact =
     vcard = telegramContactVcard contact
 
 sendLocationMessage ::
-       Handle IO
+       LogHandle IO
     -> TelegramToken
     -> ChatId
     -> TelegramLocation
@@ -273,7 +269,7 @@ sendLocationMessage hLogger tgtoken chatId location =
     par = telegramLocationProximityAlertRadius location
 
 sendVenueMessage ::
-       Handle IO
+       LogHandle IO
     -> TelegramToken
     -> ChatId
     -> TelegramVenue
@@ -295,7 +291,8 @@ sendVenueMessage hLogger tgtoken chatId venue =
     gpid = telegramVenueGooglePlaceId venue
     gptype = telegramVenueGooglePlaceType venue
 
-sendKeyboard :: Handle IO -> TelegramToken -> ChatId -> IO (Maybe StatusResult)
+sendKeyboard ::
+       LogHandle IO -> TelegramToken -> ChatId -> IO (Maybe StatusResult)
 sendKeyboard hLogger tgtoken chatId =
     buildTelegramPostRequest
         hLogger
@@ -309,7 +306,7 @@ sendKeyboard hLogger tgtoken chatId =
         []
 
 sendMessage ::
-       Handle IO
+       LogHandle IO
     -> TelegramToken
     -> ChatId
     -> TelegramText

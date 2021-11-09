@@ -1,22 +1,22 @@
 module Vk.Types where
 
-import Data.Aeson (FromJSON(parseJSON))
-import Data.Aeson.Types (Parser)
-import GHC.Generics (Generic)
+import           Data.Aeson       (FromJSON (parseJSON))
+import           Data.Aeson.Types (Parser)
+import           GHC.Generics     (Generic)
 
 newtype VkToken =
     VkToken
         { vk_token :: String
         }
 
-newtype HelpMessage =
+{-newtype HelpMessage =
     HelpMessage
         { help_mess :: String
-        }
-
+        } -}
+--https://vk.com/dev/messages.getLongPollHistory - about TS and PTS parameters
 newtype Ts =
     Ts
-        { ts' :: Int
+        { getTs :: Int
         }
     deriving (Eq, Show, Generic)
 
@@ -25,7 +25,7 @@ instance FromJSON Ts where
 
 newtype Pts =
     Pts
-        { pts' :: Int
+        { getPts :: Int
         }
     deriving (Eq, Show, Generic)
 
