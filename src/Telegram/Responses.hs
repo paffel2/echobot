@@ -132,7 +132,7 @@ type TelegramText = String
 data TgMessage
     = TextMessage TelegramText (Maybe [TelegramMessageEntity])
     | CommandMessage TelegramCommand
-    | AnimationMessage' TelegramAnimation (Maybe Caption)
+    | AnimationMessage TelegramAnimation (Maybe Caption)
     | AudioMessage TelegramAudio (Maybe Caption)
     | DocumentMessage TelegramDocument (Maybe Caption)
     | PhotoMessage [TelegramPhotoSize] (Maybe Caption)

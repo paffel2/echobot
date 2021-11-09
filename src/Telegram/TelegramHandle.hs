@@ -16,7 +16,7 @@ import           Telegram.API         (sendAnimationMessage, sendAudioMessage,
                                        sendTextMessage, sendVenueMessage,
                                        sendVideoMessage, sendVideoNoteMessage,
                                        sendVoiceMessage)
-import           Telegram.Responses   (TgMessage (AnimationMessage', AudioMessage, ContactMessage, DocumentMessage, LocationMessage, PhotoMessage, StickerMessage, TextMessage, VenueMessage, VideoMessage, VideoNoteMessage, VoiceMessage))
+import           Telegram.Responses   (TgMessage (AnimationMessage, AudioMessage, ContactMessage, DocumentMessage, LocationMessage, PhotoMessage, StickerMessage, TextMessage, VenueMessage, VideoMessage, VideoNoteMessage, VoiceMessage))
 import           Telegram.Types       (TelegramToken (..), UpdateId)
 import qualified UsersLists           as UL
 
@@ -59,7 +59,7 @@ tgSendAnswer hLogger tgToken botMessage =
                 void $
                     sendTextMessage hLogger tgToken (to botMessage) text entity
                 logInfo hLogger "TextMessage sended."
-            AnimationMessage' anim cap -> do
+            AnimationMessage anim cap -> do
                 void $
                     sendAnimationMessage
                         hLogger
