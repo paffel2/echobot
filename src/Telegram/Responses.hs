@@ -106,28 +106,7 @@ instance FromJSON TelegramMessage where
         genericParseJSON
             defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 15}
 
-{-data TelegramCommand
-    = Help
-    | Repeat
-    deriving (Show) -}
-
 type TelegramText = String
-
-{-data TgMessage
-    = TextMessage TelegramText
-    | CommandMessage TelegramCommand
-    | AnimationMessage TelegramAnimation
-    | AudioMessage TelegramAudio
-    | DocumentMessage TelegramDocument
-    | PhotoMessage [TelegramPhotoSize]
-    | VideoMessage TelegramVideo
-    | StickerMessage TelegramSticker
-    | VideoNoteMessage TelegramVideoNote
-    | VoiceMessage TelegramVoice
-    | ContactMessage TelegramContact
-    | LocationMessage TelegramLocation
-    | VenueMessage TelegramVenue
-    deriving (Show) -}
 
 data TgMessage
     = TextMessage TelegramText (Maybe [TelegramMessageEntity])

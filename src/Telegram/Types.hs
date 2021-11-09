@@ -9,10 +9,6 @@ newtype TelegramToken =
         { tg_token :: String
         }
 
-{-newtype HelpMessage =
-    HelpMessage
-        { help_mess :: String
-        } -}
 newtype UpdateId =
     UpdateId
         { upd_id :: Int
