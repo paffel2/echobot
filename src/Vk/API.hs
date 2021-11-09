@@ -103,18 +103,6 @@ createParamsAttachment (VkAttachmentAudioMessage "audio_message" (VkAudioMessage
         show ownerId ++ "_" ++ show audioId ++ "_" ++ accessKey
 createParamsAttachment _ = []
 
-sendMessageHelp :: LogHandle IO -> VkToken -> HelpMessage -> ChatId -> IO ()
-sendMessageHelp hLogger vktoken help_message chatId = do
-    status <- buildVkPostRequest hLogger vktoken "messages.send" params'
-    case status of
-        Nothing -> logError hLogger "Help message not sended"
-        Just _  -> logDebug hLogger "Help message sended"
-  where
-    params' =
-        [ ("user_id", Just . T.pack . show . getChatId $ chatId)
-        , ("message", Just $ T.pack $ getHelpMessage help_message)
-        ]
-
 sendMessageRepeatText :: LogHandle IO -> VkToken -> String -> ChatId -> IO ()
 sendMessageRepeatText hLogger vktoken message chatId = do
     status <- buildVkPostRequest hLogger vktoken "messages.send" params
