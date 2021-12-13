@@ -157,6 +157,18 @@ sendGeoVK hLogger vktoken chatId geo = do
     lat = vkCoordinatesLatitude $ vkGeoCoordinates geo
     long = vkCoordinatesLongitude $ vkGeoCoordinates geo
 
+getAttachmentType :: VkAttachment -> T.Text
+getAttachmentType (VkAttachmentPhoto _)        = "Photo"
+getAttachmentType (VkAttachmentDoc _)          = "Document"
+getAttachmentType (VkAttachmentVideo _)        = "Video"
+getAttachmentType (VkAttachmentAudio _)        = "Audio"
+getAttachmentType (VkAttachmentWall _)         = "Wall"
+getAttachmentType (VkAttachmentMarket _)       = "Market"
+getAttachmentType (VkAttachmentStory _)        = "Story"
+getAttachmentType (VkAttachmentPoll _)         = "Poll"
+getAttachmentType (VkAttachmentSticker _)      = "Sticker"
+getAttachmentType (VkAttachmentAudioMessage _) = "AudioMessage"
+
 sendMessageAttachment ::
        LogHandle IO -> VkToken -> ChatId -> [VkAttachment] -> IO ()
 sendMessageAttachment hLogger vktoken chatId (x:xs) = do
@@ -167,6 +179,7 @@ sendMessageAttachment hLogger vktoken chatId (x:xs) = do
             (fmap
                  (++ [("user_id", Just . T.pack . show . getChatId $ chatId)])
                  parameters)
+    logDebug hLogger (getAttachmentType x <> " attachment sended.")
     if all isJust status
         then logDebug hLogger "Attachments sended"
         else logError hLogger "One or all attachments not sended"
