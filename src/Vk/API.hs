@@ -6,8 +6,7 @@ module Vk.API where
 import           Data.Maybe       (isJust)
 import qualified Data.Text        as T
 import           Logger           (LogHandle, logDebug, logError)
-import           UsersLists       (ChatId (getChatId),
-                                   HelpMessage (getHelpMessage))
+import           UsersLists       (ChatId (getChatId))
 import           Vk.BuildRequests (buildVkGetRequest, buildVkPostRequest)
 import           Vk.Keyboard      (keyboard)
 import           Vk.Responses     (VkAttachment (VkAttachmentAudio, VkAttachmentAudioMessage, VkAttachmentDoc, VkAttachmentMarket, VkAttachmentPhoto, VkAttachmentPoll, VkAttachmentSticker, VkAttachmentStory, VkAttachmentVideo, VkAttachmentWall),
@@ -59,49 +58,48 @@ getTsAndPts vktoken hLogger = do
             return Nothing
 
 createParamsAttachment :: VkAttachment -> [(T.Text, Maybe T.Text)]
-createParamsAttachment (VkAttachmentPhoto _ (VkPhoto photoId ownerId accessKey _)) =
+createParamsAttachment (VkAttachmentPhoto (VkPhoto photoId ownerId accessKey _)) =
     [("attachment", Just $ T.pack attachStr)]
   where
     attachStr =
         "photo" ++ show ownerId ++ "_" ++ show photoId ++ "_" ++ accessKey
-createParamsAttachment (VkAttachmentDoc _ (VkDoc docId ownerId accessKey)) =
+createParamsAttachment (VkAttachmentDoc (VkDoc docId ownerId accessKey)) =
     [("attachment", Just $ T.pack attachStr)]
   where
     attachStr = "doc" ++ show ownerId ++ "_" ++ show docId ++ "_" ++ accessKey
-createParamsAttachment (VkAttachmentVideo _ (VkVideo videoId ownerId accessKey)) =
+createParamsAttachment (VkAttachmentVideo (VkVideo videoId ownerId accessKey)) =
     [("attachment", Just $ T.pack attachStr)]
   where
     attachStr =
         "video" ++ show ownerId ++ "_" ++ show videoId ++ "_" ++ accessKey
-createParamsAttachment (VkAttachmentAudio _ (VkAudio audioId ownerId)) =
+createParamsAttachment (VkAttachmentAudio (VkAudio audioId ownerId)) =
     [("attachment", Just $ T.pack attachStr)]
   where
     attachStr = "audio" ++ show ownerId ++ "_" ++ show audioId
-createParamsAttachment (VkAttachmentWall _ (VkWall ownerId wallId)) =
+createParamsAttachment (VkAttachmentWall (VkWall ownerId wallId)) =
     [("attachment", Just $ T.pack attachStr)]
   where
     attachStr = "wall" ++ show ownerId ++ "_" ++ show wallId
-createParamsAttachment (VkAttachmentMarket _ (VkMarket marketId ownerId)) =
+createParamsAttachment (VkAttachmentMarket (VkMarket marketId ownerId)) =
     [("attachment", Just $ T.pack attachStr)]
   where
     attachStr = "market" ++ show ownerId ++ "_" ++ show marketId
-createParamsAttachment (VkAttachmentStory _ (VkStory storyId ownerId)) =
+createParamsAttachment (VkAttachmentStory (VkStory storyId ownerId)) =
     [("attachment", Just $ T.pack attachStr)]
   where
     attachStr = "story" ++ show ownerId ++ "_" ++ show storyId
-createParamsAttachment (VkAttachmentPoll _ (VkPoll pollId ownerId)) =
+createParamsAttachment (VkAttachmentPoll (VkPoll pollId ownerId)) =
     [("attachment", Just $ T.pack attachStr)]
   where
     attachStr = "poll" ++ show ownerId ++ "_" ++ show pollId
-createParamsAttachment (VkAttachmentSticker _ (VkSticker _ stickerId)) =
+createParamsAttachment (VkAttachmentSticker (VkSticker _ stickerId)) =
     [("sticker_id", Just $ T.pack $ show stickerId)]
-createParamsAttachment (VkAttachmentAudioMessage "audio_message" (VkAudioMessage audioId ownerId accessKey)) =
+createParamsAttachment (VkAttachmentAudioMessage (VkAudioMessage audioId ownerId accessKey)) =
     [("attachment", Just $ T.pack attachStr)]
   where
     attachStr =
         "audio_message" ++
         show ownerId ++ "_" ++ show audioId ++ "_" ++ accessKey
-createParamsAttachment _ = []
 
 sendMessageRepeatText :: LogHandle IO -> VkToken -> String -> ChatId -> IO ()
 sendMessageRepeatText hLogger vktoken message chatId = do

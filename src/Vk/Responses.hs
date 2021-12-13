@@ -68,47 +68,31 @@ instance FromJSON VkItem where
             defaultOptions {fieldLabelModifier = camelTo2 '_' . drop 6}
 
 data VkAttachment
-    = VkAttachmentPhoto
-          { vkAttachmentPhotoType  :: String
-          , vkAttachmentPhotoPhoto :: VkPhoto
-          }
-    | VkAttachmentDoc
-          { vkAttachmentDocType :: String
-          , vkAttachmentDocDoc  :: VkDoc
-          }
-    | VkAttachmentVideo
-          { vkAttachmentVideoType  :: String
-          , vkAttachmentVideoVideo :: VkVideo
-          }
-    | VkAttachmentAudio
-          { vkAttachmentAudioType  :: String
-          , vkAttachmentAudioAudio :: VkAudio
-          }
-    | VkAttachmentWall
-          { vkAttachmentWallType :: String
-          , vkAttachmentWallWall :: VkWall
-          }
-    | VkAttachmentMarket
-          { vkAttachmentMarketType   :: String
-          , vkAttachmentMarketMarket :: VkMarket
-          }
-    | VkAttachmentStory
-          { vkAttachmentStoryType  :: String
-          , vkAttachmentStoryStory :: VkStory
-          }
-    | VkAttachmentPoll
-          { vkAttachmentPollType :: String
-          , vkAttachmentPollPoll :: VkPoll
-          }
-    | VkAttachmentSticker
-          { vkAttachmentStickerType    :: String
-          , vkAttachmentStickerSticker :: VkSticker
-          }
-    | VkAttachmentAudioMessage
-          { vkAttachmentAudioMessageType         :: String
-          , vkAttachmentAudioMessageAudioMessage :: VkAudioMessage
-          }
+    = VkAttachmentPhoto VkPhoto
+    | VkAttachmentDoc VkDoc
+    | VkAttachmentVideo VkVideo
+    | VkAttachmentAudio VkAudio
+    | VkAttachmentWall VkWall
+    | VkAttachmentMarket VkMarket
+    | VkAttachmentStory VkStory
+    | VkAttachmentPoll VkPoll
+    | VkAttachmentSticker VkSticker
+    | VkAttachmentAudioMessage VkAudioMessage
     deriving (Show, Generic)
+
+instance FromJSON VkAttachment where
+    parseJSON (Object v) =
+        (VkAttachmentPhoto <$> v .: "photo") <|>
+        (VkAttachmentDoc <$> v .: "doc") <|>
+        (VkAttachmentVideo <$> v .: "video") <|>
+        (VkAttachmentAudio <$> v .: "audio") <|>
+        (VkAttachmentWall <$> v .: "wall") <|>
+        (VkAttachmentMarket <$> v .: "market") <|>
+        (VkAttachmentStory <$> v .: "story") <|>
+        (VkAttachmentPoll <$> v .: "poll") <|>
+        (VkAttachmentSticker <$> v .: "sticker") <|>
+        (VkAttachmentAudioMessage <$> v .: "audio_message")
+    parseJSON _ = mzero
 
 data VkCommand
     = Help
@@ -119,20 +103,6 @@ data VkMessageTypes
     = VkTextMessage String
     | VkGeoMessage VkGeo (Maybe String)
     | VkWithAttachmentsMessage [VkAttachment] (Maybe String)
-
-instance FromJSON VkAttachment where
-    parseJSON (Object v) =
-        (VkAttachmentPhoto <$> v .: "type" <*> v .: "photo") <|>
-        (VkAttachmentDoc <$> v .: "type" <*> v .: "doc") <|>
-        (VkAttachmentVideo <$> v .: "type" <*> v .: "video") <|>
-        (VkAttachmentAudio <$> v .: "type" <*> v .: "audio") <|>
-        (VkAttachmentWall <$> v .: "type" <*> v .: "wall") <|>
-        (VkAttachmentMarket <$> v .: "type" <*> v .: "market") <|>
-        (VkAttachmentStory <$> v .: "type" <*> v .: "story") <|>
-        (VkAttachmentPoll <$> v .: "type" <*> v .: "poll") <|>
-        (VkAttachmentSticker <$> v .: "type" <*> v .: "sticker") <|>
-        (VkAttachmentAudioMessage <$> v .: "type" <*> v .: "audio_message")
-    parseJSON _ = mzero
 
 data VkPhoto =
     VkPhoto
