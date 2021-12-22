@@ -1,7 +1,7 @@
 module Telegram.TelegramHandle where
 
 import           Control.Monad.Reader (MonadIO (liftIO), MonadReader (ask),
-                                       ReaderT, when)
+                                       ReaderT, replicateM_)
 import           Control.Monad.State  (StateT)
 import           Data.Functor         (void)
 import           Echo                 (BotMessage (botMessageContent, to),
@@ -33,18 +33,14 @@ tgSendAnswer hLogger tgToken botMessage =
             void $ sendKeyboard hLogger tgToken (to botMessage)
         RepeatMessage rn tm -> repeatAnswer rn tm
   where
-    repeatAnswer rn tm =
-        when (UL.getRepeatsNum rn > 0) $ do
-            oneAnswer tm
-            repeatAnswer (UL.RepeatsNum (UL.getRepeatsNum rn - 1)) tm
-    oneAnswer tm =
+    repeatAnswer (UL.RepeatsNum n) tm =
         case tm of
             TextMessage text entity -> do
-                void $
+                replicateM_ n $
                     sendTextMessage hLogger tgToken (to botMessage) text entity
                 logInfo hLogger "TextMessage sended."
             AnimationMessage anim cap -> do
-                void $
+                replicateM_ n $
                     sendAnimationMessage
                         hLogger
                         tgToken
@@ -53,27 +49,27 @@ tgSendAnswer hLogger tgToken botMessage =
                         cap
                 logInfo hLogger "Animation sended."
             AudioMessage audio сap -> do
-                void $
+                replicateM_ n $
                     sendAudioMessage hLogger tgToken (to botMessage) audio сap
                 logInfo hLogger "Audio sended."
             DocumentMessage doc cap -> do
-                void $
+                replicateM_ n $
                     sendDocumentMessage hLogger tgToken (to botMessage) doc cap
                 logInfo hLogger "Document sended."
             PhotoMessage photo cap -> do
-                void $
+                replicateM_ n $
                     sendPhotoMessage hLogger tgToken (to botMessage) photo cap
                 logInfo hLogger "Photo sended."
             VideoMessage video cap -> do
-                void $
+                replicateM_ n $
                     sendVideoMessage hLogger tgToken (to botMessage) video cap
                 logInfo hLogger "Video sended."
             StickerMessage sticker -> do
-                void $
+                replicateM_ n $
                     sendStickerMessage hLogger tgToken (to botMessage) sticker
                 logInfo hLogger "Sticker sended."
             VideoNoteMessage videoNote -> do
-                void $
+                replicateM_ n $
                     sendVideoNoteMessage
                         hLogger
                         tgToken
@@ -81,18 +77,20 @@ tgSendAnswer hLogger tgToken botMessage =
                         videoNote
                 logInfo hLogger "VideoNote sended."
             VoiceMessage voice cap -> do
-                void $
+                replicateM_ n $
                     sendVoiceMessage hLogger tgToken (to botMessage) voice cap
                 logInfo hLogger "VoiceMessage sended."
             ContactMessage contact -> do
-                void $
+                replicateM_ n $
                     sendContactMessage hLogger tgToken (to botMessage) contact
                 logInfo hLogger "Contact sended."
             LocationMessage loc -> do
-                void $ sendLocationMessage hLogger tgToken (to botMessage) loc
+                replicateM_ n $
+                    sendLocationMessage hLogger tgToken (to botMessage) loc
                 logInfo hLogger "Location sended."
             VenueMessage venue -> do
-                void $ sendVenueMessage hLogger tgToken (to botMessage) venue
+                replicateM_ n $
+                    sendVenueMessage hLogger tgToken (to botMessage) venue
                 liftIO $ logInfo hLogger "Venue sended."
             _ -> return ()
 

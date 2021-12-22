@@ -1,9 +1,9 @@
 module Vk.VkHandle where
 
 import           Control.Monad.Reader (MonadIO (liftIO), MonadReader (ask),
-                                       ReaderT, when)
+                                       ReaderT)
 
-import           Control.Monad.State  (StateT)
+import           Control.Monad.State  (StateT, replicateM_)
 import           Echo                 (BotMessage (botMessageContent, to),
                                        BotMessageContent (Keyboard, PlainText, RepeatMessage),
                                        Handle (..), UserMessage)
@@ -25,34 +25,36 @@ vkSendAnswer hLogger vkToken botMessage =
     case botMessageContent botMessage of
         PlainText s -> sendMessageRepeatText hLogger vkToken s (to botMessage)
         Keyboard -> sendKeyboardVk hLogger vkToken (to botMessage)
-        RepeatMessage rn vmt -> repeatAnswer rn vmt
+        RepeatMessage rn vmt -> sendAnswers rn vmt
   where
-    oneAnswer vmt =
+    sendAnswers (UL.RepeatsNum n) vmt =
         case vmt of
             VkTextMessage text ->
+                replicateM_ n $
                 sendMessageText hLogger vkToken (to botMessage) text
             VkGeoMessage geo Nothing ->
-                sendGeoVK hLogger vkToken (to botMessage) geo
-            VkGeoMessage geo (Just text) -> do
-                sendMessageText hLogger vkToken (to botMessage) text
-                sendGeoVK hLogger vkToken (to botMessage) geo
+                replicateM_ n $ sendGeoVK hLogger vkToken (to botMessage) geo
+            VkGeoMessage geo (Just text) ->
+                replicateM_
+                    n
+                    (do sendMessageText hLogger vkToken (to botMessage) text
+                        sendGeoVK hLogger vkToken (to botMessage) geo)
             VkWithAttachmentsMessage attachments Nothing ->
+                replicateM_ n $
                 sendMessageAttachment
                     hLogger
                     vkToken
                     (to botMessage)
                     attachments
-            VkWithAttachmentsMessage attachments (Just text) -> do
-                sendMessageText hLogger vkToken (to botMessage) text
-                sendMessageAttachment
-                    hLogger
-                    vkToken
-                    (to botMessage)
-                    attachments
-    repeatAnswer (UL.RepeatsNum n) vmt = do
-        when (n > 0) $ do
-            oneAnswer vmt
-            repeatAnswer (UL.RepeatsNum (n - 1)) vmt
+            VkWithAttachmentsMessage attachments (Just text) ->
+                replicateM_
+                    n
+                    (do sendMessageText hLogger vkToken (to botMessage) text
+                        sendMessageAttachment
+                            hLogger
+                            vkToken
+                            (to botMessage)
+                            attachments)
 
 vkHandler ::
        LogHandle IO
