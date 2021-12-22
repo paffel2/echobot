@@ -1,67 +1,62 @@
 module EchoTests where
 
-import           Control.Monad.State   (MonadState (get, put), StateT,
-                                        execStateT)
+import           Control.Monad.Reader  (MonadReader (ask), ReaderT (runReaderT))
+import           Control.Monad.State   (StateT, execStateT)
 import           Data.Functor.Identity (Identity (Identity))
+import           Data.Map.Strict       (empty, fromList)
 import           Echo                  (Command (ChoicesRequest, Help, Repeat),
                                         Handle (..), UserMessage (UserMessage),
                                         UserMessageContent (CommandMessage, JustMessage),
                                         echo)
 import           Test.Hspec            (describe, hspec, it, shouldBe)
-import           UsersLists            (ChatId (ChatId), Repeats (Repeats),
-                                        RepeatsList, RepeatsNum (RepeatsNum),
-                                        findRepeatNumber, updateListUsers)
+import qualified UsersLists            as UL
 
-testRepeatsByUser :: ChatId -> StateT RepeatsList Identity (Maybe RepeatsNum)
-testRepeatsByUser chatId = do
-    someState <- get
-    return $ Just $ findRepeatNumber someState chatId
-
-testUpdateRepeatsForUser ::
-       ChatId -> RepeatsNum -> StateT RepeatsList Identity ()
-testUpdateRepeatsForUser chatId repeatsNum = do
-    repeatsList <- get
-    put $ updateListUsers repeatsList [Repeats chatId repeatsNum]
-
-testHandle :: Handle msg (StateT RepeatsList Identity)
+testHandle ::
+       Handle Int (ReaderT (UserMessage Int) (StateT (UL.DataLoop Int) Identity))
 testHandle =
     Handle
-        { getMessage = return Nothing
-        , repeatsByUser = testRepeatsByUser
-        , updateRepeatsForUser = testUpdateRepeatsForUser
+        { getMessage = ask
+        , repeatsByUser = UL.repeatsByUser
+        , updateRepeatsForUser = UL.updateRepeatsForUser
         , sendAnswer = \_ -> return ()
+        , helpMessage = "something"
         }
-
-simpleMessage :: StateT RepeatsList Identity (Maybe (UserMessage String))
-simpleMessage = return $ Just $ UserMessage (ChatId 1) (JustMessage "Something")
-
-helpRequest :: StateT RepeatsList Identity (Maybe (UserMessage String))
-helpRequest = return $ Just $ UserMessage (ChatId 1) (CommandMessage Help)
-
-keyboardRequest :: StateT RepeatsList Identity (Maybe (UserMessage String))
-keyboardRequest =
-    return $ Just $ UserMessage (ChatId 1) (CommandMessage ChoicesRequest)
-
-newRepeatsNum :: StateT RepeatsList Identity (Maybe (UserMessage String))
-newRepeatsNum =
-    return $
-    Just $ UserMessage (ChatId 1) (CommandMessage (Repeat $ RepeatsNum 2))
 
 echoTests :: IO ()
 echoTests =
     hspec $ do
         describe "Testing echo logic" $
             it "No sending message" $
-            execStateT (echo testHandle) [] `shouldBe` Identity []
+            execStateT
+                (mapM_ (runReaderT (echo testHandle)) [])
+                (UL.DataLoop empty Nothing) `shouldBe`
+            Identity (UL.DataLoop empty Nothing)
         it "  Answer to simple message" $
-            execStateT (echo (testHandle {getMessage = simpleMessage})) [] `shouldBe`
-            Identity []
+            execStateT
+                (mapM_
+                     (runReaderT (echo testHandle))
+                     [UserMessage (UL.ChatId 1) (JustMessage 1)])
+                (UL.DataLoop empty Nothing) `shouldBe`
+            Identity (UL.DataLoop empty Nothing)
         it "  Answer to  help request" $
-            execStateT (echo (testHandle {getMessage = helpRequest})) [] `shouldBe`
-            Identity []
+            execStateT
+                (mapM_
+                     (runReaderT (echo testHandle))
+                     [UserMessage (UL.ChatId 1) (CommandMessage Help)])
+                (UL.DataLoop empty Nothing) `shouldBe`
+            Identity (UL.DataLoop empty Nothing)
         it "  Answer to keyboard request" $
-            execStateT (echo (testHandle {getMessage = keyboardRequest})) [] `shouldBe`
-            Identity []
+            execStateT
+                (mapM_
+                     (runReaderT (echo testHandle))
+                     [UserMessage (UL.ChatId 1) (CommandMessage ChoicesRequest)])
+                (UL.DataLoop empty Nothing) `shouldBe`
+            Identity (UL.DataLoop empty Nothing)
         it "  Confirm num of repeats changing" $
-            execStateT (echo (testHandle {getMessage = newRepeatsNum})) [] `shouldBe`
-            Identity [Repeats (ChatId 1) (RepeatsNum 2)]
+            execStateT
+                (mapM_
+                     (runReaderT (echo testHandle))
+                     [UserMessage (UL.ChatId 1) (CommandMessage (Repeat 2))])
+                (UL.DataLoop empty Nothing) `shouldBe`
+            Identity
+                (UL.DataLoop (fromList [(UL.ChatId 1, UL.RepeatsNum 2)]) Nothing)

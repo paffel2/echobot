@@ -41,7 +41,7 @@ data DataLoop a =
     DataLoop
         { getRepeatsList :: RepeatsList
         , getUpdateId    :: Maybe a
-        }
+        } deriving (Show, Eq)
 
 repeatsByUser :: MonadState (DataLoop a) m => ChatId -> m (Maybe RepeatsNum)
 repeatsByUser chatId = gets (Data.Map.Strict.lookup chatId . getRepeatsList)
