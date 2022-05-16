@@ -55,4 +55,9 @@ If the help message contains cyrillic characters, use (for Windows)
 * `test` - contains tests.
 * `config/bot.template.conf` - bot's config file. Сontains a configuration file with a description of the parameters 
 
+
 test2
+
+test
+
+
